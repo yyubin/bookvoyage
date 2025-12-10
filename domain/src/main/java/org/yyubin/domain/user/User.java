@@ -7,9 +7,11 @@ public record User(
         String email,
         String username,
         String password,
+        String nickname,
         String bio,
         Role role,
         AuthProvider provider,
+        String ProfileImageUrl,
         LocalDateTime createdAt
 ) {
 
@@ -38,16 +40,17 @@ public record User(
         }
     }
 
-    // domain behavior
-    public User updateProfile(String newUsername, String newBio) {
+    public User updateProfile(String newUsername, String newBio, String newNickname, String newProfileImageUrl) {
         return new User(
                 this.id,
                 this.email,
                 newUsername != null && !newUsername.isBlank() ? newUsername : this.username,
                 this.password,
+                newNickname != null ? newNickname : this.nickname,
                 newBio != null ? newBio : this.bio,
                 this.role,
                 this.provider,
+                newProfileImageUrl != null ? newProfileImageUrl : this.ProfileImageUrl,
                 this.createdAt
         );
     }

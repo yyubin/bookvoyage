@@ -14,6 +14,7 @@ import org.yyubin.infrastructure.security.oauth2.OAuth2UserInfo;
 import org.yyubin.domain.user.AuthProvider;
 import org.yyubin.domain.user.Role;
 import org.yyubin.domain.user.User;
+import org.yyubin.support.nickname.NicknameGenerator;
 
 @Slf4j
 @Service
@@ -45,9 +46,11 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     info.getEmail(),
                     info.getName(),
                     "",  // OAuth2 사용자는 비밀번호 없음
+                    makeRandomNickname(info.getEmail()),
                     "",  // bio는 기본값으로 빈 문자열
                     Role.USER,
                     mapToAuthProvider(registrationId),
+                    null,
                     LocalDateTime.now()
             );
             user = saveUserPort.save(newUser);
@@ -64,4 +67,18 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             default -> AuthProvider.LOCAL;
         };
     }
+
+    private String makeRandomNickname(String email) {
+        String nickname;
+        int attempt = 0;
+
+        do {
+            String seed = attempt == 0 ? email : email + "#" + attempt;
+            nickname = NicknameGenerator.generate(seed);
+            attempt++;
+        } while (loadUserPort.loadByNickname(nickname).isPresent());
+
+        return nickname;
+    }
+
 }

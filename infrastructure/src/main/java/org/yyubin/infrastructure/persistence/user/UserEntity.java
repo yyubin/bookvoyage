@@ -41,6 +41,9 @@ public class UserEntity {
     @Column(name = "username", nullable = false, length = 50)
     private String username;
 
+    @Column(nullable = false, length = 30)
+    private String nickname;
+
     @Column(name = "bio", length = 500)
     private String bio;
 
@@ -49,6 +52,9 @@ public class UserEntity {
 
     @Enumerated(EnumType.STRING)
     private AuthProvider provider;
+
+    @Column(name = "profile_picture_url", columnDefinition = "TEXT")
+    private String profilePictureUrl;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -59,6 +65,7 @@ public class UserEntity {
                 .email(user.email())
                 .username(user.username())
                 .password(user.password())
+                .nickname(user.nickname())
                 .bio(user.bio())
                 .role(user.role())
                 .provider(user.provider())
@@ -72,9 +79,11 @@ public class UserEntity {
                 email,
                 username,
                 password,
+                nickname,
                 bio,
                 role,
                 provider,
+                profilePictureUrl != null ? profilePictureUrl : "",
                 createdAt
         );
     }

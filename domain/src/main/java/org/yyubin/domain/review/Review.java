@@ -9,6 +9,8 @@ import org.yyubin.domain.book.BookId;
 import org.yyubin.domain.user.UserId;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -25,8 +27,13 @@ public class Review {
     private final Rating rating;
     private final String content;
     private final LocalDateTime createdAt;
+    private final ReviewVisibility visibility;
+    private final boolean deleted;
+    private final long viewCount;
+    private final BookGenre genre;
+    private final List<Mention> mentions;
 
-    public static Review of(ReviewId id, UserId userId, BookId bookId, Rating rating, String content, LocalDateTime createdAt) {
+    public static Review of(ReviewId id, UserId userId, BookId bookId, Rating rating, String content, LocalDateTime createdAt, ReviewVisibility visibility, boolean deleted, long viewCount, BookGenre genre, List<Mention> mentions) {
         if (content != null && content.length() > 5000) {
             throw new IllegalArgumentException("Review content cannot exceed 5000 characters");
         }
@@ -34,20 +41,46 @@ public class Review {
         Objects.requireNonNull(bookId, "Book ID cannot be null");
         Objects.requireNonNull(rating, "Rating cannot be null");
         Objects.requireNonNull(createdAt, "Created at cannot be null");
+        Objects.requireNonNull(visibility, "Visibility cannot be null");
+        if (genre == null) {
+            throw new IllegalArgumentException("Genre cannot be null");
+        }
+        Objects.requireNonNull(mentions, "Mentions cannot be null");
 
-        return new Review(id, userId, bookId, rating, content != null ? content : "", createdAt);
+        long safeViewCount = Math.max(0, viewCount);
+
+        return new Review(id, userId, bookId, rating, content != null ? content : "", createdAt, visibility, deleted, safeViewCount, genre, List.copyOf(mentions));
     }
 
-    public static Review create(UserId userId, BookId bookId, Rating rating, String content) {
-        return of(null, userId, bookId, rating, content, LocalDateTime.now());
+    public static Review create(UserId userId, BookId bookId, Rating rating, String content, ReviewVisibility visibility, BookGenre genre, List<Mention> mentions) {
+        return of(null, userId, bookId, rating, content, LocalDateTime.now(), visibility != null ? visibility : ReviewVisibility.PUBLIC, false, 0, genre, mentions != null ? mentions : Collections.emptyList());
     }
 
-    public Review updateContent(String newContent) {
-        return new Review(this.id, this.userId, this.bookId, this.rating, newContent, this.createdAt);
+    public Review updateContent(String newContent, List<Mention> newMentions) {
+        Objects.requireNonNull(newMentions, "Mentions cannot be null");
+        return new Review(this.id, this.userId, this.bookId, this.rating, newContent, this.createdAt, this.visibility, this.deleted, this.viewCount, this.genre, List.copyOf(newMentions));
     }
 
     public Review updateRating(Rating newRating) {
-        return new Review(this.id, this.userId, this.bookId, newRating, this.content, this.createdAt);
+        return new Review(this.id, this.userId, this.bookId, newRating, this.content, this.createdAt, this.visibility, this.deleted, this.viewCount, this.genre, this.mentions);
+    }
+
+    public Review updateVisibility(ReviewVisibility newVisibility) {
+        Objects.requireNonNull(newVisibility, "Visibility cannot be null");
+        return new Review(this.id, this.userId, this.bookId, this.rating, this.content, this.createdAt, newVisibility, this.deleted, this.viewCount, this.genre, this.mentions);
+    }
+
+    public Review updateGenre(BookGenre newGenre) {
+        Objects.requireNonNull(newGenre, "Genre cannot be null");
+        return new Review(this.id, this.userId, this.bookId, this.rating, this.content, this.createdAt, this.visibility, this.deleted, this.viewCount, newGenre, this.mentions);
+    }
+
+    public Review markDeleted() {
+        return new Review(this.id, this.userId, this.bookId, this.rating, this.content, this.createdAt, this.visibility, true, this.viewCount, this.genre, this.mentions);
+    }
+
+    public Review increaseViewCount() {
+        return new Review(this.id, this.userId, this.bookId, this.rating, this.content, this.createdAt, this.visibility, this.deleted, this.viewCount + 1, this.genre, this.mentions);
     }
 
     public boolean isWrittenBy(UserId userId) {

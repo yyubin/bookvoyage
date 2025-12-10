@@ -6,9 +6,11 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,7 +22,16 @@ import org.yyubin.domain.user.UserFollowing;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "follow")
+@Table(
+        name = "follow",
+        indexes = {
+                @Index(name = "idx_follower", columnList = "follower_id"),
+                @Index(name = "idx_followee", columnList = "followee_id")
+        },
+        uniqueConstraints = {
+                @UniqueConstraint(name = "ux_follow_pair", columnNames = {"follower_id", "followee_id"})
+        }
+)
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

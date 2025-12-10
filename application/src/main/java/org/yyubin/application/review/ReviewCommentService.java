@@ -1,0 +1,144 @@
+package org.yyubin.application.review;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.yyubin.application.review.command.CreateCommentCommand;
+import org.yyubin.application.review.command.DeleteCommentCommand;
+import org.yyubin.application.review.command.UpdateCommentCommand;
+import org.yyubin.application.review.port.LoadReviewCommentPort;
+import org.yyubin.application.review.port.LoadReviewPort;
+import org.yyubin.application.review.port.SaveReviewCommentPort;
+import org.yyubin.application.user.port.LoadUserPort;
+import org.yyubin.domain.review.MentionParser;
+import org.yyubin.domain.review.Review;
+import org.yyubin.domain.review.ReviewComment;
+import org.yyubin.domain.review.ReviewCommentId;
+import org.yyubin.domain.review.ReviewId;
+import org.yyubin.domain.user.UserId;
+
+@Service
+@RequiredArgsConstructor
+public class ReviewCommentService implements CreateCommentUseCase, UpdateCommentUseCase, DeleteCommentUseCase, GetCommentsUseCase {
+
+    private final LoadReviewPort loadReviewPort;
+    private final LoadReviewCommentPort loadReviewCommentPort;
+    private final SaveReviewCommentPort saveReviewCommentPort;
+    private final LoadUserPort loadUserPort;
+    private final MentionParser mentionParser;
+
+    @Override
+    @Transactional
+    public ReviewCommentResult execute(CreateCommentCommand command) {
+        UserId writerId = new UserId(command.userId());
+        loadUserPort.loadById(writerId);
+
+        Review review = loadReviewPort.loadById(command.reviewId());
+        if (review.isDeleted()) {
+            throw new IllegalArgumentException("Review not found: " + command.reviewId());
+        }
+        if (!review.getVisibility().isPublic() && !review.isWrittenBy(writerId)) {
+            throw new IllegalArgumentException("Review not found: " + command.reviewId());
+        }
+        var mentions = mentionParser.parse(command.content());
+
+        ReviewCommentId parentId = null;
+        if (command.parentCommentId() != null) {
+            ReviewComment parent = loadReviewCommentPort.loadById(command.parentCommentId());
+            if (!parent.getReviewId().equals(ReviewId.of(command.reviewId()))) {
+                throw new IllegalArgumentException("Parent comment belongs to a different review");
+            }
+            if (parent.isDeleted()) {
+                throw new IllegalArgumentException("Cannot reply to a deleted comment");
+            }
+            parentId = parent.getId();
+        }
+
+        ReviewComment comment = ReviewComment.create(
+                ReviewId.of(command.reviewId()),
+                writerId,
+                command.content(),
+                parentId,
+                mentions
+        );
+
+        ReviewComment saved = saveReviewCommentPort.save(comment);
+        return ReviewCommentResult.from(saved);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PagedCommentResult query(org.yyubin.application.review.query.GetCommentsQuery query) {
+        Review review = loadReviewPort.loadById(query.reviewId());
+        if (review.isDeleted()) {
+            throw new IllegalArgumentException("Review not found: " + query.reviewId());
+        }
+        if (!review.getVisibility().isPublic()) {
+            if (query.viewerId() == null || !review.isWrittenBy(new UserId(query.viewerId()))) {
+                throw new IllegalArgumentException("Review not found: " + query.reviewId());
+            }
+        }
+
+        int fetchSize = query.size() + 1;
+        var comments = loadReviewCommentPort.loadByReviewId(query.reviewId(), query.cursor(), fetchSize);
+
+        var mapped = comments.stream()
+                .limit(query.size())
+                .map(ReviewCommentResult::from)
+                .toList();
+
+        Long nextCursor = comments.size() > query.size()
+                ? comments.get(query.size()).getId().getValue()
+                : null;
+
+        return new PagedCommentResult(mapped, nextCursor);
+    }
+
+    @Override
+    @Transactional
+    public ReviewCommentResult execute(UpdateCommentCommand command) {
+        UserId writerId = new UserId(command.userId());
+        ReviewComment comment = loadReviewCommentPort.loadById(command.commentId());
+
+        if (!comment.isOwnedBy(writerId)) {
+            throw new IllegalArgumentException("User is not the author of this comment");
+        }
+        if (comment.isDeleted()) {
+            throw new IllegalArgumentException("Comment not found: " + command.commentId());
+        }
+
+        Review review = loadReviewPort.loadById(comment.getReviewId().getValue());
+        if (review.isDeleted()) {
+            throw new IllegalArgumentException("Review not found: " + review.getId().getValue());
+        }
+        if (!review.getVisibility().isPublic() && !review.isWrittenBy(writerId)) {
+            throw new IllegalArgumentException("Review not found: " + review.getId().getValue());
+        }
+
+        ReviewComment updated = comment.updateContent(command.content(), mentionParser.parse(command.content()));
+        ReviewComment saved = saveReviewCommentPort.save(updated);
+        return ReviewCommentResult.from(saved);
+    }
+
+    @Override
+    @Transactional
+    public void execute(DeleteCommentCommand command) {
+        UserId writerId = new UserId(command.userId());
+        ReviewComment comment = loadReviewCommentPort.loadById(command.commentId());
+
+        if (!comment.isOwnedBy(writerId)) {
+            throw new IllegalArgumentException("User is not the author of this comment");
+        }
+        if (comment.isDeleted()) {
+            throw new IllegalArgumentException("Comment not found: " + command.commentId());
+        }
+
+        Review review = loadReviewPort.loadById(comment.getReviewId().getValue());
+        if (review.isDeleted()) {
+            throw new IllegalArgumentException("Review not found: " + review.getId().getValue());
+        }
+
+        ReviewComment deleted = comment.markDeleted();
+        saveReviewCommentPort.save(deleted);
+    }
+}
