@@ -8,10 +8,14 @@ import org.yyubin.application.review.command.UpsertReactionCommand;
 import org.yyubin.application.review.port.LoadReviewPort;
 import org.yyubin.application.review.port.ReviewReactionPort;
 import org.yyubin.application.user.port.LoadUserPort;
+import org.yyubin.application.notification.NotificationEventUseCase;
+import org.yyubin.application.notification.dto.NotificationEventPayload;
 import org.yyubin.domain.review.Review;
 import org.yyubin.domain.review.ReviewId;
 import org.yyubin.domain.review.ReviewReaction;
+import org.yyubin.domain.notification.NotificationType;
 import org.yyubin.domain.user.UserId;
+import org.yyubin.application.notification.NotificationMessages;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +24,7 @@ public class ReviewReactionService implements UpsertReactionUseCase, DeleteReact
     private final LoadReviewPort loadReviewPort;
     private final ReviewReactionPort reviewReactionPort;
     private final LoadUserPort loadUserPort;
+    private final NotificationEventUseCase notificationEventUseCase;
 
     @Override
     @Transactional
@@ -50,6 +55,15 @@ public class ReviewReactionService implements UpsertReactionUseCase, DeleteReact
                 ));
 
         ReviewReaction saved = reviewReactionPort.save(reaction);
+        if (!review.isWrittenBy(userId)) {
+            notificationEventUseCase.handle(new NotificationEventPayload(
+                    review.getUserId().value(),
+                    NotificationType.LIKE_ON_REVIEW,
+                    command.userId(),
+                    command.reviewId(),
+                    NotificationMessages.LIKE_ON_REVIEW
+            ));
+        }
         return ReviewReactionResult.from(saved);
     }
 

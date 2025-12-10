@@ -11,11 +11,15 @@ import org.yyubin.application.review.port.LoadReviewPort;
 import org.yyubin.application.review.port.SaveReviewCommentPort;
 import org.yyubin.application.user.port.LoadUserPort;
 import org.yyubin.domain.review.MentionParser;
+import org.yyubin.application.notification.NotificationEventUseCase;
+import org.yyubin.application.notification.dto.NotificationEventPayload;
 import org.yyubin.domain.review.Review;
 import org.yyubin.domain.review.ReviewComment;
 import org.yyubin.domain.review.ReviewCommentId;
 import org.yyubin.domain.review.ReviewId;
+import org.yyubin.domain.notification.NotificationType;
 import org.yyubin.domain.user.UserId;
+import org.yyubin.application.notification.NotificationMessages;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +30,7 @@ public class ReviewCommentService implements CreateCommentUseCase, UpdateComment
     private final SaveReviewCommentPort saveReviewCommentPort;
     private final LoadUserPort loadUserPort;
     private final MentionParser mentionParser;
+    private final NotificationEventUseCase notificationEventUseCase;
 
     @Override
     @Transactional
@@ -63,6 +68,16 @@ public class ReviewCommentService implements CreateCommentUseCase, UpdateComment
         );
 
         ReviewComment saved = saveReviewCommentPort.save(comment);
+        if (!review.isWrittenBy(writerId)) {
+            notificationEventUseCase.handle(new NotificationEventPayload(
+                    review.getUserId().value(),
+                    NotificationType.COMMENT_ON_REVIEW,
+                    command.userId(),
+                    command.reviewId(),
+                    NotificationMessages.COMMENT_ON_REVIEW
+            ));
+        }
+        sendMentionNotifications(mentions, writerId, command.reviewId(), command.parentCommentId());
         return ReviewCommentResult.from(saved);
     }
 
@@ -140,5 +155,22 @@ public class ReviewCommentService implements CreateCommentUseCase, UpdateComment
 
         ReviewComment deleted = comment.markDeleted();
         saveReviewCommentPort.save(deleted);
+    }
+
+    private void sendMentionNotifications(java.util.List<org.yyubin.domain.review.Mention> mentions, UserId writer, Long reviewId, Long commentId) {
+        java.util.Set<Long> unique = new java.util.HashSet<>();
+        for (org.yyubin.domain.review.Mention mention : mentions) {
+            Long recipient = mention.mentionedUserId();
+            if (recipient.equals(writer.value()) || !unique.add(recipient)) {
+                continue;
+            }
+            notificationEventUseCase.handle(new NotificationEventPayload(
+                    recipient,
+                    NotificationType.MENTION,
+                    writer.value(),
+                    commentId != null ? commentId : reviewId,
+                    NotificationMessages.MENTION
+            ));
+        }
     }
 }

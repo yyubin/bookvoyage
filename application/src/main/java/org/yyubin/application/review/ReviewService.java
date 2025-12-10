@@ -23,6 +23,11 @@ import org.yyubin.domain.review.ReviewId;
 import org.yyubin.domain.review.MentionParser;
 import org.yyubin.domain.review.Mention;
 import java.util.List;
+import org.yyubin.application.notification.NotificationEventUseCase;
+import org.yyubin.application.notification.dto.NotificationEventPayload;
+import org.yyubin.domain.notification.NotificationType;
+import org.yyubin.application.user.port.FollowQueryPort;
+import org.yyubin.application.notification.NotificationMessages;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +40,8 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
     private final LoadUserPort loadUserPort;
     private final RegisterKeywordsService registerKeywordsService;
     private final MentionParser mentionParser;
+    private final NotificationEventUseCase notificationEventUseCase;
+    private final FollowQueryPort followQueryPort;
 
     @Override
     @Transactional
@@ -57,6 +64,8 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
 
         Review savedReview = saveReviewPort.save(review);
         registerKeywordsService.register(savedReview.getId(), command.keywords());
+        notifyFollowersOnNewReview(savedReview);
+        notifyMentions(savedReview.getMentions(), userId, savedReview.getId().getValue(), null);
         return ReviewResult.from(savedReview, book, registerKeywordsService.loadKeywords(savedReview.getId()));
     }
 
@@ -116,6 +125,37 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
                 .orElseThrow(() -> new IllegalArgumentException("Book not found: " + saved.getBookId().getValue()));
 
         return ReviewResult.from(saved, book, registerKeywordsService.loadKeywords(saved.getId()));
+    }
+
+    private void notifyFollowersOnNewReview(Review review) {
+        List<Long> followerIds = followQueryPort.loadFollowerIdsAll(review.getUserId().value());
+        for (Long followerId : followerIds) {
+            if (followerId.equals(review.getUserId().value())) continue;
+            notificationEventUseCase.handle(new NotificationEventPayload(
+                    followerId,
+                    NotificationType.FOLLOWEE_NEW_REVIEW,
+                    review.getUserId().value(),
+                    review.getId().getValue(),
+                    NotificationMessages.FOLLOWEE_NEW_REVIEW
+            ));
+        }
+    }
+
+    private void notifyMentions(List<Mention> mentions, UserId writer, Long reviewId, Long commentId) {
+        java.util.Set<Long> unique = new java.util.HashSet<>();
+        for (Mention mention : mentions) {
+            Long recipient = mention.mentionedUserId();
+            if (recipient.equals(writer.value()) || !unique.add(recipient)) {
+                continue;
+            }
+            notificationEventUseCase.handle(new NotificationEventPayload(
+                    recipient,
+                    NotificationType.MENTION,
+                    writer.value(),
+                    commentId != null ? commentId : reviewId,
+                    NotificationMessages.MENTION
+            ));
+        }
     }
 
     private Book resolveBook(CreateReviewCommand command) {

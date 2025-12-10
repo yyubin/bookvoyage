@@ -66,4 +66,11 @@ public class FollowPersistenceAdapter implements FollowPort, FollowQueryPort {
     public long countFollowers(Long userId) {
         return userFollowingJpaRepository.countByFolloweeId(userId);
     }
+
+    @Override
+    public List<Long> loadFollowerIdsAll(Long userId) {
+        return userFollowingJpaRepository.findByFolloweeId(userId).stream()
+                .map(UserFollowingEntity::getFollowerId)
+                .toList();
+    }
 }

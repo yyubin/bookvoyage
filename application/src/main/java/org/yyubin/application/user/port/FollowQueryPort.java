@@ -11,4 +11,6 @@ public interface FollowQueryPort {
     long countFollowing(Long userId);
 
     long countFollowers(Long userId);
+
+    List<Long> loadFollowerIdsAll(Long userId);
 }
