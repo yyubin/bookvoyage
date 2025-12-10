@@ -54,31 +54,31 @@ bookvoyage
 ### 아키텍처 다이어그램
 
 ```mermaid
-graph TD;
+graph TD
     A[User] -->|HTTP| B[API Layer (Boot)]
     B --> C[Application Layer]
     C --> D[Domain Layer]
     C --> E[Infrastructure Layer]
 
-    subgraph Domain Layer
+    subgraph DomainLayer
         D1[Domain Models]
         D2[Domain Services]
     end
 
-    subgraph Application Layer
+    subgraph ApplicationLayer
         C1[UseCases]
         C2[Ports]
     end
 
-    subgraph Infrastructure Layer
+    subgraph InfrastructureLayer
         E1[Repositories]
         E2[Redis Stream Consumer]
         E3[MySQL]
         E4[External Adapters]
     end
 
-    E2 --> C1;
-    C1 --> E1;
+    E2 --> C1
+    C1 --> E1
 ```
 
 ---
