@@ -55,30 +55,33 @@ bookvoyage
 
 ```mermaid
 graph TD
-    A[User] -->|HTTP| B[API Layer (Boot)]
-    B --> C[Application Layer]
-    C --> D[Domain Layer]
-    C --> E[Infrastructure Layer]
+    User -->|HTTP| API["API Layer (Boot)"]
+    API --> App["Application Layer"]
+    App --> Domain["Domain Layer"]
+    App --> Infra["Infrastructure Layer"]
 
-    subgraph DomainLayer
-        D1[Domain Models]
-        D2[Domain Services]
+    subgraph domain["Domain Layer"]
+        DomainModels["Domain Models"]
+        DomainServices["Domain Services"]
     end
 
-    subgraph ApplicationLayer
-        C1[UseCases]
-        C2[Ports]
+    subgraph application["Application Layer"]
+        UseCases["Use Cases"]
+        Ports["Ports (Interfaces)"]
+        Commands["Commands & Queries"]
     end
 
-    subgraph InfrastructureLayer
-        E1[Repositories]
-        E2[Redis Stream Consumer]
-        E3[MySQL]
-        E4[External Adapters]
+    subgraph infrastructure["Infrastructure Layer"]
+        Repos["Repositories"]
+        RedisConsumer["Redis Stream Consumer"]
+        MySQL[("MySQL")]
+        Adapters["External Adapters"]
     end
 
-    E2 --> C1
-    C1 --> E1
+    RedisConsumer --> UseCases
+    UseCases --> Ports
+    Ports --> Repos
+    Repos --> MySQL
 ```
 
 ---
