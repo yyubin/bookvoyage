@@ -10,7 +10,7 @@ description = "infrastructure"
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(25)
+        languageVersion = JavaLanguageVersion.of(21)
     }
 }
 
@@ -25,12 +25,40 @@ repositories {
 }
 
 dependencies {
+    implementation(project(":domain"))
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     compileOnly("org.projectlombok:lombok")
     runtimeOnly("com.mysql:mysql-connector-j")
     annotationProcessor("org.projectlombok:lombok")
     testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+    annotationProcessor("io.github.yyubin:jinx-processor:0.0.19")
+    implementation("io.github.yyubin:jinx-core:0.0.19")
+}
+
+val jinxCli by configurations.creating
+
+dependencies {
+    jinxCli("io.github.yyubin:jinx-cli:0.0.19")
+}
+
+tasks.register<JavaExec>("jinxMigrate") {
+    group = "jinx"
+    classpath = configurations["jinxCli"]
+    mainClass.set("org.jinx.cli.JinxCli")
+
+    dependsOn("classes")
+    args("db", "migrate", "-d", "mysql")
+}
+
+tasks.register<JavaExec>("jinxPromoteBaseline") {
+    group = "jinx"
+    classpath = configurations["jinxCli"]
+    mainClass.set("org.jinx.cli.JinxCli")
+
+    dependsOn("classes")
+    args("db", "promote-baseline", "--force")
 }
 
 tasks.withType<Test> {
