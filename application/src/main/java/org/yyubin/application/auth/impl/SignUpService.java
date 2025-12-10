@@ -9,6 +9,8 @@ import org.yyubin.application.auth.SignUpUseCase;
 import org.yyubin.application.auth.port.PasswordEncoderPort;
 import org.yyubin.application.auth.port.SaveUserPort;
 import org.yyubin.application.dto.AuthResult;
+import org.yyubin.application.notification.port.NotificationSettingPort;
+import org.yyubin.domain.notification.NotificationSetting;
 import org.yyubin.domain.user.AuthProvider;
 import org.yyubin.domain.user.Role;
 import org.yyubin.domain.user.User;
@@ -21,6 +23,7 @@ public class SignUpService implements SignUpUseCase {
     private final SaveUserPort saveUserPort;
     private final PasswordEncoderPort passwordEncoderPort;
     private final JwtProvider jwtProvider;
+    private final NotificationSettingPort notificationSettingPort;
 
     @Override
     public AuthResult execute(String email, String password, String username, String bio) {
@@ -42,6 +45,7 @@ public class SignUpService implements SignUpUseCase {
 
         // User 저장
         User savedUser = saveUserPort.save(newUser);
+        notificationSettingPort.save(NotificationSetting.defaultFor(savedUser.id()));
 
         String accessToken = jwtProvider.createAccessToken(
                 savedUser.id().value().toString(),
