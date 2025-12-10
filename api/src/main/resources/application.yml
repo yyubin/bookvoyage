@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: api
+  profiles:
+    active: local
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/bookvoyage?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope:
+              - email
+              - profile
+
+jwt:
+  secret: ${JWT_SECRET:your-secret-key-change-this-in-production-at-least-256-bits}
+  access-token-expiration: 3600000 # 1 hour
+  refresh-token-expiration: 604800000 # 7 days
+
+server:
+  port: 8080
+
+logging:
+  level:
+    org.yyubin: DEBUG
+    org.springframework.security: DEBUG

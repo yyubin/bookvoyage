@@ -1,73 +1,54 @@
 package org.yyubin.domain.user;
 
-import lombok.AccessLevel;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.ToString;
-
 import java.time.LocalDateTime;
-import java.util.Objects;
-import java.util.regex.Pattern;
 
-/**
- * User Aggregate Root
- */
-@Getter
-@ToString(exclude = "password")
-@EqualsAndHashCode(of = "id")
-@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-public class User {
-    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+public record User(
+        UserId id,
+        String email,
+        String username,
+        String password,
+        String bio,
+        Role role,
+        AuthProvider provider,
+        LocalDateTime createdAt
+) {
 
-    private final UserId id;
-    private final String email;
-    private final String password;
-    private final UserProfile profile;
-    private final LocalDateTime createdAt;
+    public User {
+        if (email == null || !email.contains("@")) {
+            throw new IllegalArgumentException("Invalid email");
+        }
+        if (username == null || username.isBlank()) {
+            throw new IllegalArgumentException("Username cannot be empty");
+        }
 
-    public static User of(UserId id, String email, String password, UserProfile profile, LocalDateTime createdAt) {
-        validateEmail(email);
-        validatePassword(password);
-        Objects.requireNonNull(id, "User ID cannot be null");
-        Objects.requireNonNull(password, "Password cannot be null");
-        Objects.requireNonNull(profile, "Profile cannot be null");
-        Objects.requireNonNull(createdAt, "Created at cannot be null");
+        // 기본값 설정 (provider를 먼저 설정해야 함)
+        if (provider == null) provider = AuthProvider.LOCAL;
+        if (bio == null) bio = "";
+        if (role == null) role = Role.USER;
+        if (createdAt == null) createdAt = LocalDateTime.now();
 
-        return new User(id, email, password, profile, createdAt);
+        // LOCAL provider인 경우에만 password 필수
+        if (provider == AuthProvider.LOCAL) {
+            if (password == null || password.isBlank()) {
+                throw new IllegalArgumentException("Password cannot be empty for LOCAL provider");
+            }
+        } else {
+            // OAuth2 provider인 경우 password는 빈 문자열 허용
+            if (password == null) password = "";
+        }
     }
 
-    public static User create(String email, String password, String username, String bio) {
-        validateEmail(email);
-        validatePassword(password);
-
+    // domain behavior
+    public User updateProfile(String newUsername, String newBio) {
         return new User(
-                null,
-                email,
-                password,
-                UserProfile.of(username, bio),
-                LocalDateTime.now()
+                this.id,
+                this.email,
+                newUsername != null && !newUsername.isBlank() ? newUsername : this.username,
+                this.password,
+                newBio != null ? newBio : this.bio,
+                this.role,
+                this.provider,
+                this.createdAt
         );
-    }
-
-    public User updateProfile(UserProfile newProfile) {
-        return new User(this.id, this.email, this.password, newProfile, this.createdAt);
-    }
-
-    public User changePassword(String newPassword) {
-        validatePassword(newPassword);
-        return new User(this.id, this.email, newPassword, this.profile, this.createdAt);
-    }
-
-    private static void validateEmail(String email) {
-        if (email == null || !EMAIL_PATTERN.matcher(email).matches()) {
-            throw new IllegalArgumentException("Invalid email format");
-        }
-    }
-
-    private static void validatePassword(String password) {
-        if (password == null || password.length() < 8) {
-            throw new IllegalArgumentException("Password must be at least 8 characters");
-        }
     }
 }

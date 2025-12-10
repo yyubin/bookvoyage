@@ -51,8 +51,8 @@ public class UserFollowingEntity {
     public static UserFollowingEntity fromDomain(UserFollowing userFollowing) {
         return UserFollowingEntity.builder()
                 .id(userFollowing.getId())
-                .followerId(userFollowing.getFollowerId().getValue())
-                .followeeId(userFollowing.getFolloweeId().getValue())
+                .followerId(userFollowing.getFollowerId().value())
+                .followeeId(userFollowing.getFolloweeId().value())
                 .createdAt(userFollowing.getCreatedAt())
                 .build();
     }
@@ -60,8 +60,8 @@ public class UserFollowingEntity {
     public UserFollowing toDomain() {
         return UserFollowing.of(
                 this.id,
-                UserId.of(this.followerId),
-                UserId.of(this.followeeId),
+                new UserId(this.followerId),
+                new UserId(this.followeeId),
                 this.createdAt
         );
     }

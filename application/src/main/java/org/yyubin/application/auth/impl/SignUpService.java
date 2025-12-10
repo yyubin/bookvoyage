@@ -1,0 +1,63 @@
+package org.yyubin.application.auth.impl;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.stereotype.Service;
+import org.yyubin.application.auth.SignUpUseCase;
+import org.yyubin.application.auth.port.PasswordEncoderPort;
+import org.yyubin.application.auth.port.SaveUserPort;
+import org.yyubin.application.dto.AuthResult;
+import org.yyubin.domain.user.AuthProvider;
+import org.yyubin.domain.user.Role;
+import org.yyubin.domain.user.User;
+import org.yyubin.support.jwt.JwtProvider;
+
+@Service
+@RequiredArgsConstructor
+public class SignUpService implements SignUpUseCase {
+
+    private final SaveUserPort saveUserPort;
+    private final PasswordEncoderPort passwordEncoderPort;
+    private final JwtProvider jwtProvider;
+
+    @Override
+    public AuthResult execute(String email, String password, String username, String bio) {
+
+        // 비밀번호 암호화
+        String encodedPassword = passwordEncoderPort.encode(password);
+
+        // User 도메인 객체 생성
+        User newUser = new User(
+                null,  // ID는 저장 시 자동 생성
+                email,
+                username,
+                encodedPassword,
+                bio,
+                Role.USER,
+                AuthProvider.LOCAL,
+                LocalDateTime.now()
+        );
+
+        // User 저장
+        User savedUser = saveUserPort.save(newUser);
+
+        String accessToken = jwtProvider.createAccessToken(
+                savedUser.id().value().toString(),
+                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+        );
+
+        String refreshToken = jwtProvider.createRefreshToken(
+                savedUser.id().value().toString()
+        );
+
+        return new AuthResult(
+                accessToken,
+                refreshToken,
+                savedUser.id().value(),
+                savedUser.email(),
+                savedUser.username()
+        );
+    }
+}

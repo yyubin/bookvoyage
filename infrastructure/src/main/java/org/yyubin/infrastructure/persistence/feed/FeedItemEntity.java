@@ -54,7 +54,7 @@ public class FeedItemEntity {
     public static FeedItemEntity fromDomain(FeedItem feedItem) {
         return FeedItemEntity.builder()
                 .id(feedItem.getId())
-                .userId(feedItem.getUserId().getValue())
+                .userId(feedItem.getUserId().value())
                 .reviewId(feedItem.getReviewId().getValue())
                 .createdAt(feedItem.getCreatedAt())
                 .build();
@@ -63,7 +63,7 @@ public class FeedItemEntity {
     public FeedItem toDomain() {
         return FeedItem.of(
                 this.id,
-                UserId.of(this.userId),
+                new UserId(this.userId),
                 ReviewId.of(this.reviewId),
                 this.createdAt
         );

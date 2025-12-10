@@ -25,9 +25,19 @@ repositories {
 }
 
 dependencies {
+    implementation(project(":application"))
+    implementation(project(":domain"))
+    implementation(project(":infrastructure"))
+    implementation(project(":support"))
+
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
+
+    runtimeOnly("com.mysql:mysql-connector-j")
+
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
+
     testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }

@@ -62,7 +62,7 @@ public class ReviewEntity {
     public static ReviewEntity fromDomain(Review review) {
         return ReviewEntity.builder()
                 .id(review.getId() != null ? review.getId().getValue() : null)
-                .userId(review.getUserId().getValue())
+                .userId(review.getUserId().value())
                 .bookId(review.getBookId().getValue())
                 .rating(review.getRating().getValue())
                 .content(review.getContent())
@@ -73,7 +73,7 @@ public class ReviewEntity {
     public Review toDomain() {
         return Review.of(
                 ReviewId.of(this.id),
-                UserId.of(this.userId),
+                new UserId(this.userId),
                 BookId.of(this.bookId),
                 Rating.of(this.rating),
                 this.content,

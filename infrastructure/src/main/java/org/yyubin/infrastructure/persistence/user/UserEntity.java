@@ -2,6 +2,8 @@ package org.yyubin.infrastructure.persistence.user;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -11,9 +13,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.yyubin.domain.user.AuthProvider;
+import org.yyubin.domain.user.Role;
 import org.yyubin.domain.user.User;
 import org.yyubin.domain.user.UserId;
-import org.yyubin.domain.user.UserProfile;
 
 import java.time.LocalDateTime;
 
@@ -41,27 +44,38 @@ public class UserEntity {
     @Column(name = "bio", length = 500)
     private String bio;
 
+    @Enumerated(EnumType.STRING)
+    private Role role;
+
+    @Enumerated(EnumType.STRING)
+    private AuthProvider provider;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     public static UserEntity fromDomain(User user) {
         return UserEntity.builder()
-                .id(user.getId() != null ? user.getId().getValue() : null)
-                .email(user.getEmail())
-                .password(user.getPassword())
-                .username(user.getProfile().getUsername())
-                .bio(user.getProfile().getBio())
-                .createdAt(user.getCreatedAt())
+                .id(user.id() != null ? user.id().value() : null)
+                .email(user.email())
+                .username(user.username())
+                .password(user.password())
+                .bio(user.bio())
+                .role(user.role())
+                .provider(user.provider())
+                .createdAt(user.createdAt())
                 .build();
     }
 
     public User toDomain() {
-        return User.of(
-                UserId.of(this.id),
-                this.email,
-                this.password,
-                UserProfile.of(this.username, this.bio),
-                this.createdAt
+        return new User(
+                new UserId(id),
+                email,
+                username,
+                password,
+                bio,
+                role,
+                provider,
+                createdAt
         );
     }
 }

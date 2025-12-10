@@ -25,9 +25,17 @@ repositories {
 }
 
 dependencies {
+    implementation(project(":domain"))
+    implementation(project(":support"))
+
     implementation("org.springframework.boot:spring-boot-starter")
+
+    // Spring Security는 Port 인터페이스에만 필요 (GrantedAuthority 등)
+    compileOnly("org.springframework.security:spring-security-core")
+
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
+
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
