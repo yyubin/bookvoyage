@@ -1,4 +1,4 @@
-package org.yyubin.infrastructure.persistence.review;
+package org.yyubin.infrastructure.persistence.review.keyword;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

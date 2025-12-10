@@ -1,4 +1,4 @@
-package org.yyubin.infrastructure.persistence.notification;
+package org.yyubin.infrastructure.persistence.notification.setting;
 
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;

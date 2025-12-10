@@ -1,4 +1,4 @@
-package org.yyubin.infrastructure.persistence.review;
+package org.yyubin.infrastructure.persistence.review.mention;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;

@@ -1,4 +1,4 @@
-package org.yyubin.infrastructure.persistence.review;
+package org.yyubin.infrastructure.persistence.review.reaction;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -21,6 +21,7 @@ import org.yyubin.domain.review.ReviewId;
 import org.yyubin.domain.review.ReviewReaction;
 import org.yyubin.domain.review.ReviewReactionId;
 import org.yyubin.domain.user.UserId;
+import org.yyubin.infrastructure.persistence.review.ReviewEntity;
 import org.yyubin.infrastructure.persistence.user.UserEntity;
 
 @Entity

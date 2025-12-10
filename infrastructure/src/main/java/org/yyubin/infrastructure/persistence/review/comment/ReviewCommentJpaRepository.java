@@ -1,4 +1,4 @@
-package org.yyubin.infrastructure.persistence.review;
+package org.yyubin.infrastructure.persistence.review.comment;
 
 import java.util.List;
 import java.util.Optional;

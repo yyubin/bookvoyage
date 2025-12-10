@@ -1,4 +1,4 @@
-package org.yyubin.infrastructure.persistence.review;
+package org.yyubin.infrastructure.persistence.review.reaction;
 
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;

@@ -1,4 +1,4 @@
-package org.yyubin.infrastructure.persistence.review;
+package org.yyubin.infrastructure.persistence.review.comment;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,7 +12,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Convert;
 import java.time.LocalDateTime;
-import java.util.Collections;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,6 +22,8 @@ import org.yyubin.domain.review.ReviewCommentId;
 import org.yyubin.domain.review.ReviewId;
 import org.yyubin.domain.review.Mention;
 import org.yyubin.domain.user.UserId;
+import org.yyubin.infrastructure.persistence.review.ReviewEntity;
+import org.yyubin.infrastructure.persistence.review.mention.MentionListConverter;
 import org.yyubin.infrastructure.persistence.user.UserEntity;
 
 @Entity

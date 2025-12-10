@@ -1,4 +1,4 @@
-package org.yyubin.infrastructure.persistence.review;
+package org.yyubin.infrastructure.persistence.review.keyword;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
@@ -17,6 +17,7 @@ import lombok.NoArgsConstructor;
 import org.yyubin.domain.review.KeywordId;
 import org.yyubin.domain.review.ReviewId;
 import org.yyubin.domain.review.ReviewKeyword;
+import org.yyubin.infrastructure.persistence.review.ReviewEntity;
 
 @Entity
 @Table(

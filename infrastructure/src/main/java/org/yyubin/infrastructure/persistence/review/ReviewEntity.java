@@ -26,6 +26,7 @@ import org.yyubin.domain.review.ReviewVisibility;
 import org.yyubin.domain.review.Mention;
 import org.yyubin.domain.user.UserId;
 import org.yyubin.infrastructure.persistence.book.BookEntity;
+import org.yyubin.infrastructure.persistence.review.mention.MentionListConverter;
 import org.yyubin.infrastructure.persistence.user.UserEntity;
 
 import java.time.LocalDateTime;
