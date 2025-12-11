@@ -4,7 +4,7 @@ spring:
   datasource:
      url: jdbc:mysql://localhost:3306/bookvoyage_db
      username: root
-     password: your_mysql_password
+     password: tygh8868!
      driverClassName: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
@@ -13,6 +13,6 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.H2Dialect
-        # For MySQL, uncomment and configure below:
-        # dialect: org.hibernate.dialect.MySQL8Dialect
+        dialect: org.hibernate.dialect.MySQL8Dialect
+  kafka:
+    bootstrap-servers: localhost:9092

@@ -30,6 +30,23 @@ spring:
               - email
               - profile
 
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: bookvoyage-default
+      auto-offset-reset: latest
+      enable-auto-commit: false
+    listener:
+      ack-mode: batch
+      missing-topics-fatal: false
+    producer:
+      acks: all
+      retries: 3
+      properties:
+        enable.idempotence: true
+        linger.ms: 10
+        batch.size: 16384
+
 jwt:
   secret: ${JWT_SECRET:your-secret-key-change-this-in-production-at-least-256-bits}
   access-token-expiration: 3600000 # 1 hour
@@ -42,6 +59,17 @@ logging:
   level:
     org.yyubin: DEBUG
     org.springframework.security: DEBUG
+
+outbox:
+  processor:
+    fixed-delay-ms: 1000
+    initial-delay-ms: 2000
+    batch-size: 100
+
+session:
+  boost:
+    ttl-seconds: 3600
+    max-entries: 100
 
 google:
   books:

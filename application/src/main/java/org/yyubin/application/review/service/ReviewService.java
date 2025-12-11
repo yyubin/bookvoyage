@@ -5,6 +5,9 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.yyubin.application.event.EventPayload;
+import org.yyubin.application.event.EventPublisher;
+import org.yyubin.application.event.EventTopics;
 import org.yyubin.application.notification.NotificationEventUseCase;
 import org.yyubin.application.notification.NotificationMessages;
 import org.yyubin.application.notification.dto.NotificationEventPayload;
@@ -44,6 +47,7 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
     private final MentionParser mentionParser;
     private final NotificationEventUseCase notificationEventUseCase;
     private final FollowQueryPort followQueryPort;
+    private final EventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -68,6 +72,7 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
         registerKeywordsService.register(savedReview.getId(), command.keywords());
         notifyFollowersOnNewReview(savedReview);
         notifyMentions(savedReview.getMentions(), userId, savedReview.getId().getValue(), null);
+        publishReviewEvent("REVIEW_CREATED", savedReview, book.getId().getValue());
         return ReviewResult.from(savedReview, book, registerKeywordsService.loadKeywords(savedReview.getId()));
     }
 
@@ -110,6 +115,7 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
 
         Review saved = saveReviewPort.save(updated);
         registerKeywordsService.register(saved.getId(), command.keywords());
+        publishReviewEvent("REVIEW_UPDATED", saved, updatedBook.getId().getValue());
 
         return ReviewResult.from(saved, updatedBook, registerKeywordsService.loadKeywords(saved.getId()));
     }
@@ -132,6 +138,7 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
 
         Book book = loadBookPort.loadById(saved.getBookId().getValue())
                 .orElseThrow(() -> new IllegalArgumentException("Book not found: " + saved.getBookId().getValue()));
+        publishReviewEvent("REVIEW_DELETED", saved, book.getId().getValue());
 
         return ReviewResult.from(saved, book, registerKeywordsService.loadKeywords(saved.getId()));
     }
@@ -223,5 +230,28 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
                         command.googleVolumeId()
                 )
         ));
+    }
+
+    private void publishReviewEvent(String eventType, Review review, Long bookId) {
+        java.util.Map<String, Object> metadata = new java.util.HashMap<>();
+        metadata.put("bookId", bookId);
+        metadata.put("rating", review.getRating().getValue());
+        metadata.put("visibility", review.getVisibility().name());
+        metadata.put("reviewId", review.getId() != null ? review.getId().getValue() : null);
+        eventPublisher.publish(
+                EventTopics.REVIEW,
+                review.getUserId().value().toString(),
+                new EventPayload(
+                        java.util.UUID.randomUUID(),
+                        eventType,
+                        review.getUserId().value(),
+                        "REVIEW",
+                        review.getId() != null ? review.getId().getValue().toString() : null,
+                        metadata,
+                        java.time.Instant.now(),
+                        "api",
+                        1
+                )
+        );
     }
 }

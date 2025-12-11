@@ -1,9 +1,14 @@
 package org.yyubin.application.bookmark.service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.yyubin.application.event.EventPayload;
+import org.yyubin.application.event.EventPublisher;
+import org.yyubin.application.event.EventTopics;
 import org.yyubin.application.bookmark.AddBookmarkUseCase;
 import org.yyubin.application.bookmark.GetBookmarksUseCase;
 import org.yyubin.application.bookmark.RemoveBookmarkUseCase;
@@ -29,6 +34,7 @@ public class ReviewBookmarkService implements AddBookmarkUseCase, RemoveBookmark
     private final ReviewBookmarkRepository reviewBookmarkRepository;
     private final LoadReviewPort loadReviewPort;
     private final LoadBookPort loadBookPort;
+    private final EventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -40,14 +46,19 @@ public class ReviewBookmarkService implements AddBookmarkUseCase, RemoveBookmark
             throw new IllegalArgumentException("Review not found: " + reviewId.getValue());
         }
 
-        return reviewBookmarkRepository.findByUserAndReview(userId, reviewId)
+        ReviewBookmark bookmark = reviewBookmarkRepository.findByUserAndReview(userId, reviewId)
                 .orElseGet(() -> reviewBookmarkRepository.save(ReviewBookmark.create(userId, reviewId)));
+        publishBookmarkEvent("BOOKMARK_ADD", bookmark);
+        return bookmark;
     }
 
     @Override
     @Transactional
     public void remove(RemoveBookmarkCommand command) {
-        reviewBookmarkRepository.delete(new UserId(command.userId()), ReviewId.of(command.reviewId()));
+        UserId userId = new UserId(command.userId());
+        ReviewId reviewId = ReviewId.of(command.reviewId());
+        reviewBookmarkRepository.delete(userId, reviewId);
+        publishBookmarkEvent("BOOKMARK_REMOVE", new ReviewBookmark(null, userId, reviewId, java.time.LocalDateTime.now()));
     }
 
     @Override
@@ -74,5 +85,32 @@ public class ReviewBookmarkService implements AddBookmarkUseCase, RemoveBookmark
                 .orElseThrow(() -> new IllegalArgumentException("Book not found: " + review.getBookId().getValue()));
 
         return ReviewBookmarkItem.from(review, book, bookmark.id(), bookmark.createdAt());
+    }
+
+    private void publishBookmarkEvent(String actionType, ReviewBookmark bookmark) {
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("actionType", actionType);
+        metadata.put("reviewId", bookmark.reviewId().getValue());
+        metadata.put("bookId", loadReviewBookId(bookmark.reviewId().getValue()));
+        eventPublisher.publish(
+                EventTopics.WISHLIST_BOOKMARK,
+                bookmark.userId().value().toString(),
+                new EventPayload(
+                        java.util.UUID.randomUUID(),
+                        actionType,
+                        bookmark.userId().value(),
+                        "REVIEW",
+                        bookmark.reviewId().getValue().toString(),
+                        metadata,
+                        java.time.Instant.now(),
+                        "api",
+                        1
+                )
+        );
+    }
+
+    private Long loadReviewBookId(Long reviewId) {
+        Review review = loadReviewPort.loadById(reviewId);
+        return review.getBookId().getValue();
     }
 }

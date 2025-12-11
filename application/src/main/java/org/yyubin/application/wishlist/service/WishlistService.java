@@ -5,6 +5,9 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.yyubin.application.event.EventPayload;
+import org.yyubin.application.event.EventPublisher;
+import org.yyubin.application.event.EventTopics;
 import org.yyubin.application.review.port.LoadBookPort;
 import org.yyubin.application.review.port.SaveBookPort;
 import org.yyubin.application.wishlist.AddWishlistUseCase;
@@ -27,9 +30,10 @@ import org.yyubin.domain.wishlist.Wishlist;
 @RequiredArgsConstructor
 public class WishlistService implements AddWishlistUseCase, RemoveWishlistUseCase, GetWishlistUseCase {
 
-    private final WishlistPort wishlistPort;
+    private final WishlistPort wishlistRepository;
     private final LoadBookPort loadBookPort;
     private final SaveBookPort saveBookPort;
+    private final EventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -37,25 +41,28 @@ public class WishlistService implements AddWishlistUseCase, RemoveWishlistUseCas
         UserId userId = new UserId(command.userId());
         Book book = resolveBook(command.bookSearchItem());
 
-        if (wishlistPort.exists(userId, book.getId())) {
+        if (wishlistRepository.exists(userId, book.getId())) {
             return;
         }
 
-        wishlistPort.save(Wishlist.create(userId, book.getId()));
+        Wishlist saved = wishlistRepository.save(Wishlist.create(userId, book.getId()));
+        publishWishlistEvent("WISHLIST_ADD", userId, saved);
         // TODO: recommendation boost integration
     }
 
     @Override
     @Transactional
     public void remove(RemoveWishlistCommand command) {
-        wishlistPort.delete(new UserId(command.userId()), BookId.of(command.bookId()));
+        UserId userId = new UserId(command.userId());
+        wishlistRepository.delete(userId, BookId.of(command.bookId()));
+        publishWishlistEvent("WISHLIST_REMOVE", userId, Wishlist.of(null, userId, BookId.of(command.bookId()), java.time.LocalDateTime.now()));
     }
 
     @Override
     @Transactional(readOnly = true)
     public WishlistResult query(GetWishlistQuery query) {
         UserId userId = new UserId(query.userId());
-        List<Wishlist> wishlists = wishlistPort.findByUser(userId);
+        List<Wishlist> wishlists = wishlistRepository.findByUser(userId);
 
         List<WishlistItemResult> items = wishlists.stream()
                 .map(wishlist -> WishlistItemResult.from(
@@ -101,5 +108,27 @@ public class WishlistService implements AddWishlistUseCase, RemoveWishlistUseCas
                         item.getPageCount(),
                         item.getGoogleVolumeId()
                 )));
+    }
+
+    private void publishWishlistEvent(String actionType, UserId userId, Wishlist wishlist) {
+        java.util.Map<String, Object> metadata = new java.util.HashMap<>();
+        metadata.put("actionType", actionType);
+        metadata.put("bookId", wishlist.getBookId().getValue());
+        metadata.put("wishlistId", wishlist.getId());
+        eventPublisher.publish(
+                EventTopics.WISHLIST_BOOKMARK,
+                userId.value().toString(),
+                new EventPayload(
+                        java.util.UUID.randomUUID(),
+                        actionType,
+                        userId.value(),
+                        "BOOK",
+                        wishlist.getBookId().getValue().toString(),
+                        metadata,
+                        java.time.Instant.now(),
+                        "api",
+                        1
+                )
+        );
     }
 }
