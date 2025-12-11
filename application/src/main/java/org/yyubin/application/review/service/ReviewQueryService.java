@@ -1,10 +1,14 @@
-package org.yyubin.application.review;
+package org.yyubin.application.review.service;
 
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.yyubin.application.review.GetReviewUseCase;
+import org.yyubin.application.review.GetUserReviewsUseCase;
+import org.yyubin.application.review.dto.PagedReviewResult;
+import org.yyubin.application.review.dto.ReviewResult;
 import org.yyubin.application.review.port.LoadBookPort;
 import org.yyubin.application.review.port.LoadReviewPort;
 import org.yyubin.application.review.query.GetReviewQuery;
@@ -12,7 +16,6 @@ import org.yyubin.application.review.query.GetUserReviewsQuery;
 import org.yyubin.domain.book.Book;
 import org.yyubin.domain.review.Review;
 import org.yyubin.domain.review.ReviewId;
-import org.yyubin.domain.review.Mention;
 import org.yyubin.domain.user.UserId;
 
 @Service

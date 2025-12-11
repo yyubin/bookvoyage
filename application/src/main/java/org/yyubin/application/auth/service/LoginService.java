@@ -1,4 +1,4 @@
-package org.yyubin.application.auth.impl;
+package org.yyubin.application.auth.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

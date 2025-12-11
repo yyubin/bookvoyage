@@ -42,3 +42,9 @@ logging:
   level:
     org.yyubin: DEBUG
     org.springframework.security: DEBUG
+
+google:
+  books:
+    api-key: ${GOOGLE_BOOKS_API_KEY}
+    base-url: https://www.googleapis.com/books/v1/volumes
+    max-results: 40

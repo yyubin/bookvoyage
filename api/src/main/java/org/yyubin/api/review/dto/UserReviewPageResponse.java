@@ -1,7 +1,7 @@
 package org.yyubin.api.review.dto;
 
 import java.util.List;
-import org.yyubin.application.review.PagedReviewResult;
+import org.yyubin.application.review.dto.PagedReviewResult;
 
 public record UserReviewPageResponse(
         List<ReviewResponse> reviews,

@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.yyubin.api.review.dto.ReactionRequest;
 import org.yyubin.api.review.dto.ReactionResponse;
 import org.yyubin.application.review.DeleteReactionUseCase;
-import org.yyubin.application.review.ReviewReactionResult;
+import org.yyubin.application.review.dto.ReviewReactionResult;
 import org.yyubin.application.review.UpsertReactionUseCase;
 import org.yyubin.application.review.command.DeleteReactionCommand;
 import org.yyubin.application.review.command.UpsertReactionCommand;

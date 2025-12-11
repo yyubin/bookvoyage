@@ -1,4 +1,4 @@
-package org.yyubin.application.review;
+package org.yyubin.application.review.dto;
 
 import java.time.LocalDateTime;
 import java.util.List;

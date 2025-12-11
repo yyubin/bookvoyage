@@ -1,8 +1,14 @@
-package org.yyubin.application.review;
+package org.yyubin.application.review.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.yyubin.application.review.CreateCommentUseCase;
+import org.yyubin.application.review.DeleteCommentUseCase;
+import org.yyubin.application.review.GetCommentsUseCase;
+import org.yyubin.application.review.dto.PagedCommentResult;
+import org.yyubin.application.review.dto.ReviewCommentResult;
+import org.yyubin.application.review.UpdateCommentUseCase;
 import org.yyubin.application.review.command.CreateCommentCommand;
 import org.yyubin.application.review.command.DeleteCommentCommand;
 import org.yyubin.application.review.command.UpdateCommentCommand;
@@ -23,7 +29,8 @@ import org.yyubin.application.notification.NotificationMessages;
 
 @Service
 @RequiredArgsConstructor
-public class ReviewCommentService implements CreateCommentUseCase, UpdateCommentUseCase, DeleteCommentUseCase, GetCommentsUseCase {
+public class ReviewCommentService implements CreateCommentUseCase, UpdateCommentUseCase, DeleteCommentUseCase,
+        GetCommentsUseCase {
 
     private final LoadReviewPort loadReviewPort;
     private final LoadReviewCommentPort loadReviewCommentPort;

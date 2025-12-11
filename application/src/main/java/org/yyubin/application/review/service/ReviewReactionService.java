@@ -1,8 +1,11 @@
-package org.yyubin.application.review;
+package org.yyubin.application.review.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.yyubin.application.review.DeleteReactionUseCase;
+import org.yyubin.application.review.dto.ReviewReactionResult;
+import org.yyubin.application.review.UpsertReactionUseCase;
 import org.yyubin.application.review.command.DeleteReactionCommand;
 import org.yyubin.application.review.command.UpsertReactionCommand;
 import org.yyubin.application.review.port.LoadReviewPort;

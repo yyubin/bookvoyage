@@ -16,7 +16,7 @@ import org.yyubin.api.user.dto.UpdateUserNicknameRequest;
 import org.yyubin.api.user.dto.UpdateUserProfileImageRequest;
 import org.yyubin.api.user.dto.UserProfileResponse;
 import org.yyubin.application.user.command.UpdateUserBioCommand;
-import org.yyubin.application.user.command.UpdateUserCommandHandler;
+import org.yyubin.application.user.query.UpdateUserCommandHandler;
 import org.yyubin.application.user.command.UpdateUserNicknameCommand;
 import org.yyubin.application.user.command.UpdateUserProfileImageUrlCommand;
 import org.yyubin.application.user.query.GetUserProfileQuery;

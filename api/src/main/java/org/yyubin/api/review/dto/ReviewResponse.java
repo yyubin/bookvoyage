@@ -2,7 +2,7 @@ package org.yyubin.api.review.dto;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import org.yyubin.application.review.ReviewResult;
+import org.yyubin.application.review.dto.ReviewResult;
 import org.yyubin.domain.review.BookGenre;
 import org.yyubin.domain.review.ReviewVisibility;
 

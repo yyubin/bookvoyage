@@ -1,9 +1,13 @@
-package org.yyubin.application.review;
+package org.yyubin.application.review.service;
 
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.yyubin.application.review.CreateReviewUseCase;
+import org.yyubin.application.review.DeleteReviewUseCase;
+import org.yyubin.application.review.dto.ReviewResult;
+import org.yyubin.application.review.UpdateReviewUseCase;
 import org.yyubin.application.review.command.CreateReviewCommand;
 import org.yyubin.application.review.command.DeleteReviewCommand;
 import org.yyubin.application.review.command.UpdateReviewCommand;
@@ -17,9 +21,7 @@ import org.yyubin.domain.book.BookId;
 import org.yyubin.domain.review.Rating;
 import org.yyubin.domain.review.Review;
 import org.yyubin.domain.review.ReviewVisibility;
-import org.yyubin.domain.review.BookGenre;
 import org.yyubin.domain.user.UserId;
-import org.yyubin.domain.review.ReviewId;
 import org.yyubin.domain.review.MentionParser;
 import org.yyubin.domain.review.Mention;
 import java.util.List;

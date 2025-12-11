@@ -1,6 +1,5 @@
 package org.yyubin.infrastructure.stream;
 
-import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.connection.stream.Consumer;
@@ -11,7 +10,7 @@ import org.springframework.data.redis.core.StreamOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.yyubin.application.notification.NotificationCreator;
+import org.yyubin.application.notification.service.NotificationCreator;
 import org.yyubin.application.notification.dto.NotificationEventPayload;
 import org.yyubin.application.notification.port.NotificationSettingPort;
 import org.yyubin.domain.notification.NotificationType;

@@ -21,7 +21,7 @@ import org.yyubin.api.review.dto.UpdateCommentRequest;
 import org.yyubin.application.review.CreateCommentUseCase;
 import org.yyubin.application.review.DeleteCommentUseCase;
 import org.yyubin.application.review.GetCommentsUseCase;
-import org.yyubin.application.review.PagedCommentResult;
+import org.yyubin.application.review.dto.PagedCommentResult;
 import org.yyubin.application.review.UpdateCommentUseCase;
 import org.yyubin.application.review.command.CreateCommentCommand;
 import org.yyubin.application.review.command.DeleteCommentCommand;

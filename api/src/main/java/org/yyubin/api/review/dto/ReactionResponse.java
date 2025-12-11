@@ -1,7 +1,7 @@
 package org.yyubin.api.review.dto;
 
 import java.time.LocalDateTime;
-import org.yyubin.application.review.ReviewReactionResult;
+import org.yyubin.application.review.dto.ReviewReactionResult;
 
 public record ReactionResponse(
         Long reactionId,

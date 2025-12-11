@@ -1,7 +1,7 @@
 package org.yyubin.api.review.dto;
 
 import java.util.List;
-import org.yyubin.application.review.PagedCommentResult;
+import org.yyubin.application.review.dto.PagedCommentResult;
 
 public record CommentPageResponse(
         List<CommentResponse> comments,

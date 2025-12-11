@@ -2,7 +2,7 @@ package org.yyubin.api.review.dto;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import org.yyubin.application.review.ReviewCommentResult;
+import org.yyubin.application.review.dto.ReviewCommentResult;
 
 public record CommentResponse(
         Long commentId,

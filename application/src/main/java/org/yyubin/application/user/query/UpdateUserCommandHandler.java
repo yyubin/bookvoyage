@@ -1,7 +1,10 @@
-package org.yyubin.application.user.command;
+package org.yyubin.application.user.query;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.yyubin.application.user.command.UpdateUserBioCommand;
+import org.yyubin.application.user.command.UpdateUserNicknameCommand;
+import org.yyubin.application.user.command.UpdateUserProfileImageUrlCommand;
 import org.yyubin.application.user.port.LoadUserPort;
 import org.yyubin.application.user.port.UpdateUserPort;
 import org.yyubin.domain.user.User;

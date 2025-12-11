@@ -1,8 +1,10 @@
-package org.yyubin.application.notification;
+package org.yyubin.application.notification.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.yyubin.application.notification.GetNotificationSettingUseCase;
+import org.yyubin.application.notification.UpdateNotificationSettingUseCase;
 import org.yyubin.application.notification.command.UpdateNotificationSettingCommand;
 import org.yyubin.application.notification.dto.NotificationSettingResult;
 import org.yyubin.application.notification.port.NotificationSettingPort;

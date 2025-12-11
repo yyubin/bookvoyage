@@ -1,4 +1,4 @@
-package org.yyubin.application.notification;
+package org.yyubin.application.notification.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -6,7 +6,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.yyubin.application.notification.dto.NotificationEventPayload;
 import org.yyubin.application.notification.port.NotificationRepository;
 import org.yyubin.domain.notification.Notification;
-import org.yyubin.domain.notification.NotificationType;
 import org.yyubin.domain.user.UserId;
 
 @Service

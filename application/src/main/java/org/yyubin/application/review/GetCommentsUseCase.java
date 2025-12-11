@@ -1,5 +1,6 @@
 package org.yyubin.application.review;
 
+import org.yyubin.application.review.dto.PagedCommentResult;
 import org.yyubin.application.review.query.GetCommentsQuery;
 
 public interface GetCommentsUseCase {

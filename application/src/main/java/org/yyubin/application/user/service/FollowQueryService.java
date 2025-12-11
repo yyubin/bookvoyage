@@ -1,9 +1,12 @@
-package org.yyubin.application.user;
+package org.yyubin.application.user.service;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.yyubin.application.user.GetFollowCountUseCase;
+import org.yyubin.application.user.GetFollowerUsersUseCase;
+import org.yyubin.application.user.GetFollowingUsersUseCase;
 import org.yyubin.application.user.dto.FollowCountResult;
 import org.yyubin.application.user.dto.FollowPageResult;
 import org.yyubin.application.user.dto.FollowUserView;
