@@ -1,35 +1,35 @@
 package org.yyubin.application.review.service;
 
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.yyubin.application.notification.NotificationEventUseCase;
+import org.yyubin.application.notification.NotificationMessages;
+import org.yyubin.application.notification.dto.NotificationEventPayload;
 import org.yyubin.application.review.CreateReviewUseCase;
 import org.yyubin.application.review.DeleteReviewUseCase;
-import org.yyubin.application.review.dto.ReviewResult;
 import org.yyubin.application.review.UpdateReviewUseCase;
 import org.yyubin.application.review.command.CreateReviewCommand;
 import org.yyubin.application.review.command.DeleteReviewCommand;
 import org.yyubin.application.review.command.UpdateReviewCommand;
+import org.yyubin.application.review.dto.ReviewResult;
 import org.yyubin.application.review.port.LoadBookPort;
 import org.yyubin.application.review.port.LoadReviewPort;
 import org.yyubin.application.review.port.SaveBookPort;
 import org.yyubin.application.review.port.SaveReviewPort;
+import org.yyubin.application.user.port.FollowQueryPort;
 import org.yyubin.application.user.port.LoadUserPort;
 import org.yyubin.domain.book.Book;
 import org.yyubin.domain.book.BookId;
+import org.yyubin.domain.review.Mention;
+import org.yyubin.domain.review.MentionParser;
 import org.yyubin.domain.review.Rating;
 import org.yyubin.domain.review.Review;
 import org.yyubin.domain.review.ReviewVisibility;
 import org.yyubin.domain.user.UserId;
-import org.yyubin.domain.review.MentionParser;
-import org.yyubin.domain.review.Mention;
-import java.util.List;
-import org.yyubin.application.notification.NotificationEventUseCase;
-import org.yyubin.application.notification.dto.NotificationEventPayload;
 import org.yyubin.domain.notification.NotificationType;
-import org.yyubin.application.user.port.FollowQueryPort;
-import org.yyubin.application.notification.NotificationMessages;
 
 @Service
 @RequiredArgsConstructor
@@ -86,6 +86,11 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
 
         Review updated = existing;
 
+        Book book = loadBookPort.loadById(existing.getBookId().getValue())
+                .orElseThrow(() -> new IllegalArgumentException("Book not found: " + existing.getBookId().getValue()));
+
+        Book updatedBook = maybeUpdateBookMetadata(book, command);
+
         if (command.rating() != null) {
             updated = updated.updateRating(Rating.of(command.rating()));
         }
@@ -99,12 +104,14 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
             updated = updated.updateGenre(command.genre());
         }
 
+        if (updatedBook != book) {
+            saveBookPort.save(updatedBook);
+        }
+
         Review saved = saveReviewPort.save(updated);
-        Book book = loadBookPort.loadById(saved.getBookId().getValue())
-                .orElseThrow(() -> new IllegalArgumentException("Book not found: " + saved.getBookId().getValue()));
         registerKeywordsService.register(saved.getId(), command.keywords());
 
-        return ReviewResult.from(saved, book, registerKeywordsService.loadKeywords(saved.getId()));
+        return ReviewResult.from(saved, updatedBook, registerKeywordsService.loadKeywords(saved.getId()));
     }
 
     @Override
@@ -160,20 +167,60 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
         }
     }
 
-    private Book resolveBook(CreateReviewCommand command) {
-        Optional<Book> existingBook = Optional.empty();
+    private Book maybeUpdateBookMetadata(Book current, UpdateReviewCommand command) {
+        boolean hasMetadataUpdate = command.title() != null
+                || command.authors() != null
+                || command.isbn10() != null
+                || command.isbn13() != null
+                || command.coverUrl() != null
+                || command.publisher() != null
+                || command.publishedDate() != null
+                || command.description() != null
+                || command.language() != null
+                || command.pageCount() != null
+                || command.googleVolumeId() != null;
 
-        if (command.isbn() != null && !command.isbn().isBlank()) {
-            existingBook = loadBookPort.loadByIsbn(command.isbn());
+        if (!hasMetadataUpdate) {
+            return current;
         }
+
+        return current.updateMetadata(
+                org.yyubin.domain.book.BookMetadata.of(
+                        command.title() != null ? command.title() : current.getMetadata().getTitle(),
+                        command.authors() != null ? command.authors() : current.getMetadata().getAuthors(),
+                        command.isbn10() != null ? command.isbn10() : current.getMetadata().getIsbn10(),
+                        command.isbn13() != null ? command.isbn13() : current.getMetadata().getIsbn13(),
+                        command.coverUrl() != null ? command.coverUrl() : current.getMetadata().getCoverUrl(),
+                        command.publisher() != null ? command.publisher() : current.getMetadata().getPublisher(),
+                        command.publishedDate() != null ? command.publishedDate() : current.getMetadata().getPublishedDate(),
+                        command.description() != null ? command.description() : current.getMetadata().getDescription(),
+                        command.language() != null ? command.language() : current.getMetadata().getLanguage(),
+                        command.pageCount() != null ? command.pageCount() : current.getMetadata().getPageCount(),
+                        command.googleVolumeId() != null ? command.googleVolumeId() : current.getMetadata().getGoogleVolumeId()
+                )
+        );
+    }
+
+    private Book resolveBook(CreateReviewCommand command) {
+        Optional<Book> existingBook = loadBookPort.loadByIdentifiers(
+                command.isbn10(),
+                command.isbn13(),
+                command.googleVolumeId()
+        );
 
         return existingBook.orElseGet(() -> saveBookPort.save(
                 Book.create(
                         command.title(),
-                        command.author(),
-                        command.isbn(),
+                        command.authors(),
+                        command.isbn10(),
+                        command.isbn13(),
                         command.coverUrl(),
-                        command.description()
+                        command.publisher(),
+                        command.publishedDate(),
+                        command.description(),
+                        command.language(),
+                        command.pageCount(),
+                        command.googleVolumeId()
                 )
         ));
     }

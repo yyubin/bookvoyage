@@ -48,14 +48,13 @@ public class GoogleBooksSearchAdapter implements ExternalBookSearchPort {
         }
 
         return response.items().stream()
-                .map(GoogleBookItemResponse::volumeInfo)
-                .filter(Objects::nonNull)
-                .filter(info -> info.title() != null && !info.title().isBlank())
+                .filter(item -> item.volumeInfo() != null && item.volumeInfo().title() != null && !item.volumeInfo().title().isBlank())
                 .map(this::toDomain)
                 .toList();
     }
 
-    private BookSearchItem toDomain(GoogleBookVolumeInfoResponse info) {
+    private BookSearchItem toDomain(GoogleBookItemResponse item) {
+        GoogleBookVolumeInfoResponse info = item.volumeInfo();
         return BookSearchItem.of(
                 info.title(),
                 info.authors(),
@@ -66,7 +65,8 @@ public class GoogleBooksSearchAdapter implements ExternalBookSearchPort {
                 info.publishedDate(),
                 info.description(),
                 info.language(),
-                info.pageCount()
+                info.pageCount(),
+                item.id()
         );
     }
 

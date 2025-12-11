@@ -16,9 +16,29 @@ public class BookPersistenceAdapter implements LoadBookPort, SaveBookPort {
     private final BookJpaRepository bookJpaRepository;
 
     @Override
-    public Optional<Book> loadByIsbn(String isbn) {
-        return bookJpaRepository.findByIsbn(isbn)
-                .map(BookEntity::toDomain);
+    public Optional<Book> loadByIdentifiers(String isbn10, String isbn13, String googleVolumeId) {
+        if (googleVolumeId != null && !googleVolumeId.isBlank()) {
+            Optional<Book> byVolumeId = bookJpaRepository.findByGoogleVolumeId(googleVolumeId)
+                    .map(BookEntity::toDomain);
+            if (byVolumeId.isPresent()) {
+                return byVolumeId;
+            }
+        }
+
+        if (isbn13 != null && !isbn13.isBlank()) {
+            Optional<Book> byIsbn13 = bookJpaRepository.findByIsbn13(isbn13)
+                    .map(BookEntity::toDomain);
+            if (byIsbn13.isPresent()) {
+                return byIsbn13;
+            }
+        }
+
+        if (isbn10 != null && !isbn10.isBlank()) {
+            return bookJpaRepository.findByIsbn10(isbn10)
+                    .map(BookEntity::toDomain);
+        }
+
+        return Optional.empty();
     }
 
     @Override

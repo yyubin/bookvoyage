@@ -22,6 +22,7 @@ public class BookSearchItem {
     private final String description;
     private final String language;
     private final Integer pageCount;
+    private final String googleVolumeId;
 
     private BookSearchItem(
             String title,
@@ -33,7 +34,8 @@ public class BookSearchItem {
             String publishedDate,
             String description,
             String language,
-            Integer pageCount
+            Integer pageCount,
+            String googleVolumeId
     ) {
         this.title = Objects.requireNonNull(title, "title must not be null");
         this.authors = authors == null ? Collections.emptyList() : List.copyOf(authors);
@@ -45,6 +47,7 @@ public class BookSearchItem {
         this.description = description;
         this.language = language;
         this.pageCount = pageCount;
+        this.googleVolumeId = googleVolumeId;
     }
 
     public static BookSearchItem of(
@@ -57,7 +60,8 @@ public class BookSearchItem {
             String publishedDate,
             String description,
             String language,
-            Integer pageCount
+            Integer pageCount,
+            String googleVolumeId
     ) {
         return new BookSearchItem(
                 title,
@@ -69,7 +73,8 @@ public class BookSearchItem {
                 publishedDate,
                 description,
                 language,
-                pageCount
+                pageCount,
+                googleVolumeId
         );
     }
 }

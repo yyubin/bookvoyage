@@ -33,6 +33,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
     implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("com.fasterxml.jackson.core:jackson-databind")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
 
     compileOnly("org.projectlombok:lombok")
@@ -42,14 +43,14 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
-    annotationProcessor("io.github.yyubin:jinx-processor:0.0.19")
-    implementation("io.github.yyubin:jinx-core:0.0.19")
+    annotationProcessor("io.github.yyubin:jinx-processor:0.0.20")
+    implementation("io.github.yyubin:jinx-core:0.0.20")
 }
 
 val jinxCli by configurations.creating
 
 dependencies {
-    jinxCli("io.github.yyubin:jinx-cli:0.0.19")
+    jinxCli("io.github.yyubin:jinx-cli:0.0.20")
 }
 
 tasks.register<JavaExec>("jinxMigrate") {

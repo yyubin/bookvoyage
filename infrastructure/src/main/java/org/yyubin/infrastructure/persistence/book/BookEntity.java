@@ -1,5 +1,8 @@
 package org.yyubin.infrastructure.persistence.book;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -23,6 +26,8 @@ import org.yyubin.domain.book.BookMetadata;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class BookEntity {
 
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -30,11 +35,14 @@ public class BookEntity {
     @Column(name = "title", nullable = false, length = 500)
     private String title;
 
-    @Column(name = "author", nullable = false, length = 200)
-    private String author;
+    @Column(name = "authors", columnDefinition = "TEXT", nullable = false)
+    private String authors;
 
-    @Column(name = "isbn", length = 50)
-    private String isbn;
+    @Column(name = "isbn_10", length = 50)
+    private String isbn10;
+
+    @Column(name = "isbn_13", length = 50)
+    private String isbn13;
 
     @Column(name = "cover_url", length = 500)
     private String coverUrl;
@@ -42,14 +50,35 @@ public class BookEntity {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "publisher", length = 200)
+    private String publisher;
+
+    @Column(name = "published_date", length = 50)
+    private String publishedDate;
+
+    @Column(name = "language", length = 20)
+    private String language;
+
+    @Column(name = "page_count")
+    private Integer pageCount;
+
+    @Column(name = "google_volume_id", length = 100)
+    private String googleVolumeId;
+
     public static BookEntity fromDomain(Book book) {
         return BookEntity.builder()
                 .id(book.getId() != null ? book.getId().getValue() : null)
                 .title(book.getMetadata().getTitle())
-                .author(book.getMetadata().getAuthor())
-                .isbn(book.getMetadata().getIsbn())
+                .authors(writeAuthors(book.getMetadata().getAuthors()))
+                .isbn10(book.getMetadata().getIsbn10())
+                .isbn13(book.getMetadata().getIsbn13())
                 .coverUrl(book.getMetadata().getCoverUrl())
                 .description(book.getMetadata().getDescription())
+                .publisher(book.getMetadata().getPublisher())
+                .publishedDate(book.getMetadata().getPublishedDate())
+                .language(book.getMetadata().getLanguage())
+                .pageCount(book.getMetadata().getPageCount())
+                .googleVolumeId(book.getMetadata().getGoogleVolumeId())
                 .build();
     }
 
@@ -58,11 +87,36 @@ public class BookEntity {
                 BookId.of(this.id),
                 BookMetadata.of(
                         this.title,
-                        this.author,
-                        this.isbn,
+                        readAuthors(this.authors),
+                        this.isbn10,
+                        this.isbn13,
                         this.coverUrl,
-                        this.description
+                        this.publisher,
+                        this.publishedDate,
+                        this.description,
+                        this.language,
+                        this.pageCount,
+                        this.googleVolumeId
                 )
         );
+    }
+
+    private static String writeAuthors(java.util.List<String> authors) {
+        try {
+            return OBJECT_MAPPER.writeValueAsString(authors);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to serialize authors", e);
+        }
+    }
+
+    private static java.util.List<String> readAuthors(String authorsJson) {
+        if (authorsJson == null || authorsJson.isBlank()) {
+            return java.util.Collections.singletonList("Unknown");
+        }
+        try {
+            return OBJECT_MAPPER.readValue(authorsJson, new TypeReference<java.util.List<String>>() {});
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to deserialize authors", e);
+        }
     }
 }

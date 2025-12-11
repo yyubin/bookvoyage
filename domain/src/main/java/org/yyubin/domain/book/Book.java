@@ -24,10 +24,34 @@ public class Book {
         return new Book(id, metadata);
     }
 
-    public static Book create(String title, String author, String isbn, String coverUrl, String description) {
+    public static Book create(
+            String title,
+            java.util.List<String> authors,
+            String isbn10,
+            String isbn13,
+            String coverUrl,
+            String publisher,
+            String publishedDate,
+            String description,
+            String language,
+            Integer pageCount,
+            String googleVolumeId
+    ) {
         return new Book(
                 null,
-                BookMetadata.of(title, author, isbn, coverUrl, description)
+                BookMetadata.of(
+                        title,
+                        authors,
+                        isbn10,
+                        isbn13,
+                        coverUrl,
+                        publisher,
+                        publishedDate,
+                        description,
+                        language,
+                        pageCount,
+                        googleVolumeId
+                )
         );
     }
 

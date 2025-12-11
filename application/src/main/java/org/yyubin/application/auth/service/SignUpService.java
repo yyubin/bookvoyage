@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.yyubin.application.auth.SignUpUseCase;
+import org.yyubin.application.auth.port.LoadUserPort;
 import org.yyubin.application.auth.port.PasswordEncoderPort;
 import org.yyubin.application.auth.port.SaveUserPort;
 import org.yyubin.application.dto.AuthResult;
@@ -15,12 +16,14 @@ import org.yyubin.domain.user.AuthProvider;
 import org.yyubin.domain.user.Role;
 import org.yyubin.domain.user.User;
 import org.yyubin.support.jwt.JwtProvider;
+import org.yyubin.support.nickname.NicknameGenerator;
 
 @Service
 @RequiredArgsConstructor
 public class SignUpService implements SignUpUseCase {
 
     private final SaveUserPort saveUserPort;
+    private final LoadUserPort loadUserPort;
     private final PasswordEncoderPort passwordEncoderPort;
     private final JwtProvider jwtProvider;
     private final NotificationSettingPort notificationSettingPort;
@@ -37,9 +40,11 @@ public class SignUpService implements SignUpUseCase {
                 email,
                 username,
                 encodedPassword,
+                NicknameGenerator.generate(email),
                 bio,
                 Role.USER,
                 AuthProvider.LOCAL,
+                null,
                 LocalDateTime.now()
         );
 
@@ -63,5 +68,18 @@ public class SignUpService implements SignUpUseCase {
                 savedUser.email(),
                 savedUser.username()
         );
+    }
+
+    private String makeRandomNickname(String email) {
+        String nickname;
+        int attempt = 0;
+
+        do {
+            String seed = attempt == 0 ? email : email + "#" + attempt;
+            nickname = NicknameGenerator.generate(seed);
+            attempt++;
+        } while (loadUserPort.loadByNickname(nickname).isPresent());
+
+        return nickname;
     }
 }

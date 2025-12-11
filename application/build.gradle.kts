@@ -29,6 +29,7 @@ dependencies {
     implementation(project(":support"))
 
     implementation("org.springframework.boot:spring-boot-starter")
+    implementation("org.springframework:spring-tx")
 
     // Spring Security는 Port 인터페이스에만 필요 (GrantedAuthority 등)
     compileOnly("org.springframework.security:spring-security-core")

@@ -9,11 +9,9 @@ import java.util.Optional;
 @Repository
 public interface BookJpaRepository extends JpaRepository<BookEntity, Long> {
 
-    Optional<BookEntity> findByIsbn(String isbn);
+    Optional<BookEntity> findByIsbn10(String isbn10);
 
-    List<BookEntity> findByTitleContaining(String title);
+    Optional<BookEntity> findByIsbn13(String isbn13);
 
-    List<BookEntity> findByAuthorContaining(String author);
-
-    boolean existsByIsbn(String isbn);
+    Optional<BookEntity> findByGoogleVolumeId(String googleVolumeId);
 }

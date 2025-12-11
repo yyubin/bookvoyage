@@ -14,7 +14,8 @@ public record BookSearchItemResponse(
         String publishedDate,
         String description,
         String language,
-        Integer pageCount
+        Integer pageCount,
+        String googleVolumeId
 ) {
 
     public static BookSearchItemResponse from(BookSearchItem item) {
@@ -28,7 +29,8 @@ public record BookSearchItemResponse(
                 item.getPublishedDate(),
                 item.getDescription(),
                 item.getLanguage(),
-                item.getPageCount()
+                item.getPageCount(),
+                item.getGoogleVolumeId()
         );
     }
 }
