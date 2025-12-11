@@ -6,10 +6,10 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
+import org.springframework.data.redis.connection.ReturnType;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
-import org.springframework.data.redis.connection.RedisStringCommands;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.yyubin.application.event.EventPayload;
@@ -76,7 +76,7 @@ public class SessionBoostEventConsumer {
                             ReturnType.INTEGER,
                             1,
                             key,
-                            RedisStringCommands.toBytes(properties.getMaxEntries())
+                            redisTemplate.getStringSerializer().serialize(Integer.toString(properties.getMaxEntries()))
                     );
                 }
                 return null;
