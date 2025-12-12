@@ -32,6 +32,18 @@ recommendation:
       freshness: 0.05
   cache:
     ttl-hours: 3
+  review:
+    max-candidates: 300
+    cache:
+      ttl-hours: 2
+      max-items: 100
+    scoring:
+      weights:
+        popularity: 0.35
+        freshness: 0.15
+        engagement: 0.2
+        content: 0.2
+        book-context: 0.1
 
 logging:
   level:

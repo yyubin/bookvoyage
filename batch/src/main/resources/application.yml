@@ -58,6 +58,7 @@ batch:
     neo4j: "0 */10 * * * *"         # 매 10분마다 실행
     elasticsearch: "0 */30 * * * *" # 매 30분마다 실행
     recommendation: "0 0 * * * *"   # 매 1시간마다 실행
+    view-flush: "0 */15 * * * *"    # 조회수 플러시 15분마다
 
 logging:
   level:

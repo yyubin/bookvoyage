@@ -28,6 +28,7 @@ dependencies {
     implementation(project(":application")) // Port 구현이므로 허용
     implementation(project(":domain"))
     implementation(project(":support")) // JWT 필터 사용
+    implementation(project(":recommendation"))
 
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-security")
@@ -74,4 +75,8 @@ tasks.register<JavaExec>("jinxPromoteBaseline") {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+tasks.bootJar {
+    enabled = false
 }
