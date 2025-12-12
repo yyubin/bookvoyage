@@ -14,6 +14,7 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.yyubin.application.event.EventPayload;
 import org.yyubin.infrastructure.config.SessionBoostProperties;
+import org.yyubin.infrastructure.stream.metric.ReviewTrackingCounterAdapter;
 
 @Component
 @Slf4j
@@ -23,6 +24,7 @@ public class SessionBoostEventConsumer {
     private final RedisTemplate<String, String> redisTemplate;
     private final SessionBoostProperties properties;
     private final DefaultRedisScript<Long> trimScript = new DefaultRedisScript<>(TRIM_SCRIPT, Long.class);
+    private final ReviewTrackingCounterAdapter reviewTrackingCounterAdapter;
 
     private static final String BUCKET_BOOKS = "books";
     private static final String BUCKET_REVIEWS = "reviews";
@@ -181,6 +183,7 @@ public class SessionBoostEventConsumer {
                 Long reviewId = asLong(payload.metadata(), "reviewId");
                 if (reviewId != null) {
                     ops.add(boostReviews(payload.userId(), reviewId, 0.12));
+                    reviewTrackingCounterAdapter.incrementClick(reviewId);
                 }
                 Long bookId = asLong(payload.metadata(), "bookId");
                 if (bookId != null) {
@@ -191,12 +194,17 @@ public class SessionBoostEventConsumer {
                 Long reviewId = asLong(payload.metadata(), "reviewId");
                 if (reviewId != null) {
                     ops.add(boostReviews(payload.userId(), reviewId, 0.08));
+                    reviewTrackingCounterAdapter.incrementReach(reviewId);
                 }
             }
             case "REVIEW_DWELL" -> {
                 Long reviewId = asLong(payload.metadata(), "reviewId");
                 if (reviewId != null) {
                     ops.add(boostReviews(payload.userId(), reviewId, 0.1));
+                    Long dwellMs = asLong(payload.metadata(), "dwellMs");
+                    if (dwellMs != null) {
+                        reviewTrackingCounterAdapter.addDwell(reviewId, dwellMs);
+                    }
                 }
             }
             default -> {

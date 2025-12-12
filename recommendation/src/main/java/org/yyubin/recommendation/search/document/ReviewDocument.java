@@ -75,6 +75,18 @@ public class ReviewDocument {
     @Field(type = FieldType.Float)
     private Float dwellScore;
 
+    // 평균 체류 시간(ms)
+    @Field(type = FieldType.Long)
+    private Long avgDwellMs;
+
+    // 클릭률(0.0~1.0) - 인덱싱 시 저장, 정규화 필요
+    @Field(type = FieldType.Float)
+    private Float ctr;
+
+    // 도달률(0.0~1.0) - 섹션 노출 대비 도달
+    @Field(type = FieldType.Float)
+    private Float reachRate;
+
     // 검색 강화용 합성 텍스트 (content 기반)
     @Field(type = FieldType.Text, analyzer = "nori_analyzer")
     private String searchableText;

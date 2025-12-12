@@ -13,6 +13,7 @@ import org.springframework.batch.infrastructure.item.ItemReader;
 import org.springframework.batch.infrastructure.item.ItemWriter;
 import org.springframework.batch.infrastructure.item.data.RepositoryItemReader;
 import org.springframework.batch.infrastructure.item.data.builder.RepositoryItemReaderBuilder;
+import org.springframework.batch.infrastructure.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.Sort;
@@ -46,6 +47,7 @@ public class ElasticsearchSyncJobConfig {
     private final BookSyncDataProvider bookSyncDataProvider;
     private final ReviewSyncDataProvider reviewSyncDataProvider;
     private final ReviewViewCounterFlusher reviewViewCounterFlusher;
+    private final org.yyubin.batch.sync.ReviewEngagementStatsProvider reviewEngagementStatsProvider;
 
     @Bean
     public Job elasticsearchSyncJob(
@@ -104,7 +106,7 @@ public class ElasticsearchSyncJobConfig {
         return new StepBuilder("flushReviewViewCountersStep", jobRepository)
                 .tasklet((contribution, chunkContext) -> {
                     reviewViewCounterFlusher.flush();
-                    return org.springframework.batch.repeat.RepeatStatus.FINISHED;
+                    return RepeatStatus.FINISHED;
                 })
                 .build();
     }
@@ -159,6 +161,7 @@ public class ElasticsearchSyncJobConfig {
     public ItemProcessor<ReviewEntity, ReviewDocument> reviewDocumentProcessor() {
         return entity -> {
             ReviewSyncDto dto = reviewSyncDataProvider.build(entity);
+            var engagement = reviewEngagementStatsProvider.getStats(dto.id());
             return ReviewDocument.builder()
                     .id(String.valueOf(dto.id()))
                     .userId(dto.userId())
@@ -172,6 +175,9 @@ public class ElasticsearchSyncJobConfig {
                     .commentCount(dto.commentCount())
                     .viewCount(dto.viewCount())
                     .dwellScore(dto.dwellScore())
+                    .avgDwellMs(engagement.avgDwellMs())
+                    .ctr(engagement.ctr())
+                    .reachRate(engagement.reachRate())
                     .searchableText(ReviewDocument.buildSearchableText(dto.content()))
                     .build();
         };
