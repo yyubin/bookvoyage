@@ -1,0 +1,40 @@
+spring:
+  neo4j:
+    uri: ${NEO4J_URI:bolt://localhost:7687}
+    authentication:
+      username: ${NEO4J_USERNAME:neo4j}
+      password: ${NEO4J_PASSWORD:password}
+
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URI:http://localhost:9200}
+    connection-timeout: 5s
+    socket-timeout: 30s
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+# Recommendation specific settings
+recommendation:
+  graph:
+    batch-size: 100
+    max-hops: 2
+  search:
+    max-candidates: 500
+    min-score: 0.1
+  scoring:
+    weights:
+      graph: 0.4
+      semantic: 0.3
+      engagement: 0.15
+      popularity: 0.1
+      freshness: 0.05
+  cache:
+    ttl-hours: 3
+
+logging:
+  level:
+    org.springframework.data.neo4j: INFO
+    org.springframework.data.elasticsearch: INFO
+    org.yyubin.recommendation: DEBUG

@@ -1,3 +1,65 @@
 spring:
   application:
-    name: batch
+    name: bookvoyage-batch
+
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/bookvoyage?serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
+    username: ${DB_USERNAME:bookvoyage}
+    password: ${DB_PASSWORD:bookvoyage}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+
+  batch:
+    jdbc:
+      initialize-schema: always
+    job:
+      enabled: false
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: batch-sync-consumer
+      auto-offset-reset: earliest
+
+  neo4j:
+    uri: ${NEO4J_URI:bolt://localhost:7687}
+    authentication:
+      username: ${NEO4J_USERNAME:neo4j}
+      password: ${NEO4J_PASSWORD:password}
+
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URI:http://localhost:9200}
+
+batch:
+  sync:
+    neo4j:
+      chunk-size: 100
+      page-size: 1000
+    elasticsearch:
+      chunk-size: 100
+      page-size: 1000
+  recommendation:
+    chunk-size: 50
+    max-candidates: 500
+  schedule:
+    neo4j: "0 */10 * * * *"         # 매 10분마다 실행
+    elasticsearch: "0 */30 * * * *" # 매 30분마다 실행
+    recommendation: "0 0 * * * *"   # 매 1시간마다 실행
+
+logging:
+  level:
+    org.springframework.batch: INFO
+    org.yyubin.batch: DEBUG

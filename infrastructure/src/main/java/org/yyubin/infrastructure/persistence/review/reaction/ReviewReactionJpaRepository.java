@@ -10,4 +10,6 @@ public interface ReviewReactionJpaRepository extends JpaRepository<ReviewReactio
     Optional<ReviewReactionEntity> findByReviewIdAndUserId(Long reviewId, Long userId);
 
     void deleteByReviewIdAndUserId(Long reviewId, Long userId);
+
+    java.util.List<ReviewReactionEntity> findByUserId(Long userId);
 }

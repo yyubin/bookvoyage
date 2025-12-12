@@ -10,4 +10,6 @@ public interface ReviewKeywordJpaRepository extends JpaRepository<ReviewKeywordE
     void deleteByIdReviewId(Long reviewId);
 
     List<ReviewKeywordEntity> findByIdReviewId(Long reviewId);
+
+    List<ReviewKeywordEntity> findByIdReviewIdIn(List<Long> reviewIds);
 }

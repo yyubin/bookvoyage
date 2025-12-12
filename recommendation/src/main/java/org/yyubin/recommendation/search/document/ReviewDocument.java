@@ -1,0 +1,65 @@
+package org.yyubin.recommendation.search.document;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldType;
+import org.springframework.data.elasticsearch.annotations.Setting;
+
+import java.time.LocalDateTime;
+
+/**
+ * Elasticsearch Review Document
+ * - 리뷰 텍스트 검색 및 분석용
+ */
+@Document(indexName = "reviews")
+@Setting(settingPath = "elasticsearch/review-settings.json")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class ReviewDocument {
+
+    @Id
+    private String id;
+
+    // 작성자 ID
+    @Field(type = FieldType.Long)
+    private Long userId;
+
+    // 도서 ID
+    @Field(type = FieldType.Long)
+    private Long bookId;
+
+    // 리뷰 제목
+    @Field(type = FieldType.Text, analyzer = "nori_analyzer")
+    private String title;
+
+    // 리뷰 본문
+    @Field(type = FieldType.Text, analyzer = "nori_analyzer")
+    private String content;
+
+    // 평점
+    @Field(type = FieldType.Float)
+    private Float rating;
+
+    // 공개 여부
+    @Field(type = FieldType.Keyword)
+    private String visibility;
+
+    // 작성일
+    @Field(type = FieldType.Date)
+    private LocalDateTime createdAt;
+
+    // 좋아요 수 (인기도 지표)
+    @Field(type = FieldType.Integer)
+    private Integer likeCount;
+
+    // 댓글 수
+    @Field(type = FieldType.Integer)
+    private Integer commentCount;
+}

@@ -1,0 +1,43 @@
+version: '3.8'
+
+# 개발 환경용 경량 Docker Compose
+# Neo4j와 Elasticsearch만 포함 (다른 서비스는 로컬에서 직접 실행)
+
+services:
+  # Graph Database - Neo4j
+  neo4j:
+    image: neo4j:5.13-community
+    container_name: bookvoyage-neo4j-dev
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      NEO4J_AUTH: neo4j/password
+      NEO4J_dbms_memory_heap_max__size: 1G
+    volumes:
+      - neo4j-dev-data:/data
+    networks:
+      - dev-network
+
+  # Search Engine - Elasticsearch
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: bookvoyage-elasticsearch-dev
+    ports:
+      - "9200:9200"
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+    volumes:
+      - es-dev-data:/usr/share/elasticsearch/data
+    networks:
+      - dev-network
+
+volumes:
+  neo4j-dev-data:
+  es-dev-data:
+
+networks:
+  dev-network:
+    driver: bridge

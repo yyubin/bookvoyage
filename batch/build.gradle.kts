@@ -25,10 +25,38 @@ repositories {
 }
 
 dependencies {
+    // Module dependencies
+    implementation(project(":domain"))
+    implementation(project(":application"))
+    implementation(project(":infrastructure"))
+    implementation(project(":recommendation"))
+
+    // Spring Boot starters
     implementation("org.springframework.boot:spring-boot-starter")
+    implementation("org.springframework.boot:spring-boot-starter-batch")
+    implementation("org.springframework.batch:spring-batch-core")
+    implementation("org.springframework.batch:spring-batch-infrastructure")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
+
+    // Jackson for JSON parsing
+    implementation("com.fasterxml.jackson.core:jackson-databind")
+    implementation("com.fasterxml.jackson.core:jackson-core")
+    implementation("com.fasterxml.jackson.core:jackson-annotations")
+
+    // Kafka (이벤트 수집용)
+    implementation("org.springframework.kafka:spring-kafka")
+
+    // Database
+    runtimeOnly("com.mysql:mysql-connector-j")
+
+    // Lombok
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
+
+    // Test
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.batch:spring-batch-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

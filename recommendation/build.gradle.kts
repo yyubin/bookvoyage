@@ -6,7 +6,7 @@ plugins {
 
 group = "org.yyubin"
 version = "0.0.1-SNAPSHOT"
-description = "api"
+description = "recommendation"
 
 java {
     toolchain {
@@ -25,28 +25,39 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":application"))
+    // Domain dependency
     implementation(project(":domain"))
-    implementation(project(":infrastructure"))
-    implementation(project(":support"))
 
-    implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("org.springframework.boot:spring-boot-starter-validation")
-    implementation("org.springframework.boot:spring-boot-starter-security")
-    implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
+    // Neo4j
+    implementation("org.springframework.boot:spring-boot-starter-data-neo4j")
+
+    // Elasticsearch
+    implementation("org.springframework.boot:spring-boot-starter-data-elasticsearch")
+
+    // Redis (추천 결과 저장용)
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
+
+    // JSON processing
     implementation("com.fasterxml.jackson.core:jackson-databind")
 
-    runtimeOnly("com.mysql:mysql-connector-j")
-
+    // Lombok
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
 
-    // Test dependencies
+    // Test
     testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("org.springframework.security:spring-security-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+// 라이브러리 모듈이므로 bootJar 비활성화
+tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
+    enabled = false
+}
+
+tasks.named<Jar>("jar") {
+    enabled = true
 }
