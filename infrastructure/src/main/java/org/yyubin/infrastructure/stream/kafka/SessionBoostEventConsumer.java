@@ -25,6 +25,7 @@ public class SessionBoostEventConsumer {
     private final DefaultRedisScript<Long> trimScript = new DefaultRedisScript<>(TRIM_SCRIPT, Long.class);
 
     private static final String BUCKET_BOOKS = "books";
+    private static final String BUCKET_REVIEWS = "reviews";
     private static final String TRIM_SCRIPT = """
             local key = KEYS[1]
             local max = tonumber(ARGV[1])
@@ -99,6 +100,42 @@ public class SessionBoostEventConsumer {
                 if (bookId != null) {
                     ops.add(boostBooks(payload.userId(), bookId, 0.05));
                 }
+                Long reviewId = asLong(payload.metadata(), "reviewId");
+                if (reviewId != null) {
+                    ops.add(boostReviews(payload.userId(), reviewId, 0.05));
+                }
+            }
+            case "REVIEW_UPDATED" -> {
+                Long reviewId = asLong(payload.metadata(), "reviewId");
+                if (reviewId != null) {
+                    ops.add(boostReviews(payload.userId(), reviewId, 0.03));
+                }
+            }
+            case "REVIEW_VIEWED" -> {
+                Long reviewId = asLong(payload.metadata(), "reviewId");
+                if (reviewId != null) {
+                    ops.add(boostReviews(payload.userId(), reviewId, 0.02));
+                }
+                Long bookId = asLong(payload.metadata(), "bookId");
+                if (bookId != null) {
+                    ops.add(boostBooks(payload.userId(), bookId, 0.01));
+                }
+            }
+            case "COMMENT_CREATED" -> {
+                Long reviewId = asLong(payload.metadata(), "reviewId");
+                if (reviewId != null) {
+                    ops.add(boostReviews(payload.userId(), reviewId, 0.08));
+                }
+                Long bookId = asLong(payload.metadata(), "bookId");
+                if (bookId != null) {
+                    ops.add(boostBooks(payload.userId(), bookId, 0.03));
+                }
+            }
+            case "COMMENT_DELETED" -> {
+                Long reviewId = asLong(payload.metadata(), "reviewId");
+                if (reviewId != null) {
+                    ops.add(boostReviews(payload.userId(), reviewId, -0.02));
+                }
             }
             case "WISHLIST_ADD" -> {
                 Long bookId = asLong(payload.metadata(), "bookId");
@@ -107,10 +144,59 @@ public class SessionBoostEventConsumer {
                 }
             }
             case "BOOKMARK_ADD" -> {
+                // review/book 공용 이벤트. reviewId 우선 처리
                 Long reviewId = asLong(payload.metadata(), "reviewId");
                 if (reviewId != null) {
-                    // Bookmark는 review 기준이라 book 정보가 없어도 리뷰 선호를 약하게 반영
-                    ops.add(boostBooks(payload.userId(), reviewId, 0.05));
+                    ops.add(boostReviews(payload.userId(), reviewId, 0.15));
+                } else {
+                    Long bookId = asLong(payload.metadata(), "bookId");
+                    if (bookId != null) {
+                        ops.add(boostBooks(payload.userId(), bookId, 0.1));
+                    }
+                }
+            }
+            case "BOOKMARK_REMOVE" -> {
+                Long reviewId = asLong(payload.metadata(), "reviewId");
+                if (reviewId != null) {
+                    ops.add(boostReviews(payload.userId(), reviewId, -0.05));
+                }
+            }
+            case "REACTION_UPSERTED" -> {
+                Long reviewId = asLong(payload.metadata(), "reviewId");
+                if (reviewId != null) {
+                    ops.add(boostReviews(payload.userId(), reviewId, 0.1));
+                }
+                Long bookId = asLong(payload.metadata(), "bookId");
+                if (bookId != null) {
+                    ops.add(boostBooks(payload.userId(), bookId, 0.05));
+                }
+            }
+            case "REACTION_DELETED" -> {
+                Long reviewId = asLong(payload.metadata(), "reviewId");
+                if (reviewId != null) {
+                    ops.add(boostReviews(payload.userId(), reviewId, -0.05));
+                }
+            }
+            case "REVIEW_CLICKED" -> {
+                Long reviewId = asLong(payload.metadata(), "reviewId");
+                if (reviewId != null) {
+                    ops.add(boostReviews(payload.userId(), reviewId, 0.12));
+                }
+                Long bookId = asLong(payload.metadata(), "bookId");
+                if (bookId != null) {
+                    ops.add(boostBooks(payload.userId(), bookId, 0.05));
+                }
+            }
+            case "REVIEW_SCROLLED", "REVIEW_REACHED" -> {
+                Long reviewId = asLong(payload.metadata(), "reviewId");
+                if (reviewId != null) {
+                    ops.add(boostReviews(payload.userId(), reviewId, 0.08));
+                }
+            }
+            case "REVIEW_DWELL" -> {
+                Long reviewId = asLong(payload.metadata(), "reviewId");
+                if (reviewId != null) {
+                    ops.add(boostReviews(payload.userId(), reviewId, 0.1));
                 }
             }
             default -> {
@@ -122,6 +208,10 @@ public class SessionBoostEventConsumer {
 
     private BoostOp boostBooks(Long userId, Long id, double delta) {
         return new BoostOp(key(userId, BUCKET_BOOKS), id.toString(), delta);
+    }
+
+    private BoostOp boostReviews(Long userId, Long id, double delta) {
+        return new BoostOp(key(userId, BUCKET_REVIEWS), id.toString(), delta);
     }
 
     private String key(Long userId, String bucket) {

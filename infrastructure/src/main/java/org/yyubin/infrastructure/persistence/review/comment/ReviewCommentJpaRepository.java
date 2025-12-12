@@ -14,4 +14,6 @@ public interface ReviewCommentJpaRepository extends JpaRepository<ReviewCommentE
     List<ReviewCommentEntity> findByReviewIdAndDeletedFalseOrderByIdDesc(Long reviewId, Pageable pageable);
 
     List<ReviewCommentEntity> findByReviewIdAndDeletedFalseAndIdLessThanOrderByIdDesc(Long reviewId, Long id, Pageable pageable);
+
+    long countByReviewIdAndDeletedFalse(Long reviewId);
 }

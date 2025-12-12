@@ -16,4 +16,6 @@ public interface ReviewBookmarkJpaRepository extends JpaRepository<ReviewBookmar
     List<ReviewBookmarkEntity> findByUserIdOrderByIdDesc(Long userId);
 
     java.util.Optional<ReviewBookmarkEntity> findByUserIdAndReviewId(Long userId, Long reviewId);
+
+    long countByReviewId(Long reviewId);
 }

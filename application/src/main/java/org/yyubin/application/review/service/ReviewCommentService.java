@@ -19,6 +19,9 @@ import org.yyubin.application.user.port.LoadUserPort;
 import org.yyubin.domain.review.MentionParser;
 import org.yyubin.application.notification.NotificationEventUseCase;
 import org.yyubin.application.notification.dto.NotificationEventPayload;
+import org.yyubin.application.event.EventPayload;
+import org.yyubin.application.event.EventPublisher;
+import org.yyubin.application.event.EventTopics;
 import org.yyubin.domain.review.Review;
 import org.yyubin.domain.review.ReviewComment;
 import org.yyubin.domain.review.ReviewCommentId;
@@ -38,6 +41,7 @@ public class ReviewCommentService implements CreateCommentUseCase, UpdateComment
     private final LoadUserPort loadUserPort;
     private final MentionParser mentionParser;
     private final NotificationEventUseCase notificationEventUseCase;
+    private final EventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -84,6 +88,7 @@ public class ReviewCommentService implements CreateCommentUseCase, UpdateComment
                     NotificationMessages.COMMENT_ON_REVIEW
             ));
         }
+        publishCommentEvent("COMMENT_CREATED", saved, review);
         sendMentionNotifications(mentions, writerId, command.reviewId(), command.parentCommentId());
         return ReviewCommentResult.from(saved);
     }
@@ -162,6 +167,7 @@ public class ReviewCommentService implements CreateCommentUseCase, UpdateComment
 
         ReviewComment deleted = comment.markDeleted();
         saveReviewCommentPort.save(deleted);
+        publishCommentEvent("COMMENT_DELETED", deleted, review);
     }
 
     private void sendMentionNotifications(java.util.List<org.yyubin.domain.review.Mention> mentions, UserId writer, Long reviewId, Long commentId) {
@@ -179,5 +185,28 @@ public class ReviewCommentService implements CreateCommentUseCase, UpdateComment
                     NotificationMessages.MENTION
             ));
         }
+    }
+
+    private void publishCommentEvent(String eventType, ReviewComment comment, Review review) {
+        java.util.Map<String, Object> metadata = new java.util.HashMap<>();
+        metadata.put("reviewId", comment.getReviewId().getValue());
+        metadata.put("bookId", review.getBookId().getValue());
+        metadata.put("commentId", comment.getId() != null ? comment.getId().getValue() : null);
+
+        eventPublisher.publish(
+                EventTopics.REVIEW,
+                comment.getUserId().value().toString(),
+                new EventPayload(
+                        java.util.UUID.randomUUID(),
+                        eventType,
+                        comment.getUserId().value(),
+                        "REVIEW_COMMENT",
+                        comment.getReviewId().getValue().toString(),
+                        metadata,
+                        java.time.Instant.now(),
+                        "api",
+                        1
+                )
+        );
     }
 }

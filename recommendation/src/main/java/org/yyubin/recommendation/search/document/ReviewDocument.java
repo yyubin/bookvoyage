@@ -62,4 +62,24 @@ public class ReviewDocument {
     // 댓글 수
     @Field(type = FieldType.Integer)
     private Integer commentCount;
+
+    // 북마크 수
+    @Field(type = FieldType.Integer)
+    private Integer bookmarkCount;
+
+    // 조회 수
+    @Field(type = FieldType.Long)
+    private Long viewCount;
+
+    // 품질/잔류시간 보정 점수 (0.0~1.0 정규화)
+    @Field(type = FieldType.Float)
+    private Float dwellScore;
+
+    // 검색 강화용 합성 텍스트 (content 기반)
+    @Field(type = FieldType.Text, analyzer = "nori_analyzer")
+    private String searchableText;
+
+    public static String buildSearchableText(String content) {
+        return content != null ? content : "";
+    }
 }

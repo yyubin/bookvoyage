@@ -115,4 +115,8 @@ public class ReviewEntity {
                 this.mentions != null ? this.mentions : java.util.Collections.emptyList()
         );
     }
+
+    public void setViewCount(Long viewCount) {
+        this.viewCount = viewCount;
+    }
 }
