@@ -24,4 +24,9 @@ public class BatchScheduler {
     public void syncElasticsearch() {
         batchJobRunner.run("elasticsearchSyncJob");
     }
+
+    @Scheduled(cron = "${batch.schedule.view-flush:0 */15 * * * *}")
+    public void flushReviewViews() {
+        batchJobRunner.run("reviewViewFlushJob");
+    }
 }
