@@ -23,9 +23,9 @@ public class ReviewViewMetricAdapter implements ReviewViewMetricPort {
         // 사용자 중복 방지 (24h)
         if (userId != null) {
             String dedupKey = dedupKey(reviewId);
-            Boolean added = redisTemplate.opsForSet().add(dedupKey, userId.toString());
+            Long added = redisTemplate.opsForSet().add(dedupKey, userId.toString());
             redisTemplate.expire(dedupKey, java.time.Duration.ofSeconds(metricProperties.getDedupTtlSeconds()));
-            if (Boolean.FALSE.equals(added)) {
+            if (added != null && added == 0) {
                 // 이미 본 사용자면 현재 카운터 반환
                 return getCachedCount(reviewId).orElse(0L);
             }

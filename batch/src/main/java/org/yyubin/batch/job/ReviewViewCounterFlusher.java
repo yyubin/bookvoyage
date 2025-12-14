@@ -11,7 +11,7 @@ import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.yyubin.recommendation.port.ReviewViewFlushPort;
+import org.yyubin.application.review.port.ReviewViewFlushPort;
 
 /**
  * Redis 조회수 카운터를 DB/ES에 플러시

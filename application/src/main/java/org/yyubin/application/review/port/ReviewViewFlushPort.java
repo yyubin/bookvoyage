@@ -1,10 +1,11 @@
-package org.yyubin.recommendation.port;
+package org.yyubin.application.review.port;
 
 import java.util.Map;
 import java.util.Optional;
 
 /**
  * 조회수 플러시용 포트 (DB/ES 등)
+ * Infrastructure 계층에서 구현
  */
 public interface ReviewViewFlushPort {
 
