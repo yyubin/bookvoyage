@@ -23,9 +23,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.Sort;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.yyubin.batch.config.BatchProperties;
-import org.yyubin.batch.sync.BookSyncDataProvider;
+import org.yyubin.batch.service.BatchBookSyncService;
+import org.yyubin.batch.service.BatchUserSyncService;
 import org.yyubin.batch.sync.BookSyncDto;
-import org.yyubin.batch.sync.UserSyncDataProvider;
 import org.yyubin.batch.sync.UserSyncDto;
 import org.yyubin.infrastructure.persistence.book.BookEntity;
 import org.yyubin.infrastructure.persistence.book.BookJpaRepository;
@@ -56,8 +56,8 @@ public class Neo4jSyncJobConfig {
     private final BookJpaRepository bookJpaRepository;
     private final GraphUserPort graphUserPort;
     private final GraphBookPort graphBookPort;
-    private final UserSyncDataProvider userSyncDataProvider;
-    private final BookSyncDataProvider bookSyncDataProvider;
+    private final BatchUserSyncService batchUserSyncService;
+    private final BatchBookSyncService batchBookSyncService;
 
     @Bean
     public Job neo4jSyncJob(Step syncBooksToNeo4jStep, Step syncUsersToNeo4jStep) {
@@ -126,7 +126,7 @@ public class Neo4jSyncJobConfig {
     @Bean
     public ItemProcessor<BookEntity, BookNode> bookNodeProcessor() {
         return entity -> {
-            BookSyncDto dto = bookSyncDataProvider.build(entity);
+            BookSyncDto dto = batchBookSyncService.buildSyncData(entity);
 
             Set<AuthorNode> authors = dto.authors().stream()
                     .filter(Objects::nonNull)
@@ -188,7 +188,7 @@ public class Neo4jSyncJobConfig {
     @Bean
     public ItemProcessor<UserEntity, UserNode> userNodeProcessor() {
         return entity -> {
-            UserSyncDto dto = userSyncDataProvider.build(entity);
+            UserSyncDto dto = batchUserSyncService.buildSyncData(entity);
 
             UserNode userNode = UserNode.builder()
                     .id(dto.id())

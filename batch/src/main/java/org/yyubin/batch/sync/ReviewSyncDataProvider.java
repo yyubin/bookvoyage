@@ -3,6 +3,7 @@ package org.yyubin.batch.sync;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.yyubin.batch.service.BatchReviewSyncService;
 import org.yyubin.infrastructure.persistence.review.ReviewEntity;
 import org.yyubin.infrastructure.persistence.review.comment.ReviewCommentJpaRepository;
 import org.yyubin.infrastructure.persistence.review.reaction.ReviewReactionJpaRepository;
@@ -11,13 +12,14 @@ import org.yyubin.infrastructure.persistence.review.bookmark.ReviewBookmarkJpaRe
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ReviewSyncDataProvider {
+public class ReviewSyncDataProvider implements BatchReviewSyncService {
 
     private final ReviewReactionJpaRepository reviewReactionJpaRepository;
     private final ReviewBookmarkJpaRepository reviewBookmarkJpaRepository;
     private final ReviewCommentJpaRepository reviewCommentJpaRepository;
 
-    public ReviewSyncDto build(ReviewEntity review) {
+    @Override
+    public ReviewSyncDto buildSyncData(ReviewEntity review) {
         int likeCount = safeCount(reviewReactionJpaRepository.countByReviewId(review.getId()));
         int bookmarkCount = safeCount(reviewBookmarkJpaRepository.countByReviewId(review.getId()));
         int commentCount = safeCount(reviewCommentJpaRepository.countByReviewIdAndDeletedFalse(review.getId()));

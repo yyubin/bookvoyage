@@ -9,6 +9,7 @@ import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.yyubin.batch.service.BatchUserSyncService;
 import org.yyubin.infrastructure.persistence.review.ReviewEntity;
 import org.yyubin.infrastructure.persistence.review.ReviewJpaRepository;
 import org.yyubin.infrastructure.persistence.review.reaction.ReviewReactionEntity;
@@ -20,13 +21,14 @@ import org.yyubin.infrastructure.persistence.wishlist.WishlistJpaRepository;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class UserSyncDataProvider {
+public class UserSyncDataProvider implements BatchUserSyncService {
 
     private final ReviewJpaRepository reviewJpaRepository;
     private final WishlistJpaRepository wishlistJpaRepository;
     private final ReviewReactionJpaRepository reviewReactionJpaRepository;
 
-    public UserSyncDto build(UserEntity user) {
+    @Override
+    public UserSyncDto buildSyncData(UserEntity user) {
         List<ReviewEntity> reviews = reviewJpaRepository.findByUserId(user.getId());
         List<UserSyncDto.ViewedBook> viewedBooks = aggregateViewedBooks(reviews);
 

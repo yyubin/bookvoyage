@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.yyubin.batch.service.BatchBookSyncService;
 import org.yyubin.domain.book.Book;
 import org.yyubin.domain.book.BookMetadata;
 import org.yyubin.infrastructure.persistence.book.BookEntity;
@@ -22,7 +23,7 @@ import org.yyubin.infrastructure.persistence.wishlist.WishlistJpaRepository;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class BookSyncDataProvider {
+public class BookSyncDataProvider implements BatchBookSyncService {
 
     private static final List<DateTimeFormatter> DATE_FORMATTERS = List.of(
             DateTimeFormatter.ISO_LOCAL_DATE,
@@ -35,7 +36,8 @@ public class BookSyncDataProvider {
     private final WishlistJpaRepository wishlistJpaRepository;
     private final ReviewKeywordJpaRepository reviewKeywordJpaRepository;
 
-    public BookSyncDto build(BookEntity entity) {
+    @Override
+    public BookSyncDto buildSyncData(BookEntity entity) {
         Book book = entity.toDomain();
         BookMetadata metadata = book.getMetadata();
 

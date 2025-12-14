@@ -21,9 +21,9 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.yyubin.batch.config.BatchProperties;
 import org.yyubin.recommendation.port.SearchBookPort;
 import org.yyubin.recommendation.port.SearchReviewPort;
-import org.yyubin.batch.sync.BookSyncDataProvider;
+import org.yyubin.batch.service.BatchBookSyncService;
+import org.yyubin.batch.service.BatchReviewSyncService;
 import org.yyubin.batch.sync.BookSyncDto;
-import org.yyubin.batch.sync.ReviewSyncDataProvider;
 import org.yyubin.batch.sync.ReviewSyncDto;
 import org.yyubin.infrastructure.persistence.book.BookEntity;
 import org.yyubin.infrastructure.persistence.book.BookJpaRepository;
@@ -44,8 +44,8 @@ public class ElasticsearchSyncJobConfig {
     private final ReviewJpaRepository reviewJpaRepository;
     private final SearchBookPort searchBookPort;
     private final SearchReviewPort searchReviewPort;
-    private final BookSyncDataProvider bookSyncDataProvider;
-    private final ReviewSyncDataProvider reviewSyncDataProvider;
+    private final BatchBookSyncService batchBookSyncService;
+    private final BatchReviewSyncService batchReviewSyncService;
     private final ReviewViewCounterFlusher reviewViewCounterFlusher;
     private final org.yyubin.batch.sync.ReviewEngagementStatsProvider reviewEngagementStatsProvider;
 
@@ -136,7 +136,7 @@ public class ElasticsearchSyncJobConfig {
     @Bean
     public ItemProcessor<BookEntity, BookDocument> bookDocumentProcessor() {
         return entity -> {
-            BookSyncDto dto = bookSyncDataProvider.build(entity);
+            BookSyncDto dto = batchBookSyncService.buildSyncData(entity);
             String searchableText = BookDocument.buildSearchableText(dto.title(), dto.description(), dto.authors());
 
             return BookDocument.builder()
@@ -160,7 +160,7 @@ public class ElasticsearchSyncJobConfig {
     @Bean
     public ItemProcessor<ReviewEntity, ReviewDocument> reviewDocumentProcessor() {
         return entity -> {
-            ReviewSyncDto dto = reviewSyncDataProvider.build(entity);
+            ReviewSyncDto dto = batchReviewSyncService.buildSyncData(entity);
             var engagement = reviewEngagementStatsProvider.getStats(dto.id());
             return ReviewDocument.builder()
                     .id(String.valueOf(dto.id()))
