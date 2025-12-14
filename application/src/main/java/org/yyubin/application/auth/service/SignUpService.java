@@ -13,6 +13,7 @@ import org.yyubin.application.dto.AuthResult;
 import org.yyubin.application.notification.port.NotificationSettingPort;
 import org.yyubin.domain.notification.NotificationSetting;
 import org.yyubin.domain.user.AuthProvider;
+import org.yyubin.domain.user.PasswordPolicy;
 import org.yyubin.domain.user.Role;
 import org.yyubin.domain.user.User;
 import org.yyubin.support.jwt.JwtProvider;
@@ -30,6 +31,9 @@ public class SignUpService implements SignUpUseCase {
 
     @Override
     public AuthResult execute(String email, String password, String username, String bio) {
+
+        // 비밀번호 정책 검증
+        PasswordPolicy.validate(password);
 
         // 비밀번호 암호화
         String encodedPassword = passwordEncoderPort.encode(password);
