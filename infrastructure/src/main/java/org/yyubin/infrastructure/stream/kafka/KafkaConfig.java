@@ -12,7 +12,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.listener.DefaultErrorHandler;
+import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
 import org.springframework.util.backoff.FixedBackOff;
+import org.apache.kafka.common.TopicPartition;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
@@ -28,6 +30,9 @@ public class KafkaConfig {
 
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
+
+    @Value("${spring.kafka.listener.concurrency:3}")
+    private int concurrency;
 
     @Bean
     public ProducerFactory<String, EventPayload> producerFactory() {
@@ -66,17 +71,32 @@ public class KafkaConfig {
         );
     }
 
+    /**
+     * DLQ (Dead Letter Queue)를 포함한 ErrorHandler
+     * 5회 재시도 후 실패한 메시지는 .DLT 토픽으로 전송
+     */
+    @Bean
+    public DefaultErrorHandler errorHandler(KafkaTemplate<String, EventPayload> kafkaTemplate) {
+        // DLQ: 실패한 메시지를 {원본토픽}.DLT로 전송
+        DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(kafkaTemplate,
+            (record, ex) -> new TopicPartition(record.topic() + ".DLT", record.partition())
+        );
+
+        // 1초 간격으로 최대 5회 재시도
+        DefaultErrorHandler errorHandler = new DefaultErrorHandler(recoverer, new FixedBackOff(1000L, 5L));
+        errorHandler.setAckAfterHandle(false); // 오류 발생 시 오프셋 커밋하지 않음
+
+        return errorHandler;
+    }
+
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, EventPayload> kafkaListenerContainerFactory(
-            ConsumerFactory<String, EventPayload> consumerFactory
+            ConsumerFactory<String, EventPayload> consumerFactory,
+            DefaultErrorHandler errorHandler
     ) {
         ConcurrentKafkaListenerContainerFactory<String, EventPayload> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory);
-        factory.setConcurrency(3);
-
-        // ErrorHandler로 에러 처리 및 오프셋 커밋 제어 (Spring kafka 4.0 부터 변경)
-        DefaultErrorHandler errorHandler = new DefaultErrorHandler(new FixedBackOff(1000L, 2L));
-        errorHandler.setAckAfterHandle(false); // 오류 발생 시 오프셋 커밋하지 않음
+        factory.setConcurrency(concurrency); // 환경변수로 설정 가능
         factory.setCommonErrorHandler(errorHandler);
 
         return factory;
