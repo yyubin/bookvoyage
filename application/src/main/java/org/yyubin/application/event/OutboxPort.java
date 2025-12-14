@@ -1,5 +1,6 @@
 package org.yyubin.application.event;
 
+import java.time.Instant;
 import java.util.List;
 
 public interface OutboxPort {
@@ -15,4 +16,9 @@ public interface OutboxPort {
      * 최대 재시도 횟수 초과 시 DEAD 상태로 변경 (DLQ)
      */
     void markDead(Long id, String errorMessage);
+
+    /**
+     * 특정 상태이며 지정된 시간 이전에 발생한 이벤트 삭제
+     */
+    int deleteByStatusAndOccurredAtBefore(OutboxEvent.OutboxStatus status, Instant cutoff);
 }

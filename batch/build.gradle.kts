@@ -47,6 +47,10 @@ dependencies {
     // Kafka (이벤트 수집용)
     implementation("org.springframework.kafka:spring-kafka")
 
+    // ShedLock (분산 환경 스케줄러 중복 실행 방지)
+    implementation("net.javacrumbs.shedlock:shedlock-spring:5.10.0")
+    implementation("net.javacrumbs.shedlock:shedlock-provider-redis-spring:5.10.0")
+
     // Database
     runtimeOnly("com.mysql:mysql-connector-j")
 

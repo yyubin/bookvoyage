@@ -78,6 +78,12 @@ public class OutboxPersistenceAdapter implements OutboxPort {
         });
     }
 
+    @Override
+    @Transactional
+    public int deleteByStatusAndOccurredAtBefore(OutboxEvent.OutboxStatus status, Instant cutoff) {
+        return outboxEventJpaRepository.deleteByStatusAndOccurredAtBefore(status, cutoff);
+    }
+
     private String writePayload(EventPayload payload) {
         try {
             return objectMapper.writeValueAsString(payload);
