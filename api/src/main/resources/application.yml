@@ -47,6 +47,18 @@ spring:
         linger.ms: 10
         batch.size: 16384
 
+  # Redis (Spring Data Redis)
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+
+# Redisson (분산 락)
+spring.redisson:
+  address: redis://${REDIS_HOST:localhost}:${REDIS_PORT:6379}
+  password: ${REDIS_PASSWORD:}
+
 jwt:
   secret: ${JWT_SECRET:your-secret-key-change-this-in-production-at-least-256-bits}
   access-token-expiration: 3600000 # 1 hour

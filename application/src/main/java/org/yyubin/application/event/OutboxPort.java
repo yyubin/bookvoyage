@@ -10,4 +10,9 @@ public interface OutboxPort {
     void markSent(Long id);
 
     void markFailed(Long id, String errorMessage);
+
+    /**
+     * 최대 재시도 횟수 초과 시 DEAD 상태로 변경 (DLQ)
+     */
+    void markDead(Long id, String errorMessage);
 }

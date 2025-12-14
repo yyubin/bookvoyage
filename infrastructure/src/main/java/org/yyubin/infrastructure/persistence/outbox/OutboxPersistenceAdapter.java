@@ -61,8 +61,18 @@ public class OutboxPersistenceAdapter implements OutboxPort {
     @Transactional
     public void markFailed(Long id, String errorMessage) {
         outboxEventJpaRepository.findById(id).ifPresent(entity -> {
-            entity.setStatus(OutboxEvent.OutboxStatus.FAILED);
+            entity.setStatus(OutboxEvent.OutboxStatus.PENDING); // 재시도를 위해 PENDING으로 변경
             entity.setRetryCount(entity.getRetryCount() + 1);
+            entity.setLastError(errorMessage != null ? errorMessage.substring(0, Math.min(500, errorMessage.length())) : null);
+            entity.setUpdatedAt(Instant.now());
+        });
+    }
+
+    @Override
+    @Transactional
+    public void markDead(Long id, String errorMessage) {
+        outboxEventJpaRepository.findById(id).ifPresent(entity -> {
+            entity.setStatus(OutboxEvent.OutboxStatus.DEAD);
             entity.setLastError(errorMessage != null ? errorMessage.substring(0, Math.min(500, errorMessage.length())) : null);
             entity.setUpdatedAt(Instant.now());
         });

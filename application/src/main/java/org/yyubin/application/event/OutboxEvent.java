@@ -14,6 +14,9 @@ public record OutboxEvent(
         String lastError
 ) {
     public enum OutboxStatus {
-        PENDING, SENT, FAILED
+        PENDING,    // 발행 대기 중
+        SENT,       // 발행 완료
+        FAILED,     // 발행 실패 (재시도 가능)
+        DEAD        // 최대 재시도 초과 (DLQ)
     }
 }
