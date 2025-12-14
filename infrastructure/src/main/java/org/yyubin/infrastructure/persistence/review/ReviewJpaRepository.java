@@ -1,7 +1,9 @@
 package org.yyubin.infrastructure.persistence.review;
 
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -9,6 +11,13 @@ import org.yyubin.domain.review.ReviewVisibility;
 
 @Repository
 public interface ReviewJpaRepository extends JpaRepository<ReviewEntity, Long> {
+
+    /**
+     * N+1 쿼리 방지: 리뷰 상세 조회 시 user를 함께 fetch
+     * comments와 reactions는 별도 쿼리로 조회 (OneToMany는 EntityGraph에 포함하지 않는 것이 좋음)
+     */
+    @EntityGraph(attributePaths = {"user"})
+    Optional<ReviewEntity> findWithUserById(Long id);
 
     List<ReviewEntity> findByUserId(Long userId);
 

@@ -2,22 +2,13 @@ spring:
   application:
     name: api
   profiles:
-    active: local
+    active: ${SPRING_PROFILES_ACTIVE:local}
 
   datasource:
-    url: jdbc:mysql://localhost:3306/bookvoyage?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:bookvoyage}?useSSL=${MYSQL_SSL_ENABLED:false}&serverTimezone=UTC&characterEncoding=UTF-8
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
-
-  jpa:
-    hibernate:
-      ddl-auto: none
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-        dialect: org.hibernate.dialect.MySQLDialect
 
   security:
     oauth2:
@@ -31,46 +22,20 @@ spring:
               - profile
 
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
       group-id: bookvoyage-default
       auto-offset-reset: latest
-      enable-auto-commit: false
     listener:
       ack-mode: batch
       missing-topics-fatal: false
-    producer:
-      acks: all
-      retries: 3
-      properties:
-        enable.idempotence: true
-        linger.ms: 10
-        batch.size: 16384
-
-  # Redis (Spring Data Redis)
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
-
-# Redisson (분산 락)
-spring.redisson:
-  address: redis://${REDIS_HOST:localhost}:${REDIS_PORT:6379}
-  password: ${REDIS_PASSWORD:}
 
 jwt:
-  secret: ${JWT_SECRET:your-secret-key-change-this-in-production-at-least-256-bits}
+  secret: ${JWT_SECRET}
   access-token-expiration: 3600000 # 1 hour
   refresh-token-expiration: 604800000 # 7 days
 
 server:
-  port: 8080
-
-logging:
-  level:
-    org.yyubin: DEBUG
-    org.springframework.security: DEBUG
+  port: ${SERVER_PORT:8080}
 
 outbox:
   processor:
