@@ -70,7 +70,7 @@ public class OpenApiConfig {
         return List.of(
                 new Server()
                         .url("http://localhost:" + serverPort)
-                        .description("Local Development Server"),
+                        .description("Local Development Server")
 //                new Server()
 //                        .url("https://api.bookvoyage.com")
 //                        .description("Production Server")
