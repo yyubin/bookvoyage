@@ -54,3 +54,23 @@ google:
     api-key: ${GOOGLE_BOOKS_API_KEY}
     base-url: https://www.googleapis.com/books/v1/volumes
     max-results: 40
+
+# SpringDoc OpenAPI 설정
+springdoc:
+  api-docs:
+    enabled: true
+    path: /api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    operations-sorter: alpha
+    tags-sorter: alpha
+    display-request-duration: true
+    doc-expansion: none
+  show-actuator: false
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+  paths-to-match:
+    - /api/**
+  packages-to-scan:
+    - org.yyubin.api

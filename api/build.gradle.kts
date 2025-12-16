@@ -36,6 +36,9 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
     implementation("com.fasterxml.jackson.core:jackson-databind")
 
+    // API Documentation - SpringDoc OpenAPI 3
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
+
     // dotenv for environment variables management
     implementation("io.github.cdimascio:dotenv-java:3.0.0")
 

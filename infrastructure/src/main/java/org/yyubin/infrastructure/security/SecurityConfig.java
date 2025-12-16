@@ -40,7 +40,13 @@ public class SecurityConfig {
                                 "/api/auth/**",
                                 "/oauth2/**",
                                 "/login/**",
-                                "/error"
+                                "/error",
+                                // API 문서
+                                "/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/redoc/**",
+                                "/redoc.html"
                         ).permitAll()
                         // 나머지는 인증 필요
                         .anyRequest().authenticated()
