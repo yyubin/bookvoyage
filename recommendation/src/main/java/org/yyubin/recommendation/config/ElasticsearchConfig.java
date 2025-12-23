@@ -20,8 +20,15 @@ public class ElasticsearchConfig extends ElasticsearchConfiguration {
 
     @Override
     public ClientConfiguration clientConfiguration() {
+        String hostAndPort = elasticsearchUri
+                .replace("http://", "")
+                .replace("https://", "");
+
         return ClientConfiguration.builder()
-                .connectedTo(elasticsearchUri.replace("http://", ""))
+                .connectedTo(hostAndPort)
+                .usingSsl(false)
+                .withConnectTimeout(5000)
+                .withSocketTimeout(60000)
                 .build();
     }
 }

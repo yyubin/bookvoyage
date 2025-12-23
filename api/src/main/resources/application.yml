@@ -1,15 +1,11 @@
 spring:
-  data:
-    elasticsearch:
-      repositories:
-        enabled: false
   application:
     name: api
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:local}
 
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:bookvoyage}?useSSL=${MYSQL_SSL_ENABLED:false}&serverTimezone=UTC&characterEncoding=UTF-8
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:bookvoyage}?useSSL=${MYSQL_SSL_ENABLED:false}&serverTimezone=UTC&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver

@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
  * Elasticsearch Review Document
  * - 리뷰 텍스트 검색 및 분석용
  */
-@Document(indexName = "reviews")
+@Document(indexName = "reviews", createIndex = false)
 @Setting(settingPath = "elasticsearch/review-settings.json")
 @Data
 @Builder

@@ -18,7 +18,7 @@ import java.util.List;
  * - 텍스트 기반 검색 및 콘텐츠 필터링용
  * - nori 분석기를 사용한 한국어 형태소 분석
  */
-@Document(indexName = "books")
+@Document(indexName = "books", createIndex = false)
 @Setting(settingPath = "elasticsearch/book-settings.json")
 @Data
 @Builder
