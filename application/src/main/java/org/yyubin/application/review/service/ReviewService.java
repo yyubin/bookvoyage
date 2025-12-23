@@ -13,6 +13,8 @@ import org.yyubin.application.notification.NotificationMessages;
 import org.yyubin.application.notification.dto.NotificationEventPayload;
 import org.yyubin.application.review.CreateReviewUseCase;
 import org.yyubin.application.review.DeleteReviewUseCase;
+import org.yyubin.application.review.LoadKeywordsUseCase;
+import org.yyubin.application.review.RegisterKeywordsUseCase;
 import org.yyubin.application.review.UpdateReviewUseCase;
 import org.yyubin.application.review.command.CreateReviewCommand;
 import org.yyubin.application.review.command.DeleteReviewCommand;
@@ -43,7 +45,8 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
     private final SaveReviewPort saveReviewPort;
     private final LoadReviewPort loadReviewPort;
     private final LoadUserPort loadUserPort;
-    private final RegisterKeywordsService registerKeywordsService;
+    private final RegisterKeywordsUseCase registerKeywordsUseCase;
+    private final LoadKeywordsUseCase loadKeywordsUseCase;
     private final MentionParser mentionParser;
     private final NotificationEventUseCase notificationEventUseCase;
     private final FollowQueryPort followQueryPort;
@@ -69,11 +72,11 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
         );
 
         Review savedReview = saveReviewPort.save(review);
-        registerKeywordsService.register(savedReview.getId(), command.keywords());
+        registerKeywordsUseCase.register(savedReview.getId(), command.keywords());
         notifyFollowersOnNewReview(savedReview);
         notifyMentions(savedReview.getMentions(), userId, savedReview.getId().getValue(), null);
         publishReviewEvent("REVIEW_CREATED", savedReview, book.getId().getValue());
-        return ReviewResult.from(savedReview, book, registerKeywordsService.loadKeywords(savedReview.getId()));
+        return ReviewResult.from(savedReview, book, loadKeywordsUseCase.loadKeywords(savedReview.getId()));
     }
 
     @Override
@@ -114,10 +117,10 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
         }
 
         Review saved = saveReviewPort.save(updated);
-        registerKeywordsService.register(saved.getId(), command.keywords());
+        registerKeywordsUseCase.register(saved.getId(), command.keywords());
         publishReviewEvent("REVIEW_UPDATED", saved, updatedBook.getId().getValue());
 
-        return ReviewResult.from(saved, updatedBook, registerKeywordsService.loadKeywords(saved.getId()));
+        return ReviewResult.from(saved, updatedBook, loadKeywordsUseCase.loadKeywords(saved.getId()));
     }
 
     @Override
@@ -140,7 +143,7 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
                 .orElseThrow(() -> new IllegalArgumentException("Book not found: " + saved.getBookId().getValue()));
         publishReviewEvent("REVIEW_DELETED", saved, book.getId().getValue());
 
-        return ReviewResult.from(saved, book, registerKeywordsService.loadKeywords(saved.getId()));
+        return ReviewResult.from(saved, book, loadKeywordsUseCase.loadKeywords(saved.getId()));
     }
 
     private void notifyFollowersOnNewReview(Review review) {

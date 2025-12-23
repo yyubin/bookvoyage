@@ -38,6 +38,7 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.security:spring-security-core")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

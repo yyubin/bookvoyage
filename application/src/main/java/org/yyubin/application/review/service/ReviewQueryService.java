@@ -10,6 +10,7 @@ import org.yyubin.application.event.EventPublisher;
 import org.yyubin.application.event.EventTopics;
 import org.yyubin.application.review.GetReviewUseCase;
 import org.yyubin.application.review.GetUserReviewsUseCase;
+import org.yyubin.application.review.LoadKeywordsUseCase;
 import org.yyubin.application.review.dto.PagedReviewResult;
 import org.yyubin.application.review.dto.ReviewResult;
 import org.yyubin.application.review.port.LoadBookPort;
@@ -29,7 +30,7 @@ public class ReviewQueryService implements GetReviewUseCase, GetUserReviewsUseCa
 
     private final LoadReviewPort loadReviewPort;
     private final LoadBookPort loadBookPort;
-    private final RegisterKeywordsService registerKeywordsService;
+    private final LoadKeywordsUseCase loadKeywordsUseCase;
     private final ReviewViewMetricPort reviewViewMetricPort;
     private final EventPublisher eventPublisher;
 
@@ -49,7 +50,7 @@ public class ReviewQueryService implements GetReviewUseCase, GetUserReviewsUseCa
         return ReviewResult.fromWithViewCount(
                 review,
                 book,
-                registerKeywordsService.loadKeywords(ReviewId.of(review.getId().getValue())),
+                loadKeywordsUseCase.loadKeywords(ReviewId.of(review.getId().getValue())),
                 viewForResponse
         );
     }
@@ -101,7 +102,7 @@ public class ReviewQueryService implements GetReviewUseCase, GetUserReviewsUseCa
         return ReviewResult.fromWithViewCount(
                 review,
                 book,
-                registerKeywordsService.loadKeywords(review.getId()),
+                loadKeywordsUseCase.loadKeywords(review.getId()),
                 viewForResponse
         );
     }

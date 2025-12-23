@@ -5,6 +5,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.yyubin.application.review.LoadKeywordsUseCase;
 import org.yyubin.application.review.RegisterKeywordsUseCase;
 import org.yyubin.application.review.port.KeywordRepository;
 import org.yyubin.application.review.port.ReviewKeywordRepository;
@@ -16,7 +17,7 @@ import org.yyubin.domain.review.ReviewKeyword;
 
 @Service
 @RequiredArgsConstructor
-public class RegisterKeywordsService implements RegisterKeywordsUseCase {
+public class RegisterKeywordsService implements RegisterKeywordsUseCase, LoadKeywordsUseCase {
 
     private final KeywordRepository keywordRepository;
     private final ReviewKeywordRepository reviewKeywordRepository;
@@ -43,6 +44,8 @@ public class RegisterKeywordsService implements RegisterKeywordsUseCase {
         reviewKeywordRepository.saveAll(mappings);
     }
 
+    @Override
+    @Transactional(readOnly = true)
     public List<String> loadKeywords(ReviewId reviewId) {
         List<ReviewKeyword> mappings = reviewKeywordRepository.findByReviewId(reviewId.getValue());
         List<KeywordId> keywordIds = mappings.stream().map(ReviewKeyword::keywordId).toList();
