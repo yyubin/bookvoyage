@@ -1,4 +1,8 @@
 spring:
+  data:
+    elasticsearch:
+      repositories:
+        enabled: false
   application:
     name: api
   profiles:
@@ -29,6 +33,8 @@ spring:
       ack-mode: batch
       missing-topics-fatal: false
       concurrency: ${KAFKA_CONSUMER_CONCURRENCY:3}
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URI:http://localhost:9200}
 
 jwt:
   secret: ${JWT_SECRET}

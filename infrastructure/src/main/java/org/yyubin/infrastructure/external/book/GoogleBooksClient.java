@@ -9,19 +9,17 @@ import org.springframework.web.util.UriBuilder;
 import org.yyubin.application.book.search.exception.ExternalBookSearchException;
 import org.yyubin.infrastructure.external.book.dto.GoogleBooksSearchRequest;
 import org.yyubin.infrastructure.external.book.dto.GoogleBooksVolumeResponse;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 @Component
 @RequiredArgsConstructor
 public class GoogleBooksClient {
 
-    private final RestClient.Builder restClientBuilder;
     private final GoogleBooksProperties properties;
+    @Qualifier("googleBooksRestClient")
+    private final RestClient restClient;
 
     public GoogleBooksVolumeResponse search(GoogleBooksSearchRequest request) {
-        RestClient restClient = restClientBuilder
-                .baseUrl(properties.getBaseUrl())
-                .build();
-
         try {
             return restClient.get()
                     .uri(uriBuilder -> {

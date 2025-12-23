@@ -39,7 +39,7 @@ dependencies {
     implementation("org.springframework.kafka:spring-kafka:4.0.0")
 
     // Redisson for distributed lock
-    implementation("org.redisson:redisson-spring-boot-starter:3.27.0")
+    implementation("org.redisson:redisson:3.27.0")
 
     compileOnly("org.projectlombok:lombok")
     runtimeOnly("com.mysql:mysql-connector-j")
