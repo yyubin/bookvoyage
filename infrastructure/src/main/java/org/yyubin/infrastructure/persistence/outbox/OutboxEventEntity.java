@@ -46,7 +46,7 @@ public class OutboxEventEntity {
     @Column(name = "payload", nullable = false, columnDefinition = "TEXT")
     private String payload;
 
-    @Column(name = "occurred_at", nullable = false)
+    @Column(name = "occurred_at", nullable = false, columnDefinition = "TIMESTAMP(6)")
     private Instant occurredAt;
 
     @Enumerated(EnumType.STRING)
@@ -59,10 +59,10 @@ public class OutboxEventEntity {
     @Column(name = "last_error", length = 500)
     private String lastError;
 
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "created_at", nullable = false, columnDefinition = "TIMESTAMP(6)")
     private Instant createdAt;
 
-    @Column(name = "updated_at", nullable = false)
+    @Column(name = "updated_at", nullable = false, columnDefinition = "TIMESTAMP(6)")
     private Instant updatedAt;
 
     public OutboxEvent toDomain(EventPayloadDeserializer deserializer) {
