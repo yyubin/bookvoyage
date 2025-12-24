@@ -3,7 +3,6 @@ package org.yyubin.api.profile;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,6 +14,7 @@ import org.yyubin.api.profile.dto.ProfileSummaryResponse;
 import org.yyubin.api.profile.dto.ReadingBookItemResponse;
 import org.yyubin.api.profile.dto.ReviewItemResponse;
 import org.yyubin.api.profile.dto.BookmarkedReviewItemResponse;
+import org.yyubin.api.common.PrincipalUtils;
 import java.util.List;
 import org.yyubin.application.bookmark.GetBookmarksUseCase;
 import org.yyubin.application.bookmark.dto.ReviewBookmarkPageResult;
@@ -32,7 +32,6 @@ import org.yyubin.application.user.GetFollowingUsersUseCase;
 import org.yyubin.application.user.dto.FollowPageResult;
 import org.yyubin.application.user.query.GetFollowerUsersQuery;
 import org.yyubin.application.user.query.GetFollowingUsersQuery;
-import org.yyubin.infrastructure.security.oauth2.CustomOAuth2User;
 
 @RestController
 @RequestMapping("/api/profile")
@@ -57,7 +56,7 @@ public class ProfileController {
     public ResponseEntity<ProfileSummaryResponse> getMyProfile(
             @AuthenticationPrincipal Object principal
     ) {
-        Long userId = resolveUserId(principal);
+        Long userId = PrincipalUtils.requireUserId(principal);
         return ResponseEntity.ok(
                 ProfileSummaryResponse.from(getProfileSummaryUseCase.query(new GetProfileSummaryQuery(userId)))
         );
@@ -90,7 +89,7 @@ public class ProfileController {
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "20") int size
     ) {
-        Long viewerId = principal != null ? resolveUserId(principal) : null;
+        Long viewerId = PrincipalUtils.resolveUserId(principal);
         PagedReviewResult result = getUserReviewsUseCase.query(new GetUserReviewsQuery(userId, viewerId, cursor, size));
         return ResponseEntity.ok(
                 new CursorPageResponse<>(
@@ -114,7 +113,7 @@ public class ProfileController {
             @AuthenticationPrincipal Object principal,
             @RequestParam(defaultValue = "3") int size
     ) {
-        Long userId = resolveUserId(principal);
+        Long userId = PrincipalUtils.requireUserId(principal);
         UserBookListResult result = getLatestReadingBooksUseCase.query(new GetLatestReadingBooksQuery(userId, size));
         return ResponseEntity.ok(result.items().stream().map(ReadingBookItemResponse::from).toList());
     }
@@ -124,7 +123,7 @@ public class ProfileController {
             @AuthenticationPrincipal Object principal,
             @RequestParam(defaultValue = "3") int size
     ) {
-        Long userId = resolveUserId(principal);
+        Long userId = PrincipalUtils.requireUserId(principal);
         ReviewBookmarkPageResult result = getBookmarksUseCase.query(new GetBookmarksQuery(userId, null, size));
         return ResponseEntity.ok(result.items().stream().map(BookmarkedReviewItemResponse::from).toList());
     }
@@ -136,13 +135,4 @@ public class ProfileController {
         );
     }
 
-    private Long resolveUserId(Object principal) {
-        if (principal instanceof CustomOAuth2User customOAuth2User) {
-            return customOAuth2User.getUserId();
-        }
-        if (principal instanceof UserDetails userDetails) {
-            return Long.parseLong(userDetails.getUsername());
-        }
-        throw new IllegalArgumentException("Unauthorized");
-    }
 }

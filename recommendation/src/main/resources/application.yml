@@ -60,6 +60,20 @@ recommendation:
         engagement: 0.2
         content: 0.2
         book-context: 0.1
+  tracking:
+    weights:
+      impression: 0.05
+      click: 0.3
+      dwell-per-ms: 0.001
+      scroll-per-pct: 0.005
+      bookmark: 1.0
+      like: 0.6
+      follow: 0.8
+      review-create: 0.4
+      review-update: 0.4
+    caps:
+      dwell-max: 1.5
+      scroll-max: 0.5
 
 logging:
   level:

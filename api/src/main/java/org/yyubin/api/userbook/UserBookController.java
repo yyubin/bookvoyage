@@ -4,7 +4,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -43,7 +42,6 @@ import org.yyubin.application.userbook.query.GetUserBookStatisticsQuery;
 import org.yyubin.application.userbook.query.GetUserBooksQuery;
 import org.yyubin.domain.book.BookSearchItem;
 import org.yyubin.domain.user.UserId;
-import org.yyubin.infrastructure.security.oauth2.CustomOAuth2User;
 
 @RestController
 @RequestMapping("/api/user-books")
@@ -65,7 +63,7 @@ public class UserBookController {
             @AuthenticationPrincipal Object principal,
             @Valid @RequestBody AddUserBookRequest request
     ) {
-        UserId userId = new UserId(resolveUserId(principal));
+        UserId userId = new UserId(PrincipalUtils.requireUserId(principal));
         AddUserBookCommand command = new AddUserBookCommand(
                 userId.value(),
                 toBookSearchItem(request),
@@ -80,7 +78,7 @@ public class UserBookController {
             @AuthenticationPrincipal Object principal,
             @RequestParam(value = "status", required = false) String status
     ) {
-        UserId userId = new UserId(resolveUserId(principal));
+        UserId userId = new UserId(PrincipalUtils.requireUserId(principal));
         return ResponseEntity.ok(
                 UserBookListResponse.from(
                         getUserBooksUseCase.query(new GetUserBooksQuery(userId.value(), status))
@@ -93,7 +91,7 @@ public class UserBookController {
             @AuthenticationPrincipal Object principal,
             @PathVariable Long bookId
     ) {
-        UserId userId = new UserId(resolveUserId(principal));
+        UserId userId = new UserId(PrincipalUtils.requireUserId(principal));
         UserBookResult result = getUserBookUseCase.query(new GetUserBookQuery(userId.value(), bookId));
         return ResponseEntity.ok(UserBookResponse.from(result));
     }
@@ -104,7 +102,7 @@ public class UserBookController {
             @PathVariable Long bookId,
             @Valid @RequestBody UpdateUserBookStatusRequest request
     ) {
-        UserId userId = new UserId(resolveUserId(principal));
+        UserId userId = new UserId(PrincipalUtils.requireUserId(principal));
         UserBookResult result = updateUserBookStatusUseCase.execute(
                 new UpdateUserBookStatusCommand(userId.value(), bookId, request.status())
         );
@@ -117,7 +115,7 @@ public class UserBookController {
             @PathVariable Long bookId,
             @Valid @RequestBody UpdateUserBookProgressRequest request
     ) {
-        UserId userId = new UserId(resolveUserId(principal));
+        UserId userId = new UserId(PrincipalUtils.requireUserId(principal));
         UserBookResult result = updateUserBookProgressUseCase.execute(
                 new UpdateUserBookProgressCommand(userId.value(), bookId, request.progress())
         );
@@ -130,7 +128,7 @@ public class UserBookController {
             @PathVariable Long bookId,
             @Valid @RequestBody UpdateUserBookRatingRequest request
     ) {
-        UserId userId = new UserId(resolveUserId(principal));
+        UserId userId = new UserId(PrincipalUtils.requireUserId(principal));
         UserBookResult result = updateUserBookRatingUseCase.execute(
                 new UpdateUserBookRatingCommand(userId.value(), bookId, request.rating())
         );
@@ -143,7 +141,7 @@ public class UserBookController {
             @PathVariable Long bookId,
             @Valid @RequestBody UpdateUserBookMemoRequest request
     ) {
-        UserId userId = new UserId(resolveUserId(principal));
+        UserId userId = new UserId(PrincipalUtils.requireUserId(principal));
         UserBookResult result = updateUserBookMemoUseCase.execute(
                 new UpdateUserBookMemoCommand(userId.value(), bookId, request.memo())
         );
@@ -155,7 +153,7 @@ public class UserBookController {
             @AuthenticationPrincipal Object principal,
             @PathVariable Long bookId
     ) {
-        UserId userId = new UserId(resolveUserId(principal));
+        UserId userId = new UserId(PrincipalUtils.requireUserId(principal));
         deleteUserBookUseCase.execute(new DeleteUserBookCommand(userId.value(), bookId));
         return ResponseEntity.noContent().build();
     }
@@ -164,22 +162,12 @@ public class UserBookController {
     public ResponseEntity<UserBookStatisticsResponse> statistics(
             @AuthenticationPrincipal Object principal
     ) {
-        UserId userId = new UserId(resolveUserId(principal));
+        UserId userId = new UserId(PrincipalUtils.requireUserId(principal));
         return ResponseEntity.ok(
                 UserBookStatisticsResponse.from(
                         getUserBookStatisticsUseCase.query(new GetUserBookStatisticsQuery(userId.value()))
                 )
         );
-    }
-
-    private Long resolveUserId(Object principal) {
-        if (principal instanceof CustomOAuth2User customOAuth2User) {
-            return customOAuth2User.getUserId();
-        }
-        if (principal instanceof UserDetails userDetails) {
-            return Long.parseLong(userDetails.getUsername());
-        }
-        throw new IllegalArgumentException("Unauthorized");
     }
 
     private BookSearchItem toBookSearchItem(AddUserBookRequest request) {
@@ -198,3 +186,4 @@ public class UserBookController {
         );
     }
 }
+import org.yyubin.api.common.PrincipalUtils;

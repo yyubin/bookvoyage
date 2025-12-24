@@ -5,7 +5,6 @@ import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -41,7 +40,7 @@ public class ReviewBookmarkController {
             @AuthenticationPrincipal Object principal,
             @PathVariable Long reviewId
     ) {
-        Long userId = resolveUserId(principal);
+        Long userId = PrincipalUtils.requireUserId(principal);
         ReviewBookmark bookmark = addBookmarkUseCase.add(new AddBookmarkCommand(userId, reviewId));
         return ResponseEntity.status(201).body(BookmarkActionResponse.bookmarked(reviewId, bookmark.createdAt()));
     }
@@ -51,7 +50,7 @@ public class ReviewBookmarkController {
             @AuthenticationPrincipal Object principal,
             @PathVariable Long reviewId
     ) {
-        Long userId = resolveUserId(principal);
+        Long userId = PrincipalUtils.requireUserId(principal);
         removeBookmarkUseCase.remove(new RemoveBookmarkCommand(userId, reviewId));
         return ResponseEntity.noContent().build();
     }
@@ -62,19 +61,11 @@ public class ReviewBookmarkController {
             @RequestParam(value = "cursor", required = false) Long cursor,
             @RequestParam(value = "size", required = false) @Min(1) @Max(MAX_PAGE_SIZE) Integer size
     ) {
-        Long userId = resolveUserId(principal);
+        Long userId = PrincipalUtils.requireUserId(principal);
         int pageSize = size == null ? DEFAULT_PAGE_SIZE : Math.min(size, MAX_PAGE_SIZE);
         ReviewBookmarkPageResult result = getBookmarksUseCase.query(new GetBookmarksQuery(userId, cursor, pageSize));
         return ResponseEntity.ok(BookmarkPageResponse.from(result));
     }
 
-    private Long resolveUserId(Object principal) {
-        if (principal instanceof org.yyubin.infrastructure.security.oauth2.CustomOAuth2User customOAuth2User) {
-            return customOAuth2User.getUserId();
-        }
-        if (principal instanceof UserDetails userDetails) {
-            return Long.parseLong(userDetails.getUsername());
-        }
-        throw new IllegalArgumentException("Unauthorized");
-    }
 }
+import org.yyubin.api.common.PrincipalUtils;

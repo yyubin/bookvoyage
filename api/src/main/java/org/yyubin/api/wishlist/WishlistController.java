@@ -4,7 +4,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,7 +23,7 @@ import org.yyubin.application.wishlist.dto.WishlistResult;
 import org.yyubin.application.wishlist.query.GetWishlistQuery;
 import org.yyubin.application.wishlist.query.WishlistSort;
 import org.yyubin.domain.book.BookSearchItem;
-import org.yyubin.infrastructure.security.oauth2.CustomOAuth2User;
+import org.yyubin.api.common.PrincipalUtils;
 
 @RestController
 @RequestMapping("/api/wishlist")
@@ -60,7 +59,7 @@ public class WishlistController {
             @AuthenticationPrincipal Object principal,
             @RequestParam(value = "sort", required = false) String sort
     ) {
-        Long userId = resolveUserId(principal);
+        Long userId = PrincipalUtils.requireUserId(principal);
         WishlistResult result = getWishlistUseCase.query(new GetWishlistQuery(userId, WishlistSort.from(sort)));
         return ResponseEntity.ok(WishlistResponse.from(result));
     }
@@ -81,13 +80,4 @@ public class WishlistController {
         );
     }
 
-    private Long resolveUserId(Object principal) {
-        if (principal instanceof CustomOAuth2User customOAuth2User) {
-            return customOAuth2User.getUserId();
-        }
-        if (principal instanceof UserDetails userDetails) {
-            return Long.parseLong(userDetails.getUsername());
-        }
-        throw new IllegalArgumentException("Unauthorized");
-    }
 }

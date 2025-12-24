@@ -133,6 +133,28 @@ public class RecommendationCacheService {
     }
 
     /**
+     * 추천 점수 증분 반영 (실시간 시그널)
+     */
+    public void incrementBookScore(Long userId, Long bookId, double delta) {
+        if (userId == null || bookId == null) {
+            return;
+        }
+        String key = getRecommendationKey(userId);
+        String member = "book:" + bookId;
+        try {
+            redisTemplate.opsForZSet().incrementScore(key, member, delta);
+            long size = redisTemplate.opsForZSet().size(key);
+            if (size > MAX_CACHED_ITEMS) {
+                redisTemplate.opsForZSet().removeRange(key, 0, size - MAX_CACHED_ITEMS - 1);
+            }
+            int ttlHours = properties.getCache().getTtlHours();
+            redisTemplate.expire(key, ttlHours, TimeUnit.HOURS);
+        } catch (Exception e) {
+            log.error("Failed to increment score for user {} book {}", userId, bookId, e);
+        }
+    }
+
+    /**
      * 추천 결과 삭제
      *
      * @param userId 사용자 ID

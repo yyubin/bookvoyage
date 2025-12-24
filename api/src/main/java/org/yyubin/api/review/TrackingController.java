@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.yyubin.api.common.PrincipalUtils;
 import org.yyubin.api.review.dto.ReviewTrackingRequest;
 import org.yyubin.application.review.TrackReviewEventUseCase;
 import org.yyubin.application.review.command.ReviewTrackingCommand;
@@ -26,7 +27,7 @@ public class TrackingController {
             @Valid @RequestBody ReviewTrackingRequest request,
             @AuthenticationPrincipal Object principal
     ) {
-        Long userId = resolveUserId(principal);
+        Long userId = PrincipalUtils.resolveUserId(principal);
         trackReviewEventUseCase.track(ReviewTrackingCommand.builder()
                 .reviewId(reviewId)
                 .bookId(request.bookId())
@@ -41,20 +42,4 @@ public class TrackingController {
         return ResponseEntity.accepted().build();
     }
 
-    private Long resolveUserId(Object principal) {
-        if (principal == null) {
-            return null;
-        }
-        if (principal instanceof org.yyubin.infrastructure.security.oauth2.CustomOAuth2User oauth2User) {
-            return oauth2User.getUserId();
-        }
-        if (principal instanceof org.springframework.security.core.userdetails.UserDetails userDetails) {
-            try {
-                return Long.parseLong(userDetails.getUsername());
-            } catch (NumberFormatException ignored) {
-                return null;
-            }
-        }
-        return null;
-    }
 }
