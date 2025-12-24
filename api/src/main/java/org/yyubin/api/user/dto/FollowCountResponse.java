@@ -1,17 +1,18 @@
 package org.yyubin.api.user.dto;
 
+import org.yyubin.api.common.CountFormatter;
 import org.yyubin.application.user.dto.FollowCountResult;
 
 public record FollowCountResponse(
-        Long followingCount,
-        Long followerCount
+        String followingCount,
+        String followerCount
 ) {
 
     public static FollowCountResponse onlyFollowing(FollowCountResult result) {
-        return new FollowCountResponse(result.followingCount(), null);
+        return new FollowCountResponse(CountFormatter.format(result.followingCount()), null);
     }
 
     public static FollowCountResponse onlyFollowers(FollowCountResult result) {
-        return new FollowCountResponse(null, result.followerCount());
+        return new FollowCountResponse(null, CountFormatter.format(result.followerCount()));
     }
 }

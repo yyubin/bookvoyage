@@ -2,6 +2,7 @@ package org.yyubin.api.review.dto;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import org.yyubin.api.common.CountFormatter;
 import org.yyubin.application.review.dto.ReviewResult;
 import org.yyubin.domain.review.BookGenre;
 import org.yyubin.domain.review.ReviewVisibility;
@@ -26,7 +27,7 @@ public record ReviewResponse(
         LocalDateTime createdAt,
         ReviewVisibility visibility,
         boolean deleted,
-        long viewCount,
+        String viewCount,
         BookGenre genre,
         List<String> keywords,
         List<String> highlights,
@@ -54,7 +55,7 @@ public record ReviewResponse(
                 result.createdAt(),
                 result.visibility(),
                 result.deleted(),
-                result.viewCount(),
+                CountFormatter.format(result.viewCount()),
                 result.genre(),
                 result.keywords(),
                 result.highlights(),
