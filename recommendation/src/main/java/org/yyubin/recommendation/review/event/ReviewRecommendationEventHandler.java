@@ -11,14 +11,14 @@ import org.springframework.stereotype.Component;
 import org.yyubin.application.event.EventPayload;
 import org.yyubin.domain.review.HighlightNormalizer;
 import org.yyubin.recommendation.review.RecommendationIngestCommand;
-import org.yyubin.recommendation.review.ReviewRecommendationService;
+import org.yyubin.recommendation.review.HighlightReviewRecommendationService;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class ReviewRecommendationEventHandler {
 
-    private final ReviewRecommendationService reviewRecommendationService;
+    private final HighlightReviewRecommendationService reviewRecommendationService;
     private final HighlightNormalizer highlightNormalizer;
 
     @Async("recommendationTaskExecutor")

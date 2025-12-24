@@ -32,7 +32,7 @@ import org.yyubin.infrastructure.persistence.review.keyword.KeywordJpaRepository
 import org.yyubin.infrastructure.persistence.review.keyword.ReviewKeywordEntity;
 import org.yyubin.infrastructure.persistence.review.keyword.ReviewKeywordJpaRepository;
 import org.yyubin.recommendation.review.RecommendationIngestCommand;
-import org.yyubin.recommendation.review.ReviewRecommendationService;
+import org.yyubin.recommendation.review.HighlightReviewRecommendationService;
 
 @Slf4j
 @Configuration
@@ -47,7 +47,7 @@ public class ReviewContentSyncJobConfig {
     private final HighlightJpaRepository highlightJpaRepository;
     private final ReviewKeywordJpaRepository reviewKeywordJpaRepository;
     private final KeywordJpaRepository keywordJpaRepository;
-    private final ReviewRecommendationService reviewRecommendationService;
+    private final HighlightReviewRecommendationService reviewRecommendationService;
 
     @Bean
     public Job reviewContentSyncJob(Step reviewContentSyncStep) {

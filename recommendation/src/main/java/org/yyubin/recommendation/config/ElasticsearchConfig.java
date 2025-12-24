@@ -12,7 +12,10 @@ import org.springframework.beans.factory.annotation.Value;
  * - Book/Review 인덱싱 및 Semantic Search
  */
 @Configuration
-@EnableElasticsearchRepositories(basePackages = "org.yyubin.recommendation.search.repository")
+@EnableElasticsearchRepositories(basePackages = {
+        "org.yyubin.recommendation.search.repository",
+        "org.yyubin.recommendation.review.search"
+})
 public class ElasticsearchConfig extends ElasticsearchConfiguration {
 
     @Value("${spring.elasticsearch.uris}")

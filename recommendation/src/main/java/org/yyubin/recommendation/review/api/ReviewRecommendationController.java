@@ -7,14 +7,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.yyubin.recommendation.review.HighlightRecommendationResult;
-import org.yyubin.recommendation.review.ReviewRecommendationService;
+import org.yyubin.recommendation.review.HighlightReviewRecommendationService;
 
 @RestController
 @RequestMapping("/recommendations/reviews")
 @RequiredArgsConstructor
 public class ReviewRecommendationController {
 
-    private final ReviewRecommendationService reviewRecommendationService;
+    private final HighlightReviewRecommendationService reviewRecommendationService;
 
     @GetMapping("/highlights")
     public ResponseEntity<HighlightRecommendationResult> recommendByHighlight(

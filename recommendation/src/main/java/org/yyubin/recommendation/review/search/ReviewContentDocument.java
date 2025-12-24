@@ -13,7 +13,7 @@ import org.springframework.data.elasticsearch.annotations.Setting;
 
 @Getter
 @Builder
-@Document(indexName = "review_content")
+@Document(indexName = "review_content", createIndex = false)
 @Setting(settingPath = "elasticsearch/review-settings.json")
 @Mapping(mappingPath = "elasticsearch/review-mappings.json")
 public class ReviewContentDocument {

@@ -10,7 +10,10 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
  * - User-Book-Author-Genre-Topic 관계 모델링
  */
 @Configuration
-@EnableNeo4jRepositories(basePackages = "org.yyubin.recommendation.graph.repository")
+@EnableNeo4jRepositories(basePackages = {
+        "org.yyubin.recommendation.graph.repository",
+        "org.yyubin.recommendation.review.graph"
+})
 @EnableTransactionManagement
 public class Neo4jConfig {
 }

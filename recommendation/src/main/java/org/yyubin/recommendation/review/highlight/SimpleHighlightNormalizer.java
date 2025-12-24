@@ -1,9 +1,11 @@
 package org.yyubin.recommendation.review.highlight;
 
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import org.yyubin.domain.review.HighlightNormalizer;
 
-@Component
+@Component("recommendationHighlightNormalizer")
+@Primary
 public class SimpleHighlightNormalizer implements HighlightNormalizer {
 
     @Override
