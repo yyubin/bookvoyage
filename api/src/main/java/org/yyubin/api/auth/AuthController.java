@@ -62,6 +62,17 @@ public class AuthController {
         return ResponseEntity.ok(AuthResponse.from(authResult));
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(HttpServletResponse response) {
+        log.info("Logout request");
+
+        // 쿠키 삭제 (MaxAge를 0으로 설정)
+        deleteCookie(response, "accessToken");
+        deleteCookie(response, "refreshToken");
+
+        return ResponseEntity.ok().build();
+    }
+
     private void setTokenCookies(HttpServletResponse response, String accessToken, String refreshToken) {
         // Access Token 쿠키 설정
         Cookie accessTokenCookie = createCookie(
@@ -88,5 +99,14 @@ public class AuthController {
         cookie.setMaxAge(maxAge);
         // SameSite 속성은 Spring Boot 3.x부터 ResponseCookie 또는 헤더를 통해 설정 가능
         return cookie;
+    }
+
+    private void deleteCookie(HttpServletResponse response, String name) {
+        Cookie cookie = new Cookie(name, null);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(0); // 즉시 만료
+        response.addCookie(cookie);
     }
 }

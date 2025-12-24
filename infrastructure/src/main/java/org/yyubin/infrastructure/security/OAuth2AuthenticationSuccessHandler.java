@@ -47,7 +47,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         log.info("OAuth2 authentication success for user: {}", oAuth2User.getEmail());
 
         // 프론트엔드 리다이렉트 URL (토큰은 쿠키로 전달됨)
-        String targetUrl = "/oauth2/redirect";
+        String targetUrl = "http://localhost:3000/oauth2/redirect";
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
 
