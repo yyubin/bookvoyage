@@ -10,6 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.yyubin.application.feed.dto.FeedPageResult;
 import org.yyubin.application.feed.port.FeedItemPort;
 import org.yyubin.application.feed.query.GetFeedQuery;
+import org.yyubin.application.review.LoadHighlightsUseCase;
 import org.yyubin.application.review.LoadKeywordsUseCase;
 import org.yyubin.application.review.port.LoadBookPort;
 import org.yyubin.application.review.port.LoadReviewPort;
@@ -47,6 +48,9 @@ class FeedQueryServiceTest {
 
     @Mock
     private LoadKeywordsUseCase loadKeywordsUseCase;
+
+    @Mock
+    private LoadHighlightsUseCase loadHighlightsUseCase;
 
     @InjectMocks
     private FeedQueryService feedQueryService;
@@ -114,6 +118,7 @@ class FeedQueryServiceTest {
         when(loadReviewPort.loadById(101L)).thenReturn(review2);
         when(loadBookPort.loadById(1L)).thenReturn(Optional.of(testBook));
         when(loadKeywordsUseCase.loadKeywords(any())).thenReturn(List.of());
+        when(loadHighlightsUseCase.loadHighlights(any())).thenReturn(List.of());
 
         // When
         FeedPageResult result = feedQueryService.query(query);
@@ -138,6 +143,7 @@ class FeedQueryServiceTest {
         when(loadReviewPort.loadById(100L)).thenReturn(testReview);
         when(loadBookPort.loadById(1L)).thenReturn(Optional.of(testBook));
         when(loadKeywordsUseCase.loadKeywords(any())).thenReturn(List.of());
+        when(loadHighlightsUseCase.loadHighlights(any())).thenReturn(List.of());
 
         // When
         FeedPageResult result = feedQueryService.query(query);
@@ -182,6 +188,7 @@ class FeedQueryServiceTest {
         when(loadReviewPort.loadById(100L)).thenReturn(testReview);
         when(loadBookPort.loadById(1L)).thenReturn(Optional.of(testBook));
         when(loadKeywordsUseCase.loadKeywords(any())).thenReturn(List.of());
+        when(loadHighlightsUseCase.loadHighlights(any())).thenReturn(List.of());
 
         // When
         FeedPageResult result = feedQueryService.query(query);

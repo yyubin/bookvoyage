@@ -24,11 +24,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.yyubin.api.review.dto.CreateReviewRequest;
 import org.yyubin.api.review.dto.ReviewResponse;
+import org.yyubin.api.review.dto.ReviewPageResponse;
 import org.yyubin.api.review.dto.UserReviewPageResponse;
 import org.yyubin.api.review.dto.UpdateReviewRequest;
 import org.yyubin.application.review.CreateReviewUseCase;
 import org.yyubin.application.review.DeleteReviewUseCase;
 import org.yyubin.application.review.GetReviewUseCase;
+import org.yyubin.application.review.GetReviewsByHighlightUseCase;
 import org.yyubin.application.review.GetUserReviewsUseCase;
 import org.yyubin.application.review.UpdateReviewUseCase;
 import org.yyubin.application.review.dto.ReviewResult;
@@ -37,6 +39,7 @@ import org.yyubin.application.review.command.CreateReviewCommand;
 import org.yyubin.application.review.command.DeleteReviewCommand;
 import org.yyubin.application.review.command.UpdateReviewCommand;
 import org.yyubin.application.review.query.GetReviewQuery;
+import org.yyubin.application.review.query.GetReviewsByHighlightQuery;
 import org.yyubin.application.review.query.GetUserReviewsQuery;
 import org.yyubin.domain.review.ReviewVisibility;
 import org.yyubin.domain.review.BookGenre;
@@ -52,6 +55,7 @@ public class ReviewController {
     private final DeleteReviewUseCase deleteReviewUseCase;
     private final GetReviewUseCase getReviewUseCase;
     private final GetUserReviewsUseCase getUserReviewsUseCase;
+    private final GetReviewsByHighlightUseCase getReviewsByHighlightUseCase;
     private final UpdateReviewUseCase updateReviewUseCase;
 
     @Operation(
@@ -98,6 +102,29 @@ public class ReviewController {
     }
 
     @Operation(
+            summary = "하이라이트 기반 리뷰 검색",
+            description = "하이라이트 키워드로 공개 리뷰를 조회합니다. 커서 기반 페이지네이션을 지원합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청", content = @Content)
+    })
+    @GetMapping("/highlights")
+    public ResponseEntity<ReviewPageResponse> getReviewsByHighlight(
+            @Parameter(description = "하이라이트 키워드", required = true, example = "인상적인 문장")
+            @RequestParam("highlight") String highlight,
+            @Parameter(description = "커서 (다음 페이지 조회용, 이전 응답의 nextCursor 값)", example = "100")
+            @RequestParam(required = false) Long cursor,
+            @Parameter(description = "페이지 크기", example = "20")
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        PagedReviewResult result = getReviewsByHighlightUseCase.query(
+                new GetReviewsByHighlightQuery(highlight, cursor, size)
+        );
+        return ResponseEntity.ok(ReviewPageResponse.from(result));
+    }
+
+    @Operation(
             summary = "리뷰 작성",
             description = "새로운 리뷰를 작성합니다. 도서 정보와 함께 리뷰 내용, 평점, 공개 범위 등을 설정할 수 있습니다.",
             security = @SecurityRequirement(name = "Bearer Authentication")
@@ -132,10 +159,12 @@ public class ReviewController {
                 request.pageCount(),
                 request.googleVolumeId(),
                 request.rating(),
+                request.summary(),
                 request.content(),
                 parseVisibilityOrDefault(request.visibility()),
                 parseGenreOrThrow(request.genre()),
-                request.keywords()
+                request.keywords(),
+                request.highlights()
         );
 
         ReviewResult result = createReviewUseCase.execute(command);
@@ -182,10 +211,12 @@ public class ReviewController {
                 request.pageCount(),
                 request.googleVolumeId(),
                 request.rating(),
+                request.summary(),
                 request.content(),
                 parseVisibilityNullable(request.visibility()),
                 parseGenreNullable(request.genre()),
-                request.keywords()
+                request.keywords(),
+                request.highlights()
         );
 
         ReviewResult result = updateReviewUseCase.execute(command);

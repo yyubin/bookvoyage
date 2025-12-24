@@ -21,6 +21,7 @@ public record ReviewResponse(
         Integer pageCount,
         String googleVolumeId,
         int rating,
+        String summary,
         String content,
         LocalDateTime createdAt,
         ReviewVisibility visibility,
@@ -28,6 +29,7 @@ public record ReviewResponse(
         long viewCount,
         BookGenre genre,
         List<String> keywords,
+        List<String> highlights,
         List<MentionResponse> mentions
 ) {
 
@@ -47,6 +49,7 @@ public record ReviewResponse(
                 result.pageCount(),
                 result.googleVolumeId(),
                 result.rating(),
+                result.summary(),
                 result.content(),
                 result.createdAt(),
                 result.visibility(),
@@ -54,6 +57,7 @@ public record ReviewResponse(
                 result.viewCount(),
                 result.genre(),
                 result.keywords(),
+                result.highlights(),
                 result.mentions().stream().map(MentionResponse::from).toList()
         );
     }

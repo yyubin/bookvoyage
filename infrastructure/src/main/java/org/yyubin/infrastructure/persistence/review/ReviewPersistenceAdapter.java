@@ -50,6 +50,19 @@ public class ReviewPersistenceAdapter implements SaveReviewPort, LoadReviewPort 
     }
 
     @Override
+    public List<Review> loadByHighlightNormalized(String normalizedHighlight, Long cursor, int size) {
+        List<ReviewEntity> entities;
+        if (cursor != null) {
+            entities = reviewJpaRepository.findByHighlightNormalizedAndIdLessThan(normalizedHighlight, cursor, size);
+        } else {
+            entities = reviewJpaRepository.findByHighlightNormalized(normalizedHighlight, size);
+        }
+        return entities.stream()
+                .map(ReviewEntity::toDomain)
+                .toList();
+    }
+
+    @Override
     @Transactional
     public Review save(Review review) {
         ReviewEntity entity = ReviewEntity.fromDomain(review);

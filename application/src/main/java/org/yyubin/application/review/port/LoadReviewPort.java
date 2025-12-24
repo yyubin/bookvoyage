@@ -7,4 +7,6 @@ public interface LoadReviewPort {
     Review loadById(Long reviewId);
 
     List<Review> loadByUserId(Long userId, Long viewerId, Long cursor, int size);
+
+    List<Review> loadByHighlightNormalized(String normalizedHighlight, Long cursor, int size);
 }

@@ -18,9 +18,11 @@ public record CreateReviewCommand(
         Integer pageCount,
         String googleVolumeId,
         int rating,
+        String summary,
         String content,
         ReviewVisibility visibility,
         BookGenre genre,
-        List<String> keywords
+        List<String> keywords,
+        List<String> highlights
 ) {
 }

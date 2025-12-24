@@ -23,6 +23,7 @@ public record ReviewResult(
         Integer pageCount,
         String googleVolumeId,
         int rating,
+        String summary,
         String content,
         LocalDateTime createdAt,
         ReviewVisibility visibility,
@@ -30,10 +31,11 @@ public record ReviewResult(
         long viewCount,
         BookGenre genre,
         List<String> keywords,
+        List<String> highlights,
         List<org.yyubin.domain.review.Mention> mentions
 ) {
 
-    public static ReviewResult from(Review review, Book book, List<String> keywords) {
+    public static ReviewResult from(Review review, Book book, List<String> keywords, List<String> highlights) {
         return new ReviewResult(
                 review.getId().getValue(),
                 book.getId().getValue(),
@@ -49,6 +51,7 @@ public record ReviewResult(
                 book.getMetadata().getPageCount(),
                 book.getMetadata().getGoogleVolumeId(),
                 review.getRating().getValue(),
+                review.getSummary(),
                 review.getContent(),
                 review.getCreatedAt(),
                 review.getVisibility(),
@@ -56,11 +59,12 @@ public record ReviewResult(
                 review.getViewCount(),
                 review.getGenre(),
                 keywords != null ? keywords : Collections.emptyList(),
+                highlights != null ? highlights : Collections.emptyList(),
                 review.getMentions()
         );
     }
 
-    public static ReviewResult fromWithViewCount(Review review, Book book, List<String> keywords, long viewCount) {
+    public static ReviewResult fromWithViewCount(Review review, Book book, List<String> keywords, List<String> highlights, long viewCount) {
         return new ReviewResult(
                 review.getId().getValue(),
                 book.getId().getValue(),
@@ -76,6 +80,7 @@ public record ReviewResult(
                 book.getMetadata().getPageCount(),
                 book.getMetadata().getGoogleVolumeId(),
                 review.getRating().getValue(),
+                review.getSummary(),
                 review.getContent(),
                 review.getCreatedAt(),
                 review.getVisibility(),
@@ -83,6 +88,7 @@ public record ReviewResult(
                 viewCount,
                 review.getGenre(),
                 keywords != null ? keywords : Collections.emptyList(),
+                highlights != null ? highlights : Collections.emptyList(),
                 review.getMentions()
         );
     }

@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.yyubin.domain.review.ReviewVisibility;
+import org.springframework.data.repository.query.Param;
 
 @Repository
 public interface ReviewJpaRepository extends JpaRepository<ReviewEntity, Long> {
@@ -48,4 +49,33 @@ public interface ReviewJpaRepository extends JpaRepository<ReviewEntity, Long> {
     List<ReviewEntity> findByUserIdAndDeletedFalseAndVisibilityOrderByIdDesc(Long userId, ReviewVisibility visibility, Pageable pageable);
 
     List<ReviewEntity> findByUserIdAndDeletedFalseAndVisibilityAndIdLessThanOrderByIdDesc(Long userId, ReviewVisibility visibility, Long id, Pageable pageable);
+
+    @Query(value = """
+            SELECT r.* FROM review r
+            JOIN review_highlight rh ON r.id = rh.review_id
+            JOIN highlight h ON rh.highlight_id = h.id
+            WHERE h.normalized_value = :normalized
+              AND r.is_deleted = false
+              AND r.visibility = 'PUBLIC'
+            ORDER BY r.id DESC
+            LIMIT :limit
+            """, nativeQuery = true)
+    List<ReviewEntity> findByHighlightNormalized(@Param("normalized") String normalized, @Param("limit") int limit);
+
+    @Query(value = """
+            SELECT r.* FROM review r
+            JOIN review_highlight rh ON r.id = rh.review_id
+            JOIN highlight h ON rh.highlight_id = h.id
+            WHERE h.normalized_value = :normalized
+              AND r.is_deleted = false
+              AND r.visibility = 'PUBLIC'
+              AND r.id < :cursor
+            ORDER BY r.id DESC
+            LIMIT :limit
+            """, nativeQuery = true)
+    List<ReviewEntity> findByHighlightNormalizedAndIdLessThan(
+            @Param("normalized") String normalized,
+            @Param("cursor") Long cursor,
+            @Param("limit") int limit
+    );
 }

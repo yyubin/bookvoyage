@@ -22,6 +22,9 @@ public record UpdateReviewRequest(
         @Max(value = 5, message = "Rating cannot exceed 5")
         Integer rating,
 
+        @Size(max = 200, message = "Summary must not exceed 200 characters")
+        String summary,
+
         @Size(max = 5000, message = "Review content must not exceed 5000 characters")
         String content,
 
@@ -29,6 +32,8 @@ public record UpdateReviewRequest(
 
         String genre,
 
-        List<String> keywords
+        List<String> keywords,
+
+        List<String> highlights
 ) {
 }

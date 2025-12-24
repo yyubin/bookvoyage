@@ -19,9 +19,11 @@ public record UpdateReviewCommand(
         Integer pageCount,
         String googleVolumeId,
         Integer rating,
+        String summary,
         String content,
         ReviewVisibility visibility,
         BookGenre genre,
-        List<String> keywords
+        List<String> keywords,
+        List<String> highlights
 ) {
 }

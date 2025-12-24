@@ -21,7 +21,9 @@ import org.yyubin.application.review.port.LoadBookPort;
 import org.yyubin.application.review.port.SaveBookPort;
 import org.yyubin.application.userbook.command.AddUserBookCommand;
 import org.yyubin.application.userbook.command.DeleteUserBookCommand;
+import org.yyubin.application.userbook.command.UpdateUserBookMemoCommand;
 import org.yyubin.application.userbook.command.UpdateUserBookProgressCommand;
+import org.yyubin.application.userbook.command.UpdateUserBookRatingCommand;
 import org.yyubin.application.userbook.command.UpdateUserBookStatusCommand;
 import org.yyubin.application.userbook.dto.UserBookListResult;
 import org.yyubin.application.userbook.dto.UserBookResult;
@@ -215,6 +217,86 @@ class UserBookServiceTest {
         );
 
         assertThat(result.progressPercentage()).isEqualTo(40);
+    }
+
+    @Test
+    @DisplayName("평점 업데이트")
+    void updateRating_updatesValue() {
+        UserBook userBook = UserBook.create(userId, book.getId(), ReadingStatus.COMPLETED);
+        UserBook updated = userBook.rate(5);
+
+        when(userBookPort.findByUserAndBook(userId, book.getId())).thenReturn(Optional.of(userBook));
+        when(userBookPort.save(any(UserBook.class))).thenReturn(updated);
+        when(loadBookPort.loadById(book.getId().getValue())).thenReturn(Optional.of(book));
+
+        UserBookResult result = userBookService.execute(
+                new UpdateUserBookRatingCommand(userId.value(), book.getId().getValue(), 5)
+        );
+
+        assertThat(result.rating()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("메모 업데이트")
+    void updateMemo_updatesContent() {
+        UserBook userBook = UserBook.create(userId, book.getId(), ReadingStatus.READING);
+        UserBook updated = userBook.updateMemo("memo");
+
+        when(userBookPort.findByUserAndBook(userId, book.getId())).thenReturn(Optional.of(userBook));
+        when(userBookPort.save(any(UserBook.class))).thenReturn(updated);
+        when(loadBookPort.loadById(book.getId().getValue())).thenReturn(Optional.of(book));
+
+        UserBookResult result = userBookService.execute(
+                new UpdateUserBookMemoCommand(userId.value(), book.getId().getValue(), "memo")
+        );
+
+        assertThat(result.memo()).isEqualTo("memo");
+    }
+
+    @Test
+    @DisplayName("상태 변경 - 잘못된 상태 입력 시 예외")
+    void updateStatus_invalidStatus_throwsException() {
+        UserBook userBook = UserBook.create(userId, book.getId(), ReadingStatus.WANT_TO_READ);
+
+        when(userBookPort.findByUserAndBook(userId, book.getId())).thenReturn(Optional.of(userBook));
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> userBookService.execute(
+                        new UpdateUserBookStatusCommand(userId.value(), book.getId().getValue(), "INVALID")
+                ))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Invalid reading status");
+    }
+
+    @Test
+    @DisplayName("진행률 업데이트 - 범위 초과 시 예외")
+    void updateProgress_outOfRange_throwsException() {
+        UserBook reading = UserBook.create(userId, book.getId(), ReadingStatus.READING).startReading();
+
+        when(userBookPort.findByUserAndBook(userId, book.getId())).thenReturn(Optional.of(reading));
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> userBookService.execute(
+                        new UpdateUserBookProgressCommand(userId.value(), book.getId().getValue(), 101)
+                ))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Progress must be between 0 and 100");
+    }
+
+    @Test
+    @DisplayName("책 정보 미존재 시 예외")
+    void getUserBook_bookNotFound_throwsException() {
+        UserBook userBook = UserBook.create(userId, book.getId(), ReadingStatus.READING);
+
+        when(userBookPort.findByUserAndBook(userId, book.getId())).thenReturn(Optional.of(userBook));
+        when(loadBookPort.loadById(book.getId().getValue())).thenReturn(Optional.empty());
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> userBookService.query(
+                        new org.yyubin.application.userbook.query.GetUserBookQuery(
+                                userId.value(),
+                                book.getId().getValue()
+                        )
+                ))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Book not found");
     }
 
     @Test

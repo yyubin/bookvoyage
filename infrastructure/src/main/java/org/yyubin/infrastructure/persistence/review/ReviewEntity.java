@@ -68,6 +68,9 @@ public class ReviewEntity {
     @Column(name = "rating", nullable = false)
     private Integer rating;
 
+    @Column(name = "summary", length = 200)
+    private String summary;
+
     @Column(name = "content", columnDefinition = "TEXT")
     private String content;
 
@@ -98,6 +101,7 @@ public class ReviewEntity {
                 .userId(review.getUserId().value())
                 .bookId(review.getBookId().getValue())
                 .rating(review.getRating().getValue())
+                .summary(review.getSummary())
                 .content(review.getContent())
                 .createdAt(review.getCreatedAt())
                 .visibility(review.getVisibility())
@@ -114,6 +118,7 @@ public class ReviewEntity {
                 new UserId(this.userId),
                 BookId.of(this.bookId),
                 Rating.of(this.rating),
+                this.summary,
                 this.content,
                 this.createdAt,
                 this.visibility,

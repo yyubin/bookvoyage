@@ -8,6 +8,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.yyubin.application.event.EventPublisher;
+import org.yyubin.application.review.LoadHighlightsUseCase;
 import org.yyubin.application.review.LoadKeywordsUseCase;
 import org.yyubin.application.review.dto.PagedReviewResult;
 import org.yyubin.application.review.dto.ReviewResult;
@@ -44,10 +45,16 @@ class ReviewQueryServiceTest {
     private LoadKeywordsUseCase loadKeywordsUseCase;
 
     @Mock
+    private LoadHighlightsUseCase loadHighlightsUseCase;
+
+    @Mock
     private ReviewViewMetricPort reviewViewMetricPort;
 
     @Mock
     private EventPublisher eventPublisher;
+
+    @Mock
+    private HighlightNormalizer highlightNormalizer;
 
     @InjectMocks
     private ReviewQueryService reviewQueryService;
@@ -103,6 +110,7 @@ class ReviewQueryServiceTest {
         when(loadReviewPort.loadById(100L)).thenReturn(testReview);
         when(loadBookPort.loadById(1L)).thenReturn(Optional.of(testBook));
         when(loadKeywordsUseCase.loadKeywords(any(ReviewId.class))).thenReturn(List.of());
+        when(loadHighlightsUseCase.loadHighlights(any(ReviewId.class))).thenReturn(List.of());
         when(reviewViewMetricPort.incrementAndGet(100L, 2L)).thenReturn(101L);
         when(reviewViewMetricPort.getCachedCount(100L)).thenReturn(Optional.of(101L));
 
@@ -128,6 +136,7 @@ class ReviewQueryServiceTest {
         when(loadReviewPort.loadById(100L)).thenReturn(testReview);
         when(loadBookPort.loadById(1L)).thenReturn(Optional.of(testBook));
         when(loadKeywordsUseCase.loadKeywords(any(ReviewId.class))).thenReturn(List.of());
+        when(loadHighlightsUseCase.loadHighlights(any(ReviewId.class))).thenReturn(List.of());
         when(reviewViewMetricPort.incrementAndGet(100L, null)).thenReturn(101L);
         when(reviewViewMetricPort.getCachedCount(100L)).thenReturn(Optional.of(150L));
 
@@ -149,6 +158,7 @@ class ReviewQueryServiceTest {
         when(loadReviewPort.loadById(100L)).thenReturn(privateReview);
         when(loadBookPort.loadById(1L)).thenReturn(Optional.of(testBook));
         when(loadKeywordsUseCase.loadKeywords(any(ReviewId.class))).thenReturn(List.of());
+        when(loadHighlightsUseCase.loadHighlights(any(ReviewId.class))).thenReturn(List.of());
         when(reviewViewMetricPort.incrementAndGet(100L, 1L)).thenReturn(101L);
         when(reviewViewMetricPort.getCachedCount(100L)).thenReturn(Optional.of(101L));
 
@@ -232,6 +242,7 @@ class ReviewQueryServiceTest {
         when(loadBookPort.loadById(1L)).thenReturn(Optional.of(testBook));
         when(loadBookPort.loadById(2L)).thenReturn(Optional.of(book2));
         when(loadKeywordsUseCase.loadKeywords(any(ReviewId.class))).thenReturn(List.of());
+        when(loadHighlightsUseCase.loadHighlights(any(ReviewId.class))).thenReturn(List.of());
         when(reviewViewMetricPort.getCachedCount(anyLong())).thenReturn(Optional.empty());
 
         // When
@@ -256,6 +267,7 @@ class ReviewQueryServiceTest {
                 .thenReturn(List.of(review1));
         when(loadBookPort.loadById(1L)).thenReturn(Optional.of(testBook));
         when(loadKeywordsUseCase.loadKeywords(any(ReviewId.class))).thenReturn(List.of());
+        when(loadHighlightsUseCase.loadHighlights(any(ReviewId.class))).thenReturn(List.of());
         when(reviewViewMetricPort.getCachedCount(anyLong())).thenReturn(Optional.empty());
 
         // When
@@ -299,6 +311,7 @@ class ReviewQueryServiceTest {
                 .thenReturn(List.of(review1));
         when(loadBookPort.loadById(1L)).thenReturn(Optional.of(testBook));
         when(loadKeywordsUseCase.loadKeywords(any(ReviewId.class))).thenReturn(List.of());
+        when(loadHighlightsUseCase.loadHighlights(any(ReviewId.class))).thenReturn(List.of());
         when(reviewViewMetricPort.getCachedCount(anyLong())).thenReturn(Optional.empty());
 
         // When

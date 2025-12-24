@@ -9,6 +9,7 @@ import org.yyubin.application.feed.dto.FeedItemResult;
 import org.yyubin.application.feed.dto.FeedPageResult;
 import org.yyubin.application.feed.port.FeedItemPort;
 import org.yyubin.application.feed.query.GetFeedQuery;
+import org.yyubin.application.review.LoadHighlightsUseCase;
 import org.yyubin.application.review.LoadKeywordsUseCase;
 import org.yyubin.application.review.dto.ReviewResult;
 import org.yyubin.application.review.port.LoadBookPort;
@@ -27,6 +28,7 @@ public class FeedQueryService implements GetFeedUseCase {
     private final LoadReviewPort loadReviewPort;
     private final LoadBookPort loadBookPort;
     private final LoadKeywordsUseCase loadKeywordsUseCase;
+    private final LoadHighlightsUseCase loadHighlightsUseCase;
 
     @Override
     public FeedPageResult query(GetFeedQuery query) {
@@ -49,7 +51,12 @@ public class FeedQueryService implements GetFeedUseCase {
         Review review = loadReviewPort.loadById(feedItem.getReviewId().getValue());
         Book book = loadBookPort.loadById(review.getBookId().getValue())
                 .orElseThrow(() -> new IllegalArgumentException("Book not found: " + review.getBookId().getValue()));
-        ReviewResult reviewResult = ReviewResult.from(review, book, loadKeywordsUseCase.loadKeywords(review.getId()));
+        ReviewResult reviewResult = ReviewResult.from(
+                review,
+                book,
+                loadKeywordsUseCase.loadKeywords(review.getId()),
+                loadHighlightsUseCase.loadHighlights(review.getId())
+        );
         return new FeedItemResult(feedItem.getId(), feedItem.getCreatedAt(), reviewResult);
     }
 }

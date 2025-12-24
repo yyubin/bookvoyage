@@ -28,6 +28,9 @@ public record CreateReviewRequest(
         @Max(value = 5, message = "Rating cannot exceed 5")
         int rating,
 
+        @Size(max = 200, message = "Summary must not exceed 200 characters")
+        String summary,
+
         @Size(max = 5000, message = "Review content must not exceed 5000 characters")
         String content,
 
@@ -36,6 +39,8 @@ public record CreateReviewRequest(
         @NotBlank(message = "Genre is required")
         String genre,
 
-        List<String> keywords
+        List<String> keywords,
+
+        List<String> highlights
 ) {
 }

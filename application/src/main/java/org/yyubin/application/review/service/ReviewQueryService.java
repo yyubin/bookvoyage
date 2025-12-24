@@ -9,7 +9,9 @@ import org.yyubin.application.event.EventPayload;
 import org.yyubin.application.event.EventPublisher;
 import org.yyubin.application.event.EventTopics;
 import org.yyubin.application.review.GetReviewUseCase;
+import org.yyubin.application.review.GetReviewsByHighlightUseCase;
 import org.yyubin.application.review.GetUserReviewsUseCase;
+import org.yyubin.application.review.LoadHighlightsUseCase;
 import org.yyubin.application.review.LoadKeywordsUseCase;
 import org.yyubin.application.review.dto.PagedReviewResult;
 import org.yyubin.application.review.dto.ReviewResult;
@@ -17,22 +19,26 @@ import org.yyubin.application.review.port.LoadBookPort;
 import org.yyubin.application.review.port.LoadReviewPort;
 import org.yyubin.application.review.port.ReviewViewMetricPort;
 import org.yyubin.application.review.query.GetReviewQuery;
+import org.yyubin.application.review.query.GetReviewsByHighlightQuery;
 import org.yyubin.application.review.query.GetUserReviewsQuery;
 import org.yyubin.domain.book.Book;
 import org.yyubin.domain.review.Review;
 import org.yyubin.domain.review.ReviewId;
+import org.yyubin.domain.review.HighlightNormalizer;
 import org.yyubin.domain.user.UserId;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class ReviewQueryService implements GetReviewUseCase, GetUserReviewsUseCase {
+public class ReviewQueryService implements GetReviewUseCase, GetUserReviewsUseCase, GetReviewsByHighlightUseCase {
 
     private final LoadReviewPort loadReviewPort;
     private final LoadBookPort loadBookPort;
     private final LoadKeywordsUseCase loadKeywordsUseCase;
+    private final LoadHighlightsUseCase loadHighlightsUseCase;
     private final ReviewViewMetricPort reviewViewMetricPort;
     private final EventPublisher eventPublisher;
+    private final HighlightNormalizer highlightNormalizer;
 
     @Override
     public ReviewResult query(GetReviewQuery query) {
@@ -51,6 +57,7 @@ public class ReviewQueryService implements GetReviewUseCase, GetUserReviewsUseCa
                 review,
                 book,
                 loadKeywordsUseCase.loadKeywords(ReviewId.of(review.getId().getValue())),
+                loadHighlightsUseCase.loadHighlights(ReviewId.of(review.getId().getValue())),
                 viewForResponse
         );
     }
@@ -94,6 +101,26 @@ public class ReviewQueryService implements GetReviewUseCase, GetUserReviewsUseCa
         return new PagedReviewResult(mapped, nextCursor);
     }
 
+    @Override
+    public PagedReviewResult query(GetReviewsByHighlightQuery query) {
+        if (query.highlight() == null || query.highlight().isBlank()) {
+            throw new IllegalArgumentException("Highlight must not be empty");
+        }
+        String normalized = highlightNormalizer.normalize(query.highlight());
+        List<Review> reviews = loadReviewPort.loadByHighlightNormalized(normalized, query.cursor(), query.size() + 1);
+
+        List<ReviewResult> mapped = reviews.stream()
+                .limit(query.size())
+                .map(this::toResult)
+                .collect(Collectors.toList());
+
+        Long nextCursor = reviews.size() > query.size()
+                ? reviews.get(query.size()).getId().getValue()
+                : null;
+
+        return new PagedReviewResult(mapped, nextCursor);
+    }
+
     private ReviewResult toResult(Review review) {
         Book book = loadBookPort.loadById(review.getBookId().getValue())
                 .orElseThrow(() -> new IllegalArgumentException("Book not found: " + review.getBookId().getValue()));
@@ -103,6 +130,7 @@ public class ReviewQueryService implements GetReviewUseCase, GetUserReviewsUseCa
                 review,
                 book,
                 loadKeywordsUseCase.loadKeywords(review.getId()),
+                loadHighlightsUseCase.loadHighlights(review.getId()),
                 viewForResponse
         );
     }
