@@ -3,9 +3,27 @@
     "reviewId": { "type": "long" },
     "userId": { "type": "long" },
     "bookId": { "type": "long" },
-    "summary": { "type": "text", "analyzer": "nori_analyzer" },
-    "content": { "type": "text", "analyzer": "nori_analyzer" },
-    "highlights": { "type": "text", "analyzer": "nori_analyzer" },
+    "summary": {
+      "type": "text",
+      "analyzer": "nori_analyzer",
+      "fields": {
+        "ngram": { "type": "text", "analyzer": "ngram_analyzer" }
+      }
+    },
+    "content": {
+      "type": "text",
+      "analyzer": "nori_analyzer",
+      "fields": {
+        "ngram": { "type": "text", "analyzer": "ngram_analyzer" }
+      }
+    },
+    "highlights": {
+      "type": "text",
+      "analyzer": "nori_analyzer",
+      "fields": {
+        "ngram": { "type": "text", "analyzer": "ngram_analyzer" }
+      }
+    },
     "highlightsNorm": { "type": "keyword" },
     "keywords": { "type": "keyword" },
     "genre": { "type": "keyword" },
