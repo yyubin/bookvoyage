@@ -2,6 +2,7 @@ package org.yyubin.support.jwt;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 @Slf4j
 @Component
@@ -43,10 +45,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private String resolveToken(HttpServletRequest request) {
+        // 1. Authorization 헤더에서 토큰 추출
         String bearerToken = request.getHeader(AUTHORIZATION_HEADER);
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(BEARER_PREFIX)) {
             return bearerToken.substring(BEARER_PREFIX.length());
         }
+
+        // 2. 쿠키에서 accessToken 추출
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            return Arrays.stream(cookies)
+                    .filter(cookie -> "accessToken".equals(cookie.getName()))
+                    .map(Cookie::getValue)
+                    .findFirst()
+                    .orElse(null);
+        }
+
         return null;
     }
 }

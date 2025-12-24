@@ -1,7 +1,9 @@
 package org.yyubin.infrastructure.stream;
 
+import jakarta.annotation.PostConstruct;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.stream.Consumer;
 import org.springframework.data.redis.connection.stream.ReadOffset;
 import org.springframework.data.redis.connection.stream.StreamOffset;
@@ -17,6 +19,7 @@ import org.yyubin.domain.notification.NotificationType;
 import org.yyubin.domain.notification.NotificationSetting;
 import org.yyubin.domain.user.UserId;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class NotificationConsumer {
@@ -28,6 +31,30 @@ public class NotificationConsumer {
     private final RedisTemplate<String, String> redisTemplate;
     private final NotificationCreator notificationCreator;
     private final NotificationSettingPort notificationSettingPort;
+
+    @PostConstruct
+    public void init() {
+        try {
+            StreamOperations<String, Object, Object> ops = redisTemplate.opsForStream();
+
+            // Check if stream exists, if not create it with a dummy entry
+            if (!Boolean.TRUE.equals(redisTemplate.hasKey(STREAM_KEY))) {
+                ops.add(STREAM_KEY, Map.of("init", "true"));
+                log.info("Created Redis Stream: {}", STREAM_KEY);
+            }
+
+            // Create consumer group if it doesn't exist
+            try {
+                ops.createGroup(STREAM_KEY, ReadOffset.from("0"), GROUP);
+                log.info("Created consumer group '{}' for stream '{}'", GROUP, STREAM_KEY);
+            } catch (Exception e) {
+                // Group already exists, ignore
+                log.debug("Consumer group '{}' already exists for stream '{}'", GROUP, STREAM_KEY);
+            }
+        } catch (Exception e) {
+            log.error("Failed to initialize Redis Stream consumer group", e);
+        }
+    }
 
     @Scheduled(fixedDelay = 1000)
     public void consume() {
