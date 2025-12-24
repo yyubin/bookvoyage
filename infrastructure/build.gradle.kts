@@ -37,6 +37,7 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
     implementation("org.springframework.kafka:spring-kafka:4.0.0")
+    implementation("org.springframework.boot:spring-boot-starter-data-elasticsearch")
 
     // Redisson for distributed lock
     implementation("org.redisson:redisson:3.27.0")
