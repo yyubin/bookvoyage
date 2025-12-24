@@ -5,6 +5,7 @@ import org.springframework.data.elasticsearch.client.ClientConfiguration;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchConfiguration;
 import org.springframework.data.elasticsearch.repository.config.EnableElasticsearchRepositories;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.elasticsearch.support.HttpHeaders;
 
 /**
  * Elasticsearch 설정
