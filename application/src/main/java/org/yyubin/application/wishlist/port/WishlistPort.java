@@ -13,4 +13,6 @@ public interface WishlistPort {
     void delete(UserId userId, BookId bookId);
 
     List<Wishlist> findByUser(UserId userId);
+
+    long countByUser(UserId userId);
 }

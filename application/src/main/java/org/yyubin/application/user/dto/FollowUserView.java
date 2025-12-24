@@ -4,6 +4,7 @@ public record FollowUserView(
         Long userId,
         String username,
         String nickname,
-        String profileImageUrl
+        String profileImageUrl,
+        String bio
 ) {
 }

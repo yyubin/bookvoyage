@@ -6,13 +6,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.yyubin.application.review.port.LoadReviewPort;
+import org.yyubin.application.review.port.ReviewCountPort;
 import org.yyubin.application.review.port.SaveReviewPort;
 import org.yyubin.domain.review.Review;
 
 @Component
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class ReviewPersistenceAdapter implements SaveReviewPort, LoadReviewPort {
+public class ReviewPersistenceAdapter implements SaveReviewPort, LoadReviewPort, ReviewCountPort {
 
     private final ReviewJpaRepository reviewJpaRepository;
 
@@ -60,6 +61,11 @@ public class ReviewPersistenceAdapter implements SaveReviewPort, LoadReviewPort 
         return entities.stream()
                 .map(ReviewEntity::toDomain)
                 .toList();
+    }
+
+    @Override
+    public long countByUserId(Long userId) {
+        return reviewJpaRepository.countByUserIdAndDeletedFalse(userId);
     }
 
     @Override

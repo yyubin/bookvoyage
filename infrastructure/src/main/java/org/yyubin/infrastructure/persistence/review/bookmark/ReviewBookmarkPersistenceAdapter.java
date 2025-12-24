@@ -61,4 +61,9 @@ public class ReviewBookmarkPersistenceAdapter implements ReviewBookmarkRepositor
         return reviewBookmarkJpaRepository.findByUserIdAndReviewId(userId.value(), reviewId.getValue())
                 .map(ReviewBookmarkEntity::toDomain);
     }
+
+    @Override
+    public long countByUser(UserId userId) {
+        return reviewBookmarkJpaRepository.countByUserId(userId.value());
+    }
 }

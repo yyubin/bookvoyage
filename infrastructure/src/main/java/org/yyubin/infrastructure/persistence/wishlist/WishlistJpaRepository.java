@@ -16,4 +16,6 @@ public interface WishlistJpaRepository extends JpaRepository<WishlistEntity, Lon
     List<WishlistEntity> findByUserId(Long userId);
 
     long countByBookId(Long bookId);
+
+    long countByUserId(Long userId);
 }

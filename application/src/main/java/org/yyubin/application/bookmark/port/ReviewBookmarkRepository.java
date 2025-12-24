@@ -15,4 +15,6 @@ public interface ReviewBookmarkRepository {
     List<ReviewBookmark> findByUserAfterCursor(UserId userId, Long cursorId, int size);
 
     java.util.Optional<ReviewBookmark> findByUserAndReview(UserId userId, ReviewId reviewId);
+
+    long countByUser(UserId userId);
 }

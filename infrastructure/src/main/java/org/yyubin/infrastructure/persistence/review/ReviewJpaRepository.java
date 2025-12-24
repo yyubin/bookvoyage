@@ -38,6 +38,8 @@ public interface ReviewJpaRepository extends JpaRepository<ReviewEntity, Long> {
 
     long countByBookId(Long bookId);
 
+    long countByUserIdAndDeletedFalse(Long userId);
+
     List<ReviewEntity> findByUserIdOrderByIdDesc(Long userId, Pageable pageable);
 
     List<ReviewEntity> findByUserIdAndIdLessThanOrderByIdDesc(Long userId, Long id, Pageable pageable);

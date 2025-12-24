@@ -60,7 +60,8 @@ public class FollowQueryService implements GetFollowingUsersUseCase, GetFollower
                 user.id().value(),
                 user.username(),
                 user.nickname(),
-                user.ProfileImageUrl()
+                user.ProfileImageUrl(),
+                user.bio()
         );
     }
 }

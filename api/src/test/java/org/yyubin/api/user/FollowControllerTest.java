@@ -101,8 +101,8 @@ class FollowControllerTest {
         // Given
         Long userId = 1L;
         List<FollowUserView> users = List.of(
-                new FollowUserView(2L, "user2", "User 2", "avatar2.jpg"),
-                new FollowUserView(3L, "user3", "User 3", "avatar3.jpg")
+                new FollowUserView(2L, "user2", "User 2", "avatar2.jpg", "bio2"),
+                new FollowUserView(3L, "user3", "User 3", "avatar3.jpg", "bio3")
         );
         FollowPageResult pageResult = new FollowPageResult(users, 4L);
         when(getFollowingUsersUseCase.getFollowing(any())).thenReturn(pageResult);
@@ -126,7 +126,7 @@ class FollowControllerTest {
         // Given
         Long userId = 1L;
         List<FollowUserView> users = List.of(
-                new FollowUserView(4L, "user4", "User 4", "avatar4.jpg")
+                new FollowUserView(4L, "user4", "User 4", "avatar4.jpg", "bio4")
         );
         FollowPageResult pageResult = new FollowPageResult(users, null);
         when(getFollowerUsersUseCase.getFollowers(any())).thenReturn(pageResult);

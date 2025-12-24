@@ -52,4 +52,9 @@ public class WishlistPersistenceAdapter implements WishlistPort {
                 .map(WishlistEntity::toDomain)
                 .toList();
     }
+
+    @Override
+    public long countByUser(UserId userId) {
+        return wishlistJpaRepository.countByUserId(userId.value());
+    }
 }

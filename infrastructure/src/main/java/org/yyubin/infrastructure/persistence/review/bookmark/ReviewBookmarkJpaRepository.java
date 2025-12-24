@@ -18,4 +18,6 @@ public interface ReviewBookmarkJpaRepository extends JpaRepository<ReviewBookmar
     java.util.Optional<ReviewBookmarkEntity> findByUserIdAndReviewId(Long userId, Long reviewId);
 
     long countByReviewId(Long reviewId);
+
+    long countByUserId(Long userId);
 }
