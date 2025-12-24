@@ -27,6 +27,7 @@ repositories {
 dependencies {
     // Domain dependency
     implementation(project(":domain"))
+    implementation(project(":application"))
 
     // Neo4j
     implementation("org.springframework.boot:spring-boot-starter-data-neo4j")
@@ -34,8 +35,14 @@ dependencies {
     // Elasticsearch
     implementation("org.springframework.boot:spring-boot-starter-data-elasticsearch")
 
+    // Web (recommendation API)
+    implementation("org.springframework.boot:spring-boot-starter-web")
+
     // Redis (추천 결과 저장용)
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
+
+    // Kafka (event ingest)
+    implementation("org.springframework.kafka:spring-kafka")
 
     // JSON processing
     implementation("com.fasterxml.jackson.core:jackson-databind")

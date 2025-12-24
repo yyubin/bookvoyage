@@ -1,4 +1,12 @@
 spring:
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    listener:
+      concurrency: ${KAFKA_LISTENER_CONCURRENCY:2}
+    consumer:
+      group-id: ${KAFKA_CONSUMER_GROUP_ID:cg-review-recommendation}
+      auto-offset-reset: latest
+      enable-auto-commit: false
   neo4j:
     uri: ${NEO4J_URI:bolt://localhost:7687}
     authentication:
@@ -17,6 +25,10 @@ spring:
 
 # Recommendation specific settings
 recommendation:
+  async:
+    core-pool-size: ${RECOMMENDATION_ASYNC_CORE_POOL_SIZE:4}
+    max-pool-size: ${RECOMMENDATION_ASYNC_MAX_POOL_SIZE:8}
+    queue-capacity: ${RECOMMENDATION_ASYNC_QUEUE_CAPACITY:500}
   graph:
     batch-size: 100
     max-hops: 2
@@ -34,6 +46,10 @@ recommendation:
     ttl-hours: 3
   review:
     max-candidates: 300
+    highlight:
+      max-candidates: 300
+      es-weight: 0.6
+      graph-weight: 0.4
     cache:
       ttl-hours: 2
       max-items: 100

@@ -35,6 +35,7 @@ import org.yyubin.domain.review.MentionParser;
 import org.yyubin.domain.review.Rating;
 import org.yyubin.domain.review.Review;
 import org.yyubin.domain.review.ReviewVisibility;
+import org.yyubin.domain.review.HighlightNormalizer;
 import org.yyubin.domain.user.UserId;
 import org.yyubin.domain.notification.NotificationType;
 
@@ -51,6 +52,7 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
     private final LoadKeywordsUseCase loadKeywordsUseCase;
     private final RegisterHighlightsUseCase registerHighlightsUseCase;
     private final LoadHighlightsUseCase loadHighlightsUseCase;
+    private final HighlightNormalizer highlightNormalizer;
     private final MentionParser mentionParser;
     private final NotificationEventUseCase notificationEventUseCase;
     private final FollowQueryPort followQueryPort;
@@ -81,7 +83,13 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
         registerHighlightsUseCase.register(savedReview.getId(), command.highlights());
         notifyFollowersOnNewReview(savedReview);
         notifyMentions(savedReview.getMentions(), userId, savedReview.getId().getValue(), null);
-        publishReviewEvent("REVIEW_CREATED", savedReview, book.getId().getValue());
+        publishReviewEvent(
+                "REVIEW_CREATED",
+                savedReview,
+                book.getId().getValue(),
+                loadKeywordsUseCase.loadKeywords(savedReview.getId()),
+                loadHighlightsUseCase.loadHighlights(savedReview.getId())
+        );
         return ReviewResult.from(
                 savedReview,
                 book,
@@ -133,7 +141,13 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
         Review saved = saveReviewPort.save(updated);
         registerKeywordsUseCase.register(saved.getId(), command.keywords());
         registerHighlightsUseCase.register(saved.getId(), command.highlights());
-        publishReviewEvent("REVIEW_UPDATED", saved, updatedBook.getId().getValue());
+        publishReviewEvent(
+                "REVIEW_UPDATED",
+                saved,
+                updatedBook.getId().getValue(),
+                loadKeywordsUseCase.loadKeywords(saved.getId()),
+                loadHighlightsUseCase.loadHighlights(saved.getId())
+        );
 
         return ReviewResult.from(
                 saved,
@@ -161,7 +175,13 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
 
         Book book = loadBookPort.loadById(saved.getBookId().getValue())
                 .orElseThrow(() -> new IllegalArgumentException("Book not found: " + saved.getBookId().getValue()));
-        publishReviewEvent("REVIEW_DELETED", saved, book.getId().getValue());
+        publishReviewEvent(
+                "REVIEW_DELETED",
+                saved,
+                book.getId().getValue(),
+                loadKeywordsUseCase.loadKeywords(saved.getId()),
+                loadHighlightsUseCase.loadHighlights(saved.getId())
+        );
 
         return ReviewResult.from(
                 saved,
@@ -260,12 +280,25 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
         ));
     }
 
-    private void publishReviewEvent(String eventType, Review review, Long bookId) {
+    private void publishReviewEvent(
+            String eventType,
+            Review review,
+            Long bookId,
+            List<String> keywords,
+            List<String> highlights
+    ) {
         java.util.Map<String, Object> metadata = new java.util.HashMap<>();
         metadata.put("bookId", bookId);
         metadata.put("rating", review.getRating().getValue());
         metadata.put("visibility", review.getVisibility().name());
         metadata.put("reviewId", review.getId() != null ? review.getId().getValue() : null);
+        metadata.put("summary", review.getSummary());
+        metadata.put("content", review.getContent());
+        metadata.put("genre", review.getGenre().name());
+        metadata.put("createdAt", review.getCreatedAt().toString());
+        metadata.put("keywords", keywords);
+        metadata.put("highlights", highlights);
+        metadata.put("highlightsNorm", normalizeHighlights(highlights));
         eventPublisher.publish(
                 EventTopics.REVIEW,
                 review.getUserId().value().toString(),
@@ -281,5 +314,15 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
                         1
                 )
         );
+    }
+
+    private List<String> normalizeHighlights(List<String> highlights) {
+        if (highlights == null || highlights.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        return highlights.stream()
+                .filter(value -> value != null && !value.isBlank())
+                .map(highlightNormalizer::normalize)
+                .toList();
     }
 }

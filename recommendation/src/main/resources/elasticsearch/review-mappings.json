@@ -1,0 +1,15 @@
+{
+  "properties": {
+    "reviewId": { "type": "long" },
+    "userId": { "type": "long" },
+    "bookId": { "type": "long" },
+    "summary": { "type": "text", "analyzer": "nori_analyzer" },
+    "content": { "type": "text", "analyzer": "nori_analyzer" },
+    "highlights": { "type": "text", "analyzer": "nori_analyzer" },
+    "highlightsNorm": { "type": "keyword" },
+    "keywords": { "type": "keyword" },
+    "genre": { "type": "keyword" },
+    "createdAt": { "type": "date" },
+    "rating": { "type": "integer" }
+  }
+}
