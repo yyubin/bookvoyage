@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.yyubin.api.common.PrincipalUtils;
 import org.yyubin.api.userbook.dto.AddUserBookRequest;
 import org.yyubin.api.userbook.dto.UpdateUserBookMemoRequest;
 import org.yyubin.api.userbook.dto.UpdateUserBookProgressRequest;
@@ -186,4 +187,3 @@ public class UserBookController {
         );
     }
 }
-import org.yyubin.api.common.PrincipalUtils;

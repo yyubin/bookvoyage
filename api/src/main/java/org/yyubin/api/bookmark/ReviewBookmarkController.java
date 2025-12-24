@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.yyubin.api.bookmark.dto.BookmarkActionResponse;
 import org.yyubin.api.bookmark.dto.BookmarkPageResponse;
+import org.yyubin.api.common.PrincipalUtils;
 import org.yyubin.application.bookmark.AddBookmarkUseCase;
 import org.yyubin.application.bookmark.GetBookmarksUseCase;
 import org.yyubin.application.bookmark.RemoveBookmarkUseCase;
@@ -68,4 +69,3 @@ public class ReviewBookmarkController {
     }
 
 }
-import org.yyubin.api.common.PrincipalUtils;

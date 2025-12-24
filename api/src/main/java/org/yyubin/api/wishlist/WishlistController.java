@@ -24,6 +24,7 @@ import org.yyubin.application.wishlist.query.GetWishlistQuery;
 import org.yyubin.application.wishlist.query.WishlistSort;
 import org.yyubin.domain.book.BookSearchItem;
 import org.yyubin.api.common.PrincipalUtils;
+import org.yyubin.domain.user.UserId;
 
 @RestController
 @RequestMapping("/api/wishlist")
@@ -36,21 +37,19 @@ public class WishlistController {
 
     @PostMapping
     public ResponseEntity<Void> add(
-            @AuthenticationPrincipal UserDetails userDetails,
+            @AuthenticationPrincipal Object userDetails,
             @Valid @RequestBody AddWishlistRequest request
     ) {
-        Long userId = Long.parseLong(userDetails.getUsername());
-        addWishlistUseCase.add(new AddWishlistCommand(userId, toBookSearchItem(request)));
+        addWishlistUseCase.add(new AddWishlistCommand(PrincipalUtils.requireUserId(userDetails), toBookSearchItem(request)));
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{bookId}")
     public ResponseEntity<Void> remove(
-            @AuthenticationPrincipal UserDetails userDetails,
+            @AuthenticationPrincipal Object userDetails,
             @PathVariable Long bookId
     ) {
-        Long userId = Long.parseLong(userDetails.getUsername());
-        removeWishlistUseCase.remove(new RemoveWishlistCommand(userId, bookId));
+        removeWishlistUseCase.remove(new RemoveWishlistCommand(PrincipalUtils.requireUserId(userDetails), bookId));
         return ResponseEntity.noContent().build();
     }
 
