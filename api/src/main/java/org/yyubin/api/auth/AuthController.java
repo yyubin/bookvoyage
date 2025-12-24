@@ -1,12 +1,12 @@
 package org.yyubin.api.auth;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.ResponseCookie;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,8 +18,8 @@ import org.yyubin.application.auth.LoginUseCase;
 import org.yyubin.application.auth.SignUpUseCase;
 import org.yyubin.application.dto.AuthResult;
 import org.yyubin.support.jwt.JwtProperties;
+import org.yyubin.support.web.CookieProperties;
 
-import java.util.Collections;
 
 @Slf4j
 @RestController
@@ -30,6 +30,7 @@ public class AuthController {
     private final SignUpUseCase signUpUseCase;
     private final LoginUseCase loginUseCase;
     private final JwtProperties jwtProperties;
+    private final CookieProperties cookieProperties;
 
     @PostMapping("/signup")
     public ResponseEntity<AuthResponse> signUp(
@@ -75,38 +76,40 @@ public class AuthController {
 
     private void setTokenCookies(HttpServletResponse response, String accessToken, String refreshToken) {
         // Access Token 쿠키 설정
-        Cookie accessTokenCookie = createCookie(
+        addCookie(
+                response,
                 "accessToken",
                 accessToken,
                 (int) (jwtProperties.getAccessTokenExpiration() / 1000)
         );
-        response.addCookie(accessTokenCookie);
 
         // Refresh Token 쿠키 설정
-        Cookie refreshTokenCookie = createCookie(
+        addCookie(
+                response,
                 "refreshToken",
                 refreshToken,
                 (int) (jwtProperties.getRefreshTokenExpiration() / 1000)
         );
-        response.addCookie(refreshTokenCookie);
     }
 
-    private Cookie createCookie(String name, String value, int maxAge) {
-        Cookie cookie = new Cookie(name, value);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(maxAge);
-        // SameSite 속성은 Spring Boot 3.x부터 ResponseCookie 또는 헤더를 통해 설정 가능
-        return cookie;
+    private void addCookie(HttpServletResponse response, String name, String value, int maxAge) {
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(name, value)
+                .httpOnly(true)
+                .secure(cookieProperties.isSecure())
+                .path(cookieProperties.getPath())
+                .maxAge(maxAge);
+
+        if (cookieProperties.getSameSite() != null && !cookieProperties.getSameSite().isBlank()) {
+            builder.sameSite(cookieProperties.getSameSite());
+        }
+        if (cookieProperties.getDomain() != null && !cookieProperties.getDomain().isBlank()) {
+            builder.domain(cookieProperties.getDomain());
+        }
+
+        response.addHeader("Set-Cookie", builder.build().toString());
     }
 
     private void deleteCookie(HttpServletResponse response, String name) {
-        Cookie cookie = new Cookie(name, null);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(0); // 즉시 만료
-        response.addCookie(cookie);
+        addCookie(response, name, "", 0);
     }
 }

@@ -1,7 +1,6 @@
 package org.yyubin.infrastructure.security;
 
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.yyubin.infrastructure.security.oauth2.CustomOAuth2User;
 import org.yyubin.support.jwt.JwtProperties;
 import org.yyubin.support.jwt.JwtProvider;
+import org.yyubin.support.web.CookieProperties;
 
 import java.io.IOException;
 
@@ -22,6 +22,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     private final JwtProvider jwtProvider;
     private final JwtProperties jwtProperties;
+    private final CookieProperties cookieProperties;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -53,28 +54,36 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     private void setTokenCookies(HttpServletResponse response, String accessToken, String refreshToken) {
         // Access Token 쿠키 설정
-        Cookie accessTokenCookie = createCookie(
+        addCookie(
+                response,
                 "accessToken",
                 accessToken,
                 (int) (jwtProperties.getAccessTokenExpiration() / 1000)
         );
-        response.addCookie(accessTokenCookie);
 
         // Refresh Token 쿠키 설정
-        Cookie refreshTokenCookie = createCookie(
+        addCookie(
+                response,
                 "refreshToken",
                 refreshToken,
                 (int) (jwtProperties.getRefreshTokenExpiration() / 1000)
         );
-        response.addCookie(refreshTokenCookie);
     }
 
-    private Cookie createCookie(String name, String value, int maxAge) {
-        Cookie cookie = new Cookie(name, value);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(maxAge);
-        return cookie;
+    private void addCookie(HttpServletResponse response, String name, String value, int maxAge) {
+        var builder = org.springframework.http.ResponseCookie.from(name, value)
+                .httpOnly(true)
+                .secure(cookieProperties.isSecure())
+                .path(cookieProperties.getPath())
+                .maxAge(maxAge);
+
+        if (cookieProperties.getSameSite() != null && !cookieProperties.getSameSite().isBlank()) {
+            builder.sameSite(cookieProperties.getSameSite());
+        }
+        if (cookieProperties.getDomain() != null && !cookieProperties.getDomain().isBlank()) {
+            builder.domain(cookieProperties.getDomain());
+        }
+
+        response.addHeader("Set-Cookie", builder.build().toString());
     }
 }

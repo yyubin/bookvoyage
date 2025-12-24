@@ -8,6 +8,7 @@ import org.yyubin.application.review.port.LoadBookPort;
 import org.yyubin.application.review.port.SaveBookPort;
 import org.yyubin.application.userbook.AddUserBookUseCase;
 import org.yyubin.application.userbook.DeleteUserBookUseCase;
+import org.yyubin.application.userbook.GetLatestReadingBooksUseCase;
 import org.yyubin.application.userbook.GetUserBookStatisticsUseCase;
 import org.yyubin.application.userbook.GetUserBookUseCase;
 import org.yyubin.application.userbook.GetUserBooksUseCase;
@@ -26,6 +27,7 @@ import org.yyubin.application.userbook.dto.UserBookResult;
 import org.yyubin.application.userbook.dto.UserBookStatisticsResult;
 import org.yyubin.application.userbook.port.UserBookPort;
 import org.yyubin.application.userbook.port.UserBookQueryPort;
+import org.yyubin.application.userbook.query.GetLatestReadingBooksQuery;
 import org.yyubin.application.userbook.query.GetUserBookQuery;
 import org.yyubin.application.userbook.query.GetUserBookStatisticsQuery;
 import org.yyubin.application.userbook.query.GetUserBooksQuery;
@@ -47,7 +49,8 @@ public class UserBookService implements
         UpdateUserBookRatingUseCase,
         UpdateUserBookMemoUseCase,
         DeleteUserBookUseCase,
-        GetUserBookStatisticsUseCase {
+        GetUserBookStatisticsUseCase,
+        GetLatestReadingBooksUseCase {
 
     private final UserBookPort userBookPort;
     private final UserBookQueryPort userBookQueryPort;
@@ -85,6 +88,21 @@ public class UserBookService implements
                 .map(this::toResult)
                 .toList();
 
+        return new UserBookListResult(items);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserBookListResult query(GetLatestReadingBooksQuery query) {
+        UserId userId = new UserId(query.userId());
+        List<UserBook> userBooks = userBookPort.findLatestByUserAndStatus(
+                userId,
+                ReadingStatus.READING,
+                query.size()
+        );
+        List<UserBookResult> items = userBooks.stream()
+                .map(this::toResult)
+                .toList();
         return new UserBookListResult(items);
     }
 

@@ -20,11 +20,13 @@ import org.yyubin.application.bookmark.port.ReviewBookmarkRepository;
 import org.yyubin.application.bookmark.query.GetBookmarksQuery;
 import org.yyubin.application.review.port.LoadBookPort;
 import org.yyubin.application.review.port.LoadReviewPort;
+import org.yyubin.application.user.port.LoadUserPort;
 import org.yyubin.domain.book.Book;
 import org.yyubin.domain.book.BookId;
 import org.yyubin.domain.bookmark.ReviewBookmark;
 import org.yyubin.domain.review.Review;
 import org.yyubin.domain.review.ReviewId;
+import org.yyubin.domain.user.User;
 import org.yyubin.domain.user.UserId;
 
 @Service
@@ -34,6 +36,7 @@ public class ReviewBookmarkService implements AddBookmarkUseCase, RemoveBookmark
     private final ReviewBookmarkRepository reviewBookmarkRepository;
     private final LoadReviewPort loadReviewPort;
     private final LoadBookPort loadBookPort;
+    private final LoadUserPort loadUserPort;
     private final EventPublisher eventPublisher;
 
     @Override
@@ -84,7 +87,12 @@ public class ReviewBookmarkService implements AddBookmarkUseCase, RemoveBookmark
         Book book = loadBookPort.loadById(review.getBookId().getValue())
                 .orElseThrow(() -> new IllegalArgumentException("Book not found: " + review.getBookId().getValue()));
 
-        return ReviewBookmarkItem.from(review, book, bookmark.id(), bookmark.createdAt());
+        User reviewer = loadUserPort.loadById(new UserId(review.getUserId().value()));
+        String nickname = reviewer.nickname() != null && !reviewer.nickname().isBlank()
+                ? reviewer.nickname()
+                : reviewer.username();
+
+        return ReviewBookmarkItem.from(review, book, bookmark.id(), bookmark.createdAt(), nickname);
     }
 
     private void publishBookmarkEvent(String actionType, ReviewBookmark bookmark) {

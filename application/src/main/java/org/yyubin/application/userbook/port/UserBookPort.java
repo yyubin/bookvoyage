@@ -21,4 +21,6 @@ public interface UserBookPort {
     List<UserBook> findByUser(UserId userId);
 
     List<UserBook> findByUserAndStatus(UserId userId, ReadingStatus status);
+
+    List<UserBook> findLatestByUserAndStatus(UserId userId, ReadingStatus status, int size);
 }

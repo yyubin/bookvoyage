@@ -73,6 +73,17 @@ public class UserBookPersistenceAdapter implements UserBookPort, UserBookQueryPo
     }
 
     @Override
+    public List<UserBook> findLatestByUserAndStatus(UserId userId, ReadingStatus status, int size) {
+        return userBookJpaRepository.findByUserIdAndStatusAndDeletedFalseOrderByUpdatedAtDesc(
+                        userId.value(),
+                        status,
+                        org.springframework.data.domain.PageRequest.of(0, size)
+                ).stream()
+                .map(UserBookEntity::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public long countByBookAndStatus(BookId bookId, ReadingStatus status) {
         return userBookJpaRepository.countByBookIdAndStatusAndDeletedFalse(
                 bookId.getValue(),

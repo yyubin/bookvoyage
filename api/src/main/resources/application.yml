@@ -76,3 +76,25 @@ springdoc:
     - /api/**
   packages-to-scan:
     - org.yyubin.api
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+
+app:
+  cookie:
+    secure: false
+    same-site: Lax
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+app:
+  cookie:
+    secure: true
+    same-site: None

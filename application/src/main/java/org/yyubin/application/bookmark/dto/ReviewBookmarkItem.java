@@ -17,9 +17,16 @@ public record ReviewBookmarkItem(
         String publishedDate,
         int rating,
         String content,
-        Long reviewerId
+        Long reviewerId,
+        String reviewerNickname
 ) {
-    public static ReviewBookmarkItem from(Review review, Book book, Long bookmarkId, LocalDateTime createdAt) {
+    public static ReviewBookmarkItem from(
+            Review review,
+            Book book,
+            Long bookmarkId,
+            LocalDateTime createdAt,
+            String reviewerNickname
+    ) {
         return new ReviewBookmarkItem(
                 bookmarkId,
                 review.getId().getValue(),
@@ -32,7 +39,8 @@ public record ReviewBookmarkItem(
                 book.getMetadata().getPublishedDate(),
                 review.getRating().getValue(),
                 review.getContent(),
-                review.getUserId().value()
+                review.getUserId().value(),
+                reviewerNickname
         );
     }
 }
