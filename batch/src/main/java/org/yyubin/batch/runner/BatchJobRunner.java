@@ -3,6 +3,7 @@ package org.yyubin.batch.runner;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.configuration.JobRegistry;
+import org.springframework.batch.core.repository.explore.JobExplorer;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.JobExecution;
 import org.springframework.batch.core.job.JobInstance;
@@ -19,6 +20,7 @@ public class BatchJobRunner {
 
     private final JobRegistry jobRegistry;
     private final JobRepository jobRepository;
+    private final JobExplorer jobExplorer;
 
     public void run(String jobName) {
         try {
@@ -29,7 +31,9 @@ public class BatchJobRunner {
                 return;
             }
 
+            long lastRunAtEpochMs = resolveLastRunAtEpochMs(jobName);
             JobParameters jobParameters = new JobParametersBuilder()
+                    .addLong("lastRunAtEpochMs", lastRunAtEpochMs)
                     .addLong("timestamp", System.currentTimeMillis())
                     .toJobParameters();
 
@@ -62,5 +66,18 @@ public class BatchJobRunner {
         return jobRepository.findRunningJobExecutions(jobName)
                 .stream()
                 .anyMatch(e -> e.getStatus().isRunning());
+    }
+
+    private long resolveLastRunAtEpochMs(String jobName) {
+        JobInstance lastInstance = jobExplorer.getLastJobInstance(jobName);
+        if (lastInstance == null) {
+            return 0L;
+        }
+        return jobExplorer.getJobExecutions(lastInstance).stream()
+                .map(JobExecution::getEndTime)
+                .filter(java.util.Objects::nonNull)
+                .map(date -> date.toInstant(java.time.ZoneOffset.UTC).toEpochMilli())
+                .max(java.util.Comparator.naturalOrder())
+                .orElse(0L);
     }
 }

@@ -50,6 +50,8 @@ public interface ReviewJpaRepository extends JpaRepository<ReviewEntity, Long> {
 
     List<ReviewEntity> findByUserIdAndDeletedFalseAndVisibilityAndIdLessThanOrderByIdDesc(Long userId, ReviewVisibility visibility, Long id, Pageable pageable);
 
+    List<ReviewEntity> findByUpdatedAtAfterOrderByIdAsc(java.time.LocalDateTime updatedAt, Pageable pageable);
+
     @Query(value = """
             SELECT r.* FROM review r
             JOIN review_highlight rh ON r.id = rh.review_id

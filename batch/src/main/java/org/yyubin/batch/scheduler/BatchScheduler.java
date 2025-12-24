@@ -33,4 +33,10 @@ public class BatchScheduler {
     public void flushReviewViews() {
         batchJobRunner.run("reviewViewFlushJob");
     }
+
+    @Scheduled(cron = "${batch.schedule.recommendation:0 0 * * * *}")
+    @SchedulerLock(name = "reviewContentSync", lockAtLeastFor = "5m", lockAtMostFor = "30m")
+    public void syncReviewContent() {
+        batchJobRunner.run("reviewContentSyncJob");
+    }
 }

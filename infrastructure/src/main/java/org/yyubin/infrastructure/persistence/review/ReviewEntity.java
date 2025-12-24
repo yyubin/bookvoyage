@@ -11,6 +11,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.Convert;
 import lombok.AccessLevel;
@@ -77,6 +79,9 @@ public class ReviewEntity {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "visibility", nullable = false, length = 20)
     private ReviewVisibility visibility;
@@ -104,6 +109,7 @@ public class ReviewEntity {
                 .summary(review.getSummary())
                 .content(review.getContent())
                 .createdAt(review.getCreatedAt())
+                .updatedAt(null)
                 .visibility(review.getVisibility())
                 .deleted(review.isDeleted())
                 .viewCount(review.getViewCount())
@@ -131,5 +137,17 @@ public class ReviewEntity {
 
     public void setViewCount(Long viewCount) {
         this.viewCount = viewCount;
+    }
+
+    @PrePersist
+    public void prePersist() {
+        if (updatedAt == null) {
+            updatedAt = createdAt != null ? createdAt : LocalDateTime.now();
+        }
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 }

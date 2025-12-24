@@ -293,7 +293,6 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
         metadata.put("visibility", review.getVisibility().name());
         metadata.put("reviewId", review.getId() != null ? review.getId().getValue() : null);
         metadata.put("summary", review.getSummary());
-        metadata.put("content", review.getContent());
         metadata.put("genre", review.getGenre().name());
         metadata.put("createdAt", review.getCreatedAt().toString());
         metadata.put("keywords", keywords);
