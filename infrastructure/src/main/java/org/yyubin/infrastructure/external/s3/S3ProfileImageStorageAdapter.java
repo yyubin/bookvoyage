@@ -11,7 +11,6 @@ import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequ
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
 import java.time.Duration;
-import java.util.UUID;
 
 @Slf4j
 @Component
@@ -22,9 +21,9 @@ public class S3ProfileImageStorageAdapter implements ProfileImageStoragePort {
     private final S3Properties s3Properties;
 
     @Override
-    public ProfileImageUploadUrlResult generateUploadUrl(String originalFilename) {
+    public ProfileImageUploadUrlResult generateUploadUrl(Long userId, String originalFilename) {
         String fileExtension = extractFileExtension(originalFilename);
-        String objectKey = generateObjectKey(fileExtension);
+        String objectKey = generateObjectKey(userId, fileExtension);
 
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                 .bucket(s3Properties.getBucketName())
@@ -54,9 +53,8 @@ public class S3ProfileImageStorageAdapter implements ProfileImageStoragePort {
         return filename.substring(filename.lastIndexOf("."));
     }
 
-    private String generateObjectKey(String extension) {
-        String uuid = UUID.randomUUID().toString();
-        return String.format("profile-images/%s%s", uuid, extension);
+    private String generateObjectKey(Long userId, String extension) {
+        return String.format("profile-images/user-%d%s", userId, extension);
     }
 
     private String determineContentType(String extension) {

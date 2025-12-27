@@ -104,7 +104,8 @@ public class UserProfileController {
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody ProfileImageUploadRequest request
     ) {
-        GenerateProfileImageUploadUrlQuery query = new GenerateProfileImageUploadUrlQuery(request.filename());
+        Long userId = Long.parseLong(userDetails.getUsername());
+        GenerateProfileImageUploadUrlQuery query = new GenerateProfileImageUploadUrlQuery(userId, request.filename());
         ProfileImageUploadUrlResult result = generateProfileImageUploadUrlQueryHandler.handle(query);
         return ResponseEntity.ok(
                 ProfileImageUploadResponse.of(

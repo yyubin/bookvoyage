@@ -12,6 +12,6 @@ public class GenerateProfileImageUploadUrlQueryHandler {
     private final ProfileImageStoragePort profileImageStoragePort;
 
     public ProfileImageUploadUrlResult handle(GenerateProfileImageUploadUrlQuery query) {
-        return profileImageStoragePort.generateUploadUrl(query.filename());
+        return profileImageStoragePort.generateUploadUrl(query.userId(), query.filename());
     }
 }
