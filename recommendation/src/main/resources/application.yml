@@ -75,8 +75,3 @@ recommendation:
       dwell-max: 1.5
       scroll-max: 0.5
 
-logging:
-  level:
-    org.springframework.data.neo4j: INFO
-    org.springframework.data.elasticsearch: INFO
-    org.yyubin.recommendation: DEBUG

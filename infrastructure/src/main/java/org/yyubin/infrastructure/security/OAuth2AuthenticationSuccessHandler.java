@@ -23,6 +23,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     private final JwtProvider jwtProvider;
     private final JwtProperties jwtProperties;
     private final CookieProperties cookieProperties;
+    private final HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -32,6 +33,9 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             log.debug("Response has already been committed. Unable to redirect.");
             return;
         }
+
+        // OAuth2 인증 쿠키 정리
+        cookieAuthorizationRequestRepository.removeAuthorizationRequestCookies(request, response);
 
         CustomOAuth2User oAuth2User = (CustomOAuth2User) authentication.getPrincipal();
 

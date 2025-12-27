@@ -15,9 +15,18 @@ import java.io.IOException;
 @Component
 public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationFailureHandler {
 
+    private final HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
+
+    public OAuth2AuthenticationFailureHandler(HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository) {
+        this.cookieAuthorizationRequestRepository = cookieAuthorizationRequestRepository;
+    }
+
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
                                         AuthenticationException exception) throws IOException, ServletException {
+
+        // OAuth2 인증 쿠키 정리
+        cookieAuthorizationRequestRepository.removeAuthorizationRequestCookies(request, response);
 
         String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:3000/oauth2/redirect")
                 .queryParam("error", exception.getLocalizedMessage())
