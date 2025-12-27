@@ -35,17 +35,21 @@ public class UserBook {
         Objects.requireNonNull(status, "status must not be null");
 
         LocalDateTime now = LocalDateTime.now();
+        ReadingProgress initialProgress = status == ReadingStatus.COMPLETED
+                ? ReadingProgress.completed()
+                : ReadingProgress.notStarted();
+
         return new UserBook(
                 null,
                 userId,
                 bookId,
                 status,
-                ReadingProgress.notStarted(),
+                initialProgress,
                 PersonalRating.empty(),
                 PersonalMemo.empty(),
                 ReadingCount.first(),
                 null,
-                null,
+                status == ReadingStatus.COMPLETED ? now : null,  // completionDate
                 false,
                 null,
                 now,
@@ -163,6 +167,11 @@ public class UserBook {
     }
 
     public UserBook updateProgress(int progressPercent) {
+        // COMPLETED 상태면 진행률을 100으로 고정 (업데이트 무시)
+        if (status == ReadingStatus.COMPLETED) {
+            return this;
+        }
+
         if (status != ReadingStatus.READING) {
             throw new IllegalStateException("Progress can only be updated when status is READING");
         }
