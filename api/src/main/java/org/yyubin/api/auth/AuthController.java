@@ -1,5 +1,7 @@
 package org.yyubin.api.auth;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -7,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.ResponseCookie;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,10 +18,13 @@ import org.yyubin.api.auth.dto.AuthResponse;
 import org.yyubin.api.auth.dto.LoginRequest;
 import org.yyubin.api.auth.dto.SignUpRequest;
 import org.yyubin.application.auth.LoginUseCase;
+import org.yyubin.application.auth.LogoutUseCase;
 import org.yyubin.application.auth.SignUpUseCase;
 import org.yyubin.application.dto.AuthResult;
 import org.yyubin.support.jwt.JwtProperties;
 import org.yyubin.support.web.CookieProperties;
+
+import java.util.Arrays;
 
 
 @Slf4j
@@ -29,6 +35,7 @@ public class AuthController {
 
     private final SignUpUseCase signUpUseCase;
     private final LoginUseCase loginUseCase;
+    private final LogoutUseCase logoutUseCase;
     private final JwtProperties jwtProperties;
     private final CookieProperties cookieProperties;
 
@@ -64,12 +71,29 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(HttpServletResponse response) {
+    public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) {
         log.info("Logout request");
 
-        // 쿠키 삭제 (MaxAge를 0으로 설정)
+        // 1. 토큰 추출
+        String accessToken = extractTokenFromRequest(request, "accessToken");
+        String refreshToken = extractTokenFromRequest(request, "refreshToken");
+
+        // 2. 로그아웃 처리 (토큰 블랙리스트 추가)
+        logoutUseCase.execute(accessToken, refreshToken);
+
+        // 3. 쿠키 삭제
         deleteCookie(response, "accessToken");
         deleteCookie(response, "refreshToken");
+
+        // 4. 서버 세션 무효화
+        jakarta.servlet.http.HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+            log.debug("Server session invalidated");
+        }
+
+        // 5. JSESSIONID 쿠키 삭제
+        deleteCookie(response, "JSESSIONID");
 
         return ResponseEntity.ok().build();
     }
@@ -111,5 +135,28 @@ public class AuthController {
 
     private void deleteCookie(HttpServletResponse response, String name) {
         addCookie(response, name, "", 0);
+    }
+
+    private String extractTokenFromRequest(HttpServletRequest request, String cookieName) {
+        // 1. Authorization 헤더에서 추출 (accessToken만 해당)
+        if ("accessToken".equals(cookieName)) {
+            String bearerToken = request.getHeader("Authorization");
+            if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
+                return bearerToken.substring(7);
+            }
+        }
+
+        // 2. 쿠키에서 추출
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            return Arrays.stream(cookies)
+                    .filter(cookie -> cookieName.equals(cookie.getName()))
+                    .map(Cookie::getValue)
+                    .filter(StringUtils::hasText)
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        return null;
     }
 }

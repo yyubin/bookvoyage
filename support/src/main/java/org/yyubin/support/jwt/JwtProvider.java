@@ -21,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -46,6 +47,7 @@ public class JwtProvider {
 
         return Jwts.builder()
                 .subject(userId)
+                .id(UUID.randomUUID().toString())
                 .claim(AUTHORITIES_KEY, authoritiesString)
                 .issuedAt(new Date(now))
                 .expiration(validity)
@@ -59,6 +61,7 @@ public class JwtProvider {
 
         return Jwts.builder()
                 .subject(userId)
+                .id(UUID.randomUUID().toString())
                 .issuedAt(new Date(now))
                 .expiration(validity)
                 .signWith(getSigningKey())
@@ -98,6 +101,17 @@ public class JwtProvider {
 
     public String getUserIdFromToken(String token) {
         return parseClaims(token).getSubject();
+    }
+
+    public String getJtiFromToken(String token) {
+        return parseClaims(token).getId();
+    }
+
+    public long getRemainingTimeInSeconds(String token) {
+        Date expiration = parseClaims(token).getExpiration();
+        long now = System.currentTimeMillis();
+        long remainingMs = expiration.getTime() - now;
+        return Math.max(0, remainingMs / 1000);
     }
 
     private Claims parseClaims(String token) {
