@@ -3,6 +3,7 @@ package org.yyubin.api.profile.dto;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.yyubin.api.common.CountFormatter;
+import org.yyubin.api.common.TimeFormatter;
 import org.yyubin.application.review.dto.ReviewResult;
 
 public record ReviewItemResponse(
@@ -13,7 +14,7 @@ public record ReviewItemResponse(
         String coverUrl,
         int rating,
         String summary,
-        LocalDateTime createdAt,
+        String createdAt,
         String viewCount
 ) {
     public static ReviewItemResponse from(ReviewResult result) {
@@ -25,7 +26,7 @@ public record ReviewItemResponse(
                 result.coverUrl(),
                 result.rating(),
                 result.summary(),
-                result.createdAt(),
+                TimeFormatter.formatRelativeTime(result.createdAt()),
                 CountFormatter.format(result.viewCount())
         );
     }

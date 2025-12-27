@@ -39,6 +39,7 @@ public class ReviewQueryService implements GetReviewUseCase, GetUserReviewsUseCa
     private final ReviewViewMetricPort reviewViewMetricPort;
     private final EventPublisher eventPublisher;
     private final HighlightNormalizer highlightNormalizer;
+    private final org.yyubin.application.user.port.LoadUserPort loadUserPort;
 
     @Override
     public ReviewResult query(GetReviewQuery query) {
@@ -46,6 +47,7 @@ public class ReviewQueryService implements GetReviewUseCase, GetUserReviewsUseCa
         validateViewPermission(review, query.viewerId());
         Book book = loadBookPort.loadById(review.getBookId().getValue())
                 .orElseThrow(() -> new IllegalArgumentException("Book not found: " + review.getBookId().getValue()));
+        org.yyubin.domain.user.User author = loadUserPort.loadById(review.getUserId());
 
         long cachedView = reviewViewMetricPort.incrementAndGet(review.getId().getValue(), query.viewerId());
         publishViewEvent(review, book, cachedView, query.viewerId());
@@ -56,6 +58,7 @@ public class ReviewQueryService implements GetReviewUseCase, GetUserReviewsUseCa
         return ReviewResult.fromWithViewCount(
                 review,
                 book,
+                author,
                 loadKeywordsUseCase.loadKeywords(ReviewId.of(review.getId().getValue())),
                 loadHighlightsUseCase.loadHighlights(ReviewId.of(review.getId().getValue())),
                 viewForResponse
@@ -124,11 +127,13 @@ public class ReviewQueryService implements GetReviewUseCase, GetUserReviewsUseCa
     private ReviewResult toResult(Review review) {
         Book book = loadBookPort.loadById(review.getBookId().getValue())
                 .orElseThrow(() -> new IllegalArgumentException("Book not found: " + review.getBookId().getValue()));
+        org.yyubin.domain.user.User author = loadUserPort.loadById(review.getUserId());
         long viewForResponse = reviewViewMetricPort.getCachedCount(review.getId().getValue())
                 .orElse(review.getViewCount());
         return ReviewResult.fromWithViewCount(
                 review,
                 book,
+                author,
                 loadKeywordsUseCase.loadKeywords(review.getId()),
                 loadHighlightsUseCase.loadHighlights(review.getId()),
                 viewForResponse

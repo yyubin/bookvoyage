@@ -2,6 +2,7 @@ package org.yyubin.api.search.dto;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import org.yyubin.api.common.TimeFormatter;
 import org.yyubin.application.review.search.dto.ReviewSearchItemResult;
 
 public record ReviewSearchItemResponse(
@@ -12,7 +13,7 @@ public record ReviewSearchItemResponse(
         List<String> highlights,
         List<String> keywords,
         Integer rating,
-        LocalDateTime createdAt
+        String createdAt
 ) {
     public static ReviewSearchItemResponse from(ReviewSearchItemResult result) {
         return new ReviewSearchItemResponse(
@@ -23,7 +24,7 @@ public record ReviewSearchItemResponse(
                 result.highlights(),
                 result.keywords(),
                 result.rating(),
-                result.createdAt()
+                TimeFormatter.formatRelativeTime(result.createdAt())
         );
     }
 }

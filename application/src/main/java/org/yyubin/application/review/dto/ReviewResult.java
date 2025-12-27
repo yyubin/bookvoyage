@@ -10,6 +10,9 @@ import org.yyubin.domain.review.ReviewVisibility;
 
 public record ReviewResult(
         Long reviewId,
+        Long userId,
+        String authorNickname,
+        String authorTasteTag,
         Long bookId,
         String title,
         List<String> authors,
@@ -35,9 +38,12 @@ public record ReviewResult(
         List<org.yyubin.domain.review.Mention> mentions
 ) {
 
-    public static ReviewResult from(Review review, Book book, List<String> keywords, List<String> highlights) {
+    public static ReviewResult from(Review review, Book book, org.yyubin.domain.user.User author, List<String> keywords, List<String> highlights) {
         return new ReviewResult(
                 review.getId().getValue(),
+                author.id().value(),
+                author.nickname(),
+                author.tasteTag(),
                 book.getId().getValue(),
                 book.getMetadata().getTitle(),
                 book.getMetadata().getAuthors(),
@@ -64,9 +70,12 @@ public record ReviewResult(
         );
     }
 
-    public static ReviewResult fromWithViewCount(Review review, Book book, List<String> keywords, List<String> highlights, long viewCount) {
+    public static ReviewResult fromWithViewCount(Review review, Book book, org.yyubin.domain.user.User author, List<String> keywords, List<String> highlights, long viewCount) {
         return new ReviewResult(
                 review.getId().getValue(),
+                author.id().value(),
+                author.nickname(),
+                author.tasteTag(),
                 book.getId().getValue(),
                 book.getMetadata().getTitle(),
                 book.getMetadata().getAuthors(),

@@ -62,7 +62,7 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
     @Transactional
     public ReviewResult execute(CreateReviewCommand command) {
         UserId userId = new UserId(command.userId());
-        loadUserPort.loadById(userId);
+        org.yyubin.domain.user.User author = loadUserPort.loadById(userId);
 
         Book book = resolveBook(command);
         List<Mention> mentions = mentionParser.parse(command.content());
@@ -93,6 +93,7 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
         return ReviewResult.from(
                 savedReview,
                 book,
+                author,
                 loadKeywordsUseCase.loadKeywords(savedReview.getId()),
                 loadHighlightsUseCase.loadHighlights(savedReview.getId())
         );
@@ -102,6 +103,7 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
     @Transactional
     public ReviewResult execute(UpdateReviewCommand command) {
         UserId userId = new UserId(command.userId());
+        org.yyubin.domain.user.User author = loadUserPort.loadById(userId);
         Review existing = loadReviewPort.loadById(command.reviewId());
 
         if (!existing.isWrittenBy(userId)) {
@@ -152,6 +154,7 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
         return ReviewResult.from(
                 saved,
                 updatedBook,
+                author,
                 loadKeywordsUseCase.loadKeywords(saved.getId()),
                 loadHighlightsUseCase.loadHighlights(saved.getId())
         );
@@ -161,6 +164,7 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
     @Transactional
     public ReviewResult execute(DeleteReviewCommand command) {
         UserId userId = new UserId(command.userId());
+        org.yyubin.domain.user.User author = loadUserPort.loadById(userId);
         Review existing = loadReviewPort.loadById(command.reviewId());
 
         if (!existing.isWrittenBy(userId)) {
@@ -186,6 +190,7 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
         return ReviewResult.from(
                 saved,
                 book,
+                author,
                 loadKeywordsUseCase.loadKeywords(saved.getId()),
                 loadHighlightsUseCase.loadHighlights(saved.getId())
         );

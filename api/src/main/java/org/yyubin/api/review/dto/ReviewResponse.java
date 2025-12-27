@@ -3,12 +3,16 @@ package org.yyubin.api.review.dto;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.yyubin.api.common.CountFormatter;
+import org.yyubin.api.common.TimeFormatter;
 import org.yyubin.application.review.dto.ReviewResult;
 import org.yyubin.domain.review.BookGenre;
 import org.yyubin.domain.review.ReviewVisibility;
 
 public record ReviewResponse(
         Long reviewId,
+        Long userId,
+        String authorNickname,
+        String authorTasteTag,
         Long bookId,
         String title,
         List<String> authors,
@@ -24,11 +28,11 @@ public record ReviewResponse(
         int rating,
         String summary,
         String content,
-        LocalDateTime createdAt,
+        String createdAt,
         ReviewVisibility visibility,
         boolean deleted,
         String viewCount,
-        BookGenre genre,
+        String genre,
         List<String> keywords,
         List<String> highlights,
         List<MentionResponse> mentions
@@ -37,6 +41,9 @@ public record ReviewResponse(
     public static ReviewResponse from(ReviewResult result) {
         return new ReviewResponse(
                 result.reviewId(),
+                result.userId(),
+                result.authorNickname(),
+                result.authorTasteTag(),
                 result.bookId(),
                 result.title(),
                 result.authors(),
@@ -52,11 +59,11 @@ public record ReviewResponse(
                 result.rating(),
                 result.summary(),
                 result.content(),
-                result.createdAt(),
+                TimeFormatter.formatRelativeTime(result.createdAt()),
                 result.visibility(),
                 result.deleted(),
                 CountFormatter.format(result.viewCount()),
-                result.genre(),
+                result.genre() != null ? result.genre().displayName() : null,
                 result.keywords(),
                 result.highlights(),
                 result.mentions().stream().map(MentionResponse::from).toList()

@@ -29,6 +29,7 @@ public class FeedQueryService implements GetFeedUseCase {
     private final LoadBookPort loadBookPort;
     private final LoadKeywordsUseCase loadKeywordsUseCase;
     private final LoadHighlightsUseCase loadHighlightsUseCase;
+    private final org.yyubin.application.user.port.LoadUserPort loadUserPort;
 
     @Override
     public FeedPageResult query(GetFeedQuery query) {
@@ -51,9 +52,11 @@ public class FeedQueryService implements GetFeedUseCase {
         Review review = loadReviewPort.loadById(feedItem.getReviewId().getValue());
         Book book = loadBookPort.loadById(review.getBookId().getValue())
                 .orElseThrow(() -> new IllegalArgumentException("Book not found: " + review.getBookId().getValue()));
+        org.yyubin.domain.user.User author = loadUserPort.loadById(review.getUserId());
         ReviewResult reviewResult = ReviewResult.from(
                 review,
                 book,
+                author,
                 loadKeywordsUseCase.loadKeywords(review.getId()),
                 loadHighlightsUseCase.loadHighlights(review.getId())
         );
