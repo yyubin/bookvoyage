@@ -69,6 +69,13 @@ public class ReviewPersistenceAdapter implements SaveReviewPort, LoadReviewPort,
     }
 
     @Override
+    public List<Review> findAll() {
+        return reviewJpaRepository.findAll().stream()
+                .map(ReviewEntity::toDomain)
+                .toList();
+    }
+
+    @Override
     @Transactional
     public Review save(Review review) {
         ReviewEntity entity = ReviewEntity.fromDomain(review);

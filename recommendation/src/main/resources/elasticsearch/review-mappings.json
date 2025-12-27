@@ -27,7 +27,10 @@
     "highlightsNorm": { "type": "keyword" },
     "keywords": { "type": "keyword" },
     "genre": { "type": "keyword" },
-    "createdAt": { "type": "date" },
+    "createdAt": {
+      "type": "date",
+      "format": "strict_date_time||strict_date_optional_time||epoch_millis"
+    },
     "rating": { "type": "integer" }
   }
 }

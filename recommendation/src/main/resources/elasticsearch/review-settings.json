@@ -37,25 +37,11 @@
     "filter": {
       "nori_posfilter": {
         "type": "nori_part_of_speech",
-        "stoptags": [
-          "E",
-          "IC",
-          "J",
-          "MAG",
-          "MAJ",
-          "MM",
-          "SP",
-          "SSC",
-          "SSO",
-          "SC",
-          "SE",
-          "XPN",
-          "XSA",
-          "XSN",
-          "XSV",
-          "UNA",
-          "NA",
-          "VSV"
+        "stop_tags": [
+          "JKS","JKC","JKG","JKO","JKB","JKV","JKQ","JX","JC",
+          "EP","EF","EC","ETN","ETM",
+          "XPN","XSN","XSV","XSA",
+          "SF","SP","SS","SE","SO","SW"
         ]
       }
     }

@@ -61,6 +61,7 @@ class LoginServiceTest {
                 encodedPassword,
                 "Test User",
                 "Test bio",
+                "",
                 Role.USER,
                 AuthProvider.LOCAL,
                 null,

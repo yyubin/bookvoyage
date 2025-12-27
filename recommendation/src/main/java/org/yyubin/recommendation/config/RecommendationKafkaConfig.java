@@ -15,6 +15,7 @@ import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.util.backoff.FixedBackOff;
 import org.springframework.kafka.support.serializer.JacksonJsonDeserializer;
 import org.yyubin.application.event.EventPayload;
+import org.yyubin.application.review.search.event.ReviewSearchIndexEvent;
 
 @Configuration
 @EnableKafka
@@ -48,6 +49,21 @@ public class RecommendationKafkaConfig {
     }
 
     @Bean
+    public ConsumerFactory<String, ReviewSearchIndexEvent> reviewSearchIndexConsumerFactory() {
+        Map<String, Object> configs = new HashMap<>();
+        configs.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        configs.put(ConsumerConfig.GROUP_ID_CONFIG, groupId + "-search-index");
+        configs.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
+        configs.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+
+        return new DefaultKafkaConsumerFactory<>(
+                configs,
+                new StringDeserializer(),
+                new ReviewSearchIndexEventDeserializer()
+        );
+    }
+
+    @Bean
     public DefaultErrorHandler recommendationErrorHandler() {
         return new DefaultErrorHandler(new FixedBackOff(1000L, 3L));
     }
@@ -59,6 +75,19 @@ public class RecommendationKafkaConfig {
     ) {
         ConcurrentKafkaListenerContainerFactory<String, EventPayload> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(recommendationConsumerFactory);
+        factory.setConcurrency(concurrency);
+        factory.setCommonErrorHandler(recommendationErrorHandler);
+        return factory;
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, ReviewSearchIndexEvent> reviewSearchIndexKafkaListenerContainerFactory(
+            ConsumerFactory<String, ReviewSearchIndexEvent> reviewSearchIndexConsumerFactory,
+            DefaultErrorHandler recommendationErrorHandler
+    ) {
+        ConcurrentKafkaListenerContainerFactory<String, ReviewSearchIndexEvent> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(reviewSearchIndexConsumerFactory);
         factory.setConcurrency(concurrency);
         factory.setCommonErrorHandler(recommendationErrorHandler);
         return factory;

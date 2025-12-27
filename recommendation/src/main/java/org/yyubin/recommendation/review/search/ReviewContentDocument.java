@@ -5,6 +5,7 @@ import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.elasticsearch.annotations.DateFormat;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
@@ -48,7 +49,7 @@ public class ReviewContentDocument {
     @Field(type = FieldType.Keyword)
     private final String genre;
 
-    @Field(type = FieldType.Date)
+    @Field(type = FieldType.Date, format = DateFormat.date_hour_minute_second_millis, pattern = "uuuu-MM-dd'T'HH:mm:ss.SSS")
     private final LocalDateTime createdAt;
 
     @Field(type = FieldType.Integer)

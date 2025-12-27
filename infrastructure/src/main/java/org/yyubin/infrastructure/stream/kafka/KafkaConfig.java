@@ -22,7 +22,9 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.support.serializer.JacksonJsonDeserializer;
 import org.springframework.kafka.support.serializer.JacksonJsonSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.yyubin.application.event.EventPayload;
+import org.yyubin.application.review.search.event.ReviewSearchIndexEvent;
 
 @Configuration
 @EnableKafka
@@ -44,13 +46,34 @@ public class KafkaConfig {
         return new DefaultKafkaProducerFactory<>(
             configs,
             new StringSerializer(),
-            new JacksonJsonSerializer<>()
+            new JacksonJsonSerializer<EventPayload>()
+        );
+    }
+
+    @Bean
+    public ProducerFactory<String, ReviewSearchIndexEvent> reviewSearchIndexProducerFactory() {
+        Map<String, Object> configs = new HashMap<>();
+        configs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        configs.put(ProducerConfig.ACKS_CONFIG, "all");
+        configs.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
+
+        return new DefaultKafkaProducerFactory<>(
+            configs,
+            new StringSerializer(),
+            new JacksonJsonSerializer<ReviewSearchIndexEvent>()
         );
     }
 
     @Bean
     public KafkaTemplate<String, EventPayload> kafkaTemplate(ProducerFactory<String, EventPayload> producerFactory) {
         return new KafkaTemplate<>(producerFactory);
+    }
+
+    @Bean
+    public KafkaTemplate<String, ReviewSearchIndexEvent> reviewSearchIndexKafkaTemplate(
+            ProducerFactory<String, ReviewSearchIndexEvent> reviewSearchIndexProducerFactory
+    ) {
+        return new KafkaTemplate<>(reviewSearchIndexProducerFactory);
     }
 
     @Bean

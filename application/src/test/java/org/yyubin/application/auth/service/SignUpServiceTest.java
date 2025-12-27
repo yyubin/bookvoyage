@@ -80,6 +80,7 @@ class SignUpServiceTest {
                 encodedPassword,
                 "GeneratedNickname",
                 bio,
+                "",
                 Role.USER,
                 AuthProvider.LOCAL,
                 null,

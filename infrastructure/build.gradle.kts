@@ -54,14 +54,14 @@ dependencies {
     testImplementation("com.h2database:h2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
-    annotationProcessor("io.github.yyubin:jinx-processor:0.0.20")
-    implementation("io.github.yyubin:jinx-core:0.0.20")
+    annotationProcessor("io.github.yyubin:jinx-processor:0.0.21")
+    implementation("io.github.yyubin:jinx-core:0.0.21")
 }
 
 val jinxCli by configurations.creating
 
 dependencies {
-    jinxCli("io.github.yyubin:jinx-cli:0.0.20")
+    jinxCli("io.github.yyubin:jinx-cli:0.0.21")
 }
 
 tasks.register<JavaExec>("jinxMigrate") {

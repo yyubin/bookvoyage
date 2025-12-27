@@ -22,6 +22,9 @@ import org.yyubin.application.review.command.CreateReviewCommand;
 import org.yyubin.application.review.command.DeleteReviewCommand;
 import org.yyubin.application.review.command.UpdateReviewCommand;
 import org.yyubin.application.review.dto.ReviewResult;
+import org.yyubin.application.review.search.event.ReviewSearchIndexEvent;
+import org.yyubin.application.review.search.event.ReviewSearchIndexEventPublisher;
+import org.yyubin.application.review.search.event.ReviewSearchIndexEventType;
 import org.yyubin.application.review.port.LoadBookPort;
 import org.yyubin.application.review.port.LoadReviewPort;
 import org.yyubin.application.review.port.SaveBookPort;
@@ -57,6 +60,7 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
     private final NotificationEventUseCase notificationEventUseCase;
     private final FollowQueryPort followQueryPort;
     private final EventPublisher eventPublisher;
+    private final ReviewSearchIndexEventPublisher reviewSearchIndexEventPublisher;
 
     @Override
     @Transactional
@@ -320,6 +324,26 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
                         1
                 )
         );
+
+        ReviewSearchIndexEventType indexType = "REVIEW_DELETED".equals(eventType)
+                ? ReviewSearchIndexEventType.DELETE
+                : ReviewSearchIndexEventType.UPSERT;
+        ReviewSearchIndexEvent indexEvent = new ReviewSearchIndexEvent(
+                indexType,
+                review.getId() != null ? review.getId().getValue() : null,
+                review.getUserId().value(),
+                book.getId().getValue(),
+                book.getMetadata().getTitle(),
+                review.getSummary(),
+                review.getContent(),
+                highlights,
+                normalizeHighlights(highlights),
+                keywords,
+                review.getGenre().name(),
+                review.getCreatedAt(),
+                review.getRating().getValue()
+        );
+        reviewSearchIndexEventPublisher.publish(indexEvent);
     }
 
     private List<String> normalizeHighlights(List<String> highlights) {

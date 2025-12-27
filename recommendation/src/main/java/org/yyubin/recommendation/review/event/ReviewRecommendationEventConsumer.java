@@ -4,7 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
-import org.yyubin.application.event.EventPayload;
+import org.yyubin.application.event.EventTopics;
+import org.yyubin.application.review.search.event.ReviewSearchIndexEvent;
 
 @Component
 @RequiredArgsConstructor
@@ -14,14 +15,14 @@ public class ReviewRecommendationEventConsumer {
     private final ReviewRecommendationEventHandler handler;
 
     @KafkaListener(
-            topics = "events.review",
+            topics = EventTopics.REVIEW_SEARCH_INDEX,
             groupId = "${spring.kafka.consumer.group-id:cg-review-recommendation}",
-            containerFactory = "recommendationKafkaListenerContainerFactory"
+            containerFactory = "reviewSearchIndexKafkaListenerContainerFactory"
     )
-    public void consume(EventPayload payload) {
-        if (payload == null) {
+    public void consume(ReviewSearchIndexEvent event) {
+        if (event == null) {
             return;
         }
-        handler.handle(payload);
+        handler.handle(event);
     }
 }
