@@ -28,6 +28,9 @@ public class ReviewContentDocument {
     private final Long bookId;
 
     @Field(type = FieldType.Text, analyzer = "nori_analyzer", searchAnalyzer = "nori_analyzer")
+    private final String bookTitle;
+
+    @Field(type = FieldType.Text, analyzer = "nori_analyzer", searchAnalyzer = "nori_analyzer")
     private final String summary;
 
     @Field(type = FieldType.Text, analyzer = "nori_analyzer", searchAnalyzer = "nori_analyzer")

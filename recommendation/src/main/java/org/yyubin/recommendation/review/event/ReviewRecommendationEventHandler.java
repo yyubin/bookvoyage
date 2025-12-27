@@ -62,6 +62,7 @@ public class ReviewRecommendationEventHandler {
                 reviewId,
                 userId,
                 bookId,
+                asString(metadata.get("bookTitle")),
                 asString(metadata.get("summary")),
                 asString(metadata.get("content")),
                 highlights,

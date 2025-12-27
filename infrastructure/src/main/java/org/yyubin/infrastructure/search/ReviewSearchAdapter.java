@@ -57,8 +57,8 @@ public class ReviewSearchAdapter implements ReviewSearchPort {
         json.append("{\"multi_match\":{");
         json.append("\"query\":\"").append(escape(keyword)).append("\",");
         json.append("\"fields\":[");
-        json.append("\"summary^3\",\"highlights^2\",\"content^1\",");
-        json.append("\"summary.ngram^0.5\",\"highlights.ngram^0.5\",\"content.ngram^0.3\"");
+        json.append("\"bookTitle^4\",\"summary^3\",\"highlights^2\",\"content^1\",");
+        json.append("\"bookTitle.ngram^0.8\",\"summary.ngram^0.5\",\"highlights.ngram^0.5\",\"content.ngram^0.3\"");
         json.append("]}");
         json.append("}");
         json.append("]");

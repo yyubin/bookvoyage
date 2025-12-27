@@ -45,15 +45,14 @@ public class ProfileFacadeService implements GetProfileSummaryUseCase {
 
         UserBookStatisticsResult userBookStats = getUserBookStatisticsUseCase
                 .query(new GetUserBookStatisticsQuery(userId.value()));
-        long savedReviews = reviewBookmarkRepository.countByUser(userId);
-        long bookmarks = wishlistPort.countByUser(userId);
+        long bookmarkedReviews = reviewBookmarkRepository.countByUser(userId);
 
         ProfileStatsResult stats = new ProfileStatsResult(reviews, followers, following);
         ShelfStatsResult shelves = new ShelfStatsResult(
                 userBookStats.readingCount(),
                 userBookStats.completedCount(),
-                savedReviews,
-                bookmarks
+                reviews,
+                bookmarkedReviews
         );
 
         List<String> tags = Collections.emptyList();

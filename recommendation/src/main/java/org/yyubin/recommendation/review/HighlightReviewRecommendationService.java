@@ -42,6 +42,7 @@ public class HighlightReviewRecommendationService {
                 .reviewId(command.reviewId())
                 .userId(command.userId())
                 .bookId(command.bookId())
+                .bookTitle(command.bookTitle())
                 .summary(command.summary())
                 .content(command.content())
                 .highlights(command.highlights())

@@ -71,6 +71,7 @@ public class UserEntity {
                 .nickname(user.nickname())
                 .bio(user.bio())
                 .tasteTag(user.tasteTag())
+                .profilePictureUrl(user.ProfileImageUrl())
                 .role(user.role())
                 .provider(user.provider())
                 .createdAt(user.createdAt())

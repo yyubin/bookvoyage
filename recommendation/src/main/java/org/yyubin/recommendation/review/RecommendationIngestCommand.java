@@ -7,6 +7,7 @@ public record RecommendationIngestCommand(
         Long reviewId,
         Long userId,
         Long bookId,
+        String bookTitle,
         String summary,
         String content,
         List<String> highlights,

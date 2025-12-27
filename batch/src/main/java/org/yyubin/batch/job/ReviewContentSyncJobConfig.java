@@ -21,6 +21,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.beans.factory.annotation.Value;
 import org.yyubin.batch.config.BatchProperties;
+import org.yyubin.infrastructure.persistence.book.BookEntity;
+import org.yyubin.infrastructure.persistence.book.BookJpaRepository;
 import org.yyubin.infrastructure.persistence.review.ReviewEntity;
 import org.yyubin.infrastructure.persistence.review.ReviewJpaRepository;
 import org.yyubin.infrastructure.persistence.review.highlight.HighlightEntity;
@@ -43,6 +45,7 @@ public class ReviewContentSyncJobConfig {
     private final PlatformTransactionManager transactionManager;
     private final BatchProperties batchProperties;
     private final ReviewJpaRepository reviewJpaRepository;
+    private final BookJpaRepository bookJpaRepository;
     private final ReviewHighlightJpaRepository reviewHighlightJpaRepository;
     private final HighlightJpaRepository highlightJpaRepository;
     private final ReviewKeywordJpaRepository reviewKeywordJpaRepository;
@@ -124,10 +127,14 @@ public class ReviewContentSyncJobConfig {
                     .map(KeywordEntity::getRawValue)
                     .toList();
 
+            BookEntity book = bookJpaRepository.findById(entity.getBookId()).orElse(null);
+            String bookTitle = book != null ? book.getTitle() : null;
+
             return new RecommendationIngestCommand(
                     entity.getId(),
                     entity.getUserId(),
                     entity.getBookId(),
+                    bookTitle,
                     entity.getSummary(),
                     entity.getContent(),
                     highlightRaw,

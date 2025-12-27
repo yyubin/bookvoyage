@@ -86,7 +86,7 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
         publishReviewEvent(
                 "REVIEW_CREATED",
                 savedReview,
-                book.getId().getValue(),
+                book,
                 loadKeywordsUseCase.loadKeywords(savedReview.getId()),
                 loadHighlightsUseCase.loadHighlights(savedReview.getId())
         );
@@ -146,7 +146,7 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
         publishReviewEvent(
                 "REVIEW_UPDATED",
                 saved,
-                updatedBook.getId().getValue(),
+                updatedBook,
                 loadKeywordsUseCase.loadKeywords(saved.getId()),
                 loadHighlightsUseCase.loadHighlights(saved.getId())
         );
@@ -182,7 +182,7 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
         publishReviewEvent(
                 "REVIEW_DELETED",
                 saved,
-                book.getId().getValue(),
+                book,
                 loadKeywordsUseCase.loadKeywords(saved.getId()),
                 loadHighlightsUseCase.loadHighlights(saved.getId())
         );
@@ -288,16 +288,18 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
     private void publishReviewEvent(
             String eventType,
             Review review,
-            Long bookId,
+            Book book,
             List<String> keywords,
             List<String> highlights
     ) {
         java.util.Map<String, Object> metadata = new java.util.HashMap<>();
-        metadata.put("bookId", bookId);
+        metadata.put("bookId", book.getId().getValue());
+        metadata.put("bookTitle", book.getMetadata().getTitle());
         metadata.put("rating", review.getRating().getValue());
         metadata.put("visibility", review.getVisibility().name());
         metadata.put("reviewId", review.getId() != null ? review.getId().getValue() : null);
         metadata.put("summary", review.getSummary());
+        metadata.put("content", review.getContent());
         metadata.put("genre", review.getGenre().name());
         metadata.put("createdAt", review.getCreatedAt().toString());
         metadata.put("keywords", keywords);
