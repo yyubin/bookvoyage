@@ -9,7 +9,8 @@ public record UserProfileResponse(
         String nickname,
         String bio,
         String tasteTag,
-        String provider
+        String provider,
+        String profileImageUrl
 ) {
     public static UserProfileResponse from(UserProfileResult result) {
         return new UserProfileResponse(
@@ -19,7 +20,8 @@ public record UserProfileResponse(
                 result.nickname(),
                 result.bio(),
                 result.tasteTag(),
-                result.provider()
+                result.provider(),
+                result.profileImageUrl()
         );
     }
 }

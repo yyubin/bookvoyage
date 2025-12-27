@@ -56,9 +56,9 @@ BookVoyage는 책 리뷰를 중심으로 한 소셜 플랫폼입니다. 사용�
 - **인기 도서/리뷰 랭킹**
 - **사용자 활동 분석**
 
-### ⚙️ 배치 작업
-- **Neo4j 동기화** (10분마다) - 그래프 데이터 업데이트
-- **Elasticsearch 동기화** (30분마다) - 검색 인덱스 업데이트
+### ⚙️ 배치 작업 (파생 인덱스 동기화)
+- **Neo4j 동기화** (10분마다) - **MySQL → Neo4j 파생 그래프 인덱스 구축**
+- **Elasticsearch 동기화** (30분마다) - **MySQL → ES 파생 검색 인덱스 구축**
 - **리뷰 조회수 플러시** (15분마다) - Redis → MySQL 동기화
 - **Outbox 정리** (매일 새벽 2시) - 7일 이상 오래된 이벤트 삭제
 - **ShedLock 분산 락** - 중복 실행 방지
@@ -151,6 +151,56 @@ sequenceDiagram
 
 ---
 
+## 💾 데이터 아키텍처 원칙
+
+### MySQL = Source of Truth
+
+**BookVoyage는 MySQL을 단일 진실 공급원(Single Source of Truth)으로 사용합니다.**
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    MySQL (SoT)                          │
+│  - 모든 도메인 데이터의 유일한 원본 저장소                    │
+│  - 모든 쓰기(Create/Update/Delete) 작업은 MySQL에만 수행    │
+│  - 트랜잭션 일관성 및 ACID 보장                            │
+└─────────────────────────────────────────────────────────┘
+                           │
+                           │ Batch Sync (10분~30분 주기)
+                           ▼
+        ┌──────────────────────────────────────┐
+        │                                      │
+        ▼                                      ▼
+┌──────────────────┐              ┌──────────────────────┐
+│   Neo4j          │              │   Elasticsearch      │
+│ (파생 그래프 인덱스) │              │  (파생 검색 인덱스)     │
+│                  │              │                      │
+│ - Read-only      │              │ - Read-only          │
+│ - 추천 시스템 전용  │              │ - 검색 & MLT 전용     │
+└──────────────────┘              └──────────────────────┘
+```
+
+### 데이터 동기화 전략
+
+1. **쓰기**: MySQL만 가능
+   - 모든 비즈니스 로직은 MySQL에 먼저 기록
+   - JPA 트랜잭션을 통한 데이터 무결성 보장
+
+2. **읽기**: 목적에 따라 분산
+   - **트랜잭션 조회**: MySQL (정확한 최신 데이터)
+   - **그래프 분석**: Neo4j (관계 기반 추천)
+   - **전문 검색**: Elasticsearch (텍스트 검색 및 유사도)
+
+3. **동기화**: 배치 작업
+   - **Neo4j 동기화**: 10분마다 (BatchSyncService)
+   - **Elasticsearch 동기화**: 30분마다 (BatchSyncService)
+   - **실패 처리**: 재시도 메커니즘 포함
+
+4. **일관성 모델**: Eventual Consistency
+   - 파생 인덱스는 최대 10-30분의 지연 가능
+   - 실시간 정확도가 필요한 경우 MySQL 직접 조회
+
+---
+
 ## 🛠️ 기술 스택
 
 ### Backend
@@ -162,9 +212,25 @@ sequenceDiagram
 - **Spring Kafka** - 이벤트 스트리밍
 
 ### Database & Storage
-- **MySQL 8.0** - 메인 RDB
-- **Neo4j 5.13** - 그래프 데이터베이스 (추천 시스템)
-- **Elasticsearch 8.11** - 검색 엔진 (추천 시스템)
+
+#### 📌 Source of Truth (SoT)
+- **MySQL 8.0** - **단일 진실 공급원 (Single Source of Truth)**
+  - 모든 도메인 데이터의 원본 저장소
+  - 트랜잭션 일관성 보장
+  - 모든 쓰기 작업은 MySQL을 통해서만 수행
+
+#### 🔄 Derived Indexes (파생 인덱스)
+- **Neo4j 5.13** - **파생 그래프 인덱스**
+  - MySQL 데이터를 배치 동기화하여 구축
+  - 추천 시스템용 그래프 쿼리 최적화
+  - 읽기 전용 (Read-only)
+
+- **Elasticsearch 8.11** - **파생 검색 인덱스**
+  - MySQL 데이터를 배치 동기화하여 구축
+  - 전문 검색 및 텍스트 유사도 분석
+  - 읽기 전용 (Read-only)
+
+#### ⚡ Cache Layer
 - **Redis 7** - 캐시 & 세션 & 분산 락
 
 ### Messaging & Events
@@ -219,19 +285,21 @@ sequenceDiagram
   - Outbox Processor
 
 ### 🤖 Recommendation Module
-- **역할**: 추천 시스템 엔진
+- **역할**: 추천 시스템 엔진 (읽기 전용)
+- **데이터 소스**: MySQL의 파생 인덱스 활용
 - **구성**:
-  - **Candidate Generation**: Neo4j + Elasticsearch
+  - **Candidate Generation**: Neo4j(파생 그래프) + Elasticsearch(파생 검색)
   - **Scoring**: 5가지 하이브리드 스코어러
   - **Caching**: Redis 기반 결과 캐싱
+- **중요**: 추천 엔진은 데이터를 쓰지 않고, MySQL에서 동기화된 데이터만 읽음
 
 ### ⏰ Batch Module
-- **역할**: 정기 배치 작업
+- **역할**: 정기 배치 작업 및 **파생 인덱스 동기화**
 - **작업 목록**:
-  - Neo4j 동기화 (10분)
-  - Elasticsearch 동기화 (30분)
-  - 리뷰 조회수 플러시 (15분)
-  - Outbox 정리 (매일 새벽 2시)
+  - **Neo4j 동기화** (10분) - **MySQL → Neo4j 단방향 동기화**
+  - **Elasticsearch 동기화** (30분) - **MySQL → ES 단방향 동기화**
+  - **리뷰 조회수 플러시** (15분) - Redis → MySQL 동기화
+  - **Outbox 정리** (매일 새벽 2시) - 완료된 이벤트 삭제
 
 ### 🛠️ Support Module
 - **역할**: 공통 유틸리티
@@ -300,13 +368,16 @@ public interface ReviewRepository extends JpaRepository<ReviewEntity, Long>,
 
 ## 📊 추천 시스템 개요
 
+> **중요**: 추천 시스템은 **MySQL의 파생 인덱스**(Neo4j, Elasticsearch)를 활용합니다.
+> 모든 추천 데이터는 MySQL에서 배치 동기화되며, 추천 엔진은 읽기 전용으로 동작합니다.
+
 ### 2-Stage 추천 파이프라인
 
 **Stage 1: Candidate Generation (후보 생성)**
 ```
-Neo4j: 협업 필터링 + 장르/저자 기반 → 250개
-Elasticsearch: MLT + 인기 도서 → 250개
-──────────────────────────────────────────
+Neo4j (파생 그래프 인덱스): 협업 필터링 + 장르/저자 기반 → 250개
+Elasticsearch (파생 검색 인덱스): MLT + 인기 도서 → 250개
+────────────────────────────────────────────────────────────
 합계: 500개 후보 (중복 제거 후)
 ```
 
@@ -324,13 +395,15 @@ HybridScorer =
 
 | 추천 유형 | 알고리즘 | 데이터 소스 |
 |----------|---------|-----------|
-| 협업 필터링 | User-based CF | Neo4j |
-| 장르 기반 | Content-based | Neo4j |
-| 저자 기반 | Content-based | Neo4j |
-| 유사 도서 | Graph k-hop | Neo4j |
-| More Like This | Text similarity | Elasticsearch |
-| 인기 도서 | Popularity-based | Elasticsearch |
-| 시맨틱 검색 | Text search | Elasticsearch |
+| 협업 필터링 | User-based CF | Neo4j (파생 인덱스) |
+| 장르 기반 | Content-based | Neo4j (파생 인덱스) |
+| 저자 기반 | Content-based | Neo4j (파생 인덱스) |
+| 유사 도서 | Graph k-hop | Neo4j (파생 인덱스) |
+| More Like This | Text similarity | Elasticsearch (파생 인덱스) |
+| 인기 도서 | Popularity-based | Elasticsearch (파생 인덱스) |
+| 시맨틱 검색 | Text search | Elasticsearch (파생 인덱스) |
+
+**데이터 원본**: 모든 추천 데이터는 **MySQL(SoT)**에서 배치 동기화됩니다.
 
 ---
 

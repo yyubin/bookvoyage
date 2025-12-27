@@ -61,6 +61,8 @@ public class ProfileFacadeService implements GetProfileSummaryUseCase {
                 user.id().value(),
                 name,
                 user.bio(),
+                user.tasteTag(),
+                user.ProfileImageUrl(),
                 tags,
                 stats,
                 shelves

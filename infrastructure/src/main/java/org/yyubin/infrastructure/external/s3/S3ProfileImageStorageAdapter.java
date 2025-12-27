@@ -28,7 +28,6 @@ public class S3ProfileImageStorageAdapter implements ProfileImageStoragePort {
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                 .bucket(s3Properties.getBucketName())
                 .key(objectKey)
-                .contentType(determineContentType(fileExtension))
                 .build();
 
         PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()

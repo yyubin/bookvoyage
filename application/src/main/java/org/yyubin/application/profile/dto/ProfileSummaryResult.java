@@ -6,6 +6,8 @@ public record ProfileSummaryResult(
         Long id,
         String name,
         String bio,
+        String tasteTag,
+        String profileImageUrl,
         List<String> tags,
         ProfileStatsResult stats,
         ShelfStatsResult shelves

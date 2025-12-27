@@ -7,6 +7,8 @@ public record ProfileSummaryResponse(
         Long id,
         String name,
         String bio,
+        String tasteTag,
+        String profileImageUrl,
         List<String> tags,
         ProfileStatsResponse stats,
         ShelfStatsResponse shelves
@@ -16,6 +18,8 @@ public record ProfileSummaryResponse(
                 result.id(),
                 result.name(),
                 result.bio(),
+                result.tasteTag(),
+                result.profileImageUrl(),
                 result.tags(),
                 ProfileStatsResponse.from(result.stats()),
                 ShelfStatsResponse.from(result.shelves())
