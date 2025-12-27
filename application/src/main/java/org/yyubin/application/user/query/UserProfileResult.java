@@ -8,6 +8,7 @@ public record UserProfileResult(
         String username,
         String nickname,
         String bio,
+        String tasteTag,
         String provider,
         String profileImageUrl
 ) {
@@ -18,6 +19,7 @@ public record UserProfileResult(
                 user.username(),
                 user.nickname(),
                 user.bio(),
+                user.tasteTag(),
                 user.provider().name(),
                 user.ProfileImageUrl()
         );

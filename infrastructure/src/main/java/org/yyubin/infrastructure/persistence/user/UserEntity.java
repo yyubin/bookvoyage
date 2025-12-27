@@ -47,6 +47,9 @@ public class UserEntity {
     @Column(name = "bio", length = 500)
     private String bio;
 
+    @Column(name = "taste_tag", length = 100)
+    private String tasteTag;
+
     @Enumerated(EnumType.STRING)
     private Role role;
 
@@ -67,6 +70,7 @@ public class UserEntity {
                 .password(user.password())
                 .nickname(user.nickname())
                 .bio(user.bio())
+                .tasteTag(user.tasteTag())
                 .role(user.role())
                 .provider(user.provider())
                 .createdAt(user.createdAt())
@@ -81,6 +85,7 @@ public class UserEntity {
                 password,
                 nickname,
                 bio,
+                tasteTag,
                 role,
                 provider,
                 profilePictureUrl != null ? profilePictureUrl : "",

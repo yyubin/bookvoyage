@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.yyubin.application.user.command.UpdateUserBioCommand;
 import org.yyubin.application.user.command.UpdateUserNicknameCommand;
 import org.yyubin.application.user.command.UpdateUserProfileImageUrlCommand;
+import org.yyubin.application.user.command.UpdateUserTasteTagCommand;
 import org.yyubin.application.user.port.LoadUserPort;
 import org.yyubin.application.user.port.UpdateUserPort;
 import org.yyubin.domain.user.User;
@@ -21,7 +22,7 @@ public class UpdateUserCommandHandler {
     public void handle(UpdateUserBioCommand command) {
         User user = loadUserPort.loadById(new UserId(command.userId()));
 
-        User updatedUser = user.updateProfile(user.username(), command.bio(), user.nickname(), user.ProfileImageUrl());
+        User updatedUser = user.updateProfile(user.username(), command.bio(), user.nickname(), user.ProfileImageUrl(), user.tasteTag());
 
         updateUserPort.update(updatedUser);
     }
@@ -29,7 +30,7 @@ public class UpdateUserCommandHandler {
     public void handle(UpdateUserNicknameCommand command) {
         User user = loadUserPort.loadById(new UserId(command.userId()));
 
-        User updatedUser = user.updateProfile(user.username(), user.bio(), command.newNickname(), user.ProfileImageUrl());
+        User updatedUser = user.updateProfile(user.username(), user.bio(), command.newNickname(), user.ProfileImageUrl(), user.tasteTag());
 
         updateUserPort.update(updatedUser);
     }
@@ -37,7 +38,15 @@ public class UpdateUserCommandHandler {
     public void handle(UpdateUserProfileImageUrlCommand command) {
         User user = loadUserPort.loadById(new UserId(command.userId()));
 
-        User updatedUser = user.updateProfile(user.username(), user.bio(), user.nickname(), command.newProfileImageUrl());
+        User updatedUser = user.updateProfile(user.username(), user.bio(), user.nickname(), command.newProfileImageUrl(), user.tasteTag());
+
+        updateUserPort.update(updatedUser);
+    }
+
+    public void handle(UpdateUserTasteTagCommand command) {
+        User user = loadUserPort.loadById(new UserId(command.userId()));
+
+        User updatedUser = user.updateProfile(user.username(), user.bio(), user.nickname(), user.ProfileImageUrl(), command.tasteTag());
 
         updateUserPort.update(updatedUser);
     }

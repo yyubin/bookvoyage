@@ -8,6 +8,7 @@ public record UserProfileResponse(
         String username,
         String nickname,
         String bio,
+        String tasteTag,
         String provider
 ) {
     public static UserProfileResponse from(UserProfileResult result) {
@@ -17,6 +18,7 @@ public record UserProfileResponse(
                 result.username(),
                 result.nickname(),
                 result.bio(),
+                result.tasteTag(),
                 result.provider()
         );
     }

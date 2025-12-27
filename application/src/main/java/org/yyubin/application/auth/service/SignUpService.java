@@ -46,6 +46,7 @@ public class SignUpService implements SignUpUseCase {
                 encodedPassword,
                 NicknameGenerator.generate(email),
                 bio,
+                null,
                 Role.USER,
                 AuthProvider.LOCAL,
                 null,

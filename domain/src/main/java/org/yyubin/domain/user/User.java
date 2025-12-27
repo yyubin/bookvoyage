@@ -9,6 +9,7 @@ public record User(
         String password,
         String nickname,
         String bio,
+        String tasteTag,
         Role role,
         AuthProvider provider,
         String ProfileImageUrl,
@@ -26,6 +27,7 @@ public record User(
         // 기본값 설정 (provider를 먼저 설정해야 함)
         if (provider == null) provider = AuthProvider.LOCAL;
         if (bio == null) bio = "";
+        if (tasteTag == null) tasteTag = "";
         if (role == null) role = Role.USER;
         if (createdAt == null) createdAt = LocalDateTime.now();
 
@@ -40,7 +42,7 @@ public record User(
         }
     }
 
-    public User updateProfile(String newUsername, String newBio, String newNickname, String newProfileImageUrl) {
+    public User updateProfile(String newUsername, String newBio, String newNickname, String newProfileImageUrl, String newTasteTag) {
         return new User(
                 this.id,
                 this.email,
@@ -48,6 +50,7 @@ public record User(
                 this.password,
                 newNickname != null ? newNickname : this.nickname,
                 newBio != null ? newBio : this.bio,
+                newTasteTag != null ? newTasteTag : this.tasteTag,
                 this.role,
                 this.provider,
                 newProfileImageUrl != null ? newProfileImageUrl : this.ProfileImageUrl,

@@ -48,6 +48,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     "",  // OAuth2 사용자는 비밀번호 없음
                     makeRandomNickname(info.getEmail()),
                     "",  // bio는 기본값으로 빈 문자열
+                    "",
                     Role.USER,
                     mapToAuthProvider(registrationId),
                     null,
