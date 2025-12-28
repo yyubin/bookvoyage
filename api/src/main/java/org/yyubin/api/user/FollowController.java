@@ -13,14 +13,17 @@ import org.springframework.web.bind.annotation.RestController;
 import org.yyubin.api.user.dto.FollowToggleResponse;
 import org.yyubin.api.user.dto.FollowPageResponse;
 import org.yyubin.api.user.dto.FollowCountResponse;
+import org.yyubin.api.user.dto.FollowStatusResponse;
 import org.yyubin.application.user.ToggleFollowUseCase;
 import org.yyubin.application.user.GetFollowingUsersUseCase;
 import org.yyubin.application.user.GetFollowerUsersUseCase;
 import org.yyubin.application.user.GetFollowCountUseCase;
+import org.yyubin.application.user.CheckFollowStatusUseCase;
 import org.yyubin.application.user.command.ToggleFollowCommand;
 import org.yyubin.application.user.query.GetFollowingUsersQuery;
 import org.yyubin.application.user.query.GetFollowerUsersQuery;
 import org.yyubin.application.user.query.GetFollowCountQuery;
+import org.yyubin.application.user.query.CheckFollowStatusQuery;
 
 @RestController
 @RequestMapping("/api/users")
@@ -31,6 +34,7 @@ public class FollowController {
     private final GetFollowingUsersUseCase getFollowingUsersUseCase;
     private final GetFollowerUsersUseCase getFollowerUsersUseCase;
     private final GetFollowCountUseCase getFollowCountUseCase;
+    private final CheckFollowStatusUseCase checkFollowStatusUseCase;
 
     @PostMapping("/{targetUserId}/follow")
     public ResponseEntity<FollowToggleResponse> toggleFollow(
@@ -85,5 +89,16 @@ public class FollowController {
                         getFollowCountUseCase.getCounts(new GetFollowCountQuery(userId))
                 )
         );
+    }
+
+    @GetMapping("/{targetUserId}/follow-status")
+    public ResponseEntity<FollowStatusResponse> checkFollowStatus(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long targetUserId
+    ) {
+        Long followerId = Long.parseLong(userDetails.getUsername());
+        CheckFollowStatusQuery query = new CheckFollowStatusQuery(followerId, targetUserId);
+        boolean following = checkFollowStatusUseCase.check(query).following();
+        return ResponseEntity.ok(new FollowStatusResponse(following));
     }
 }
