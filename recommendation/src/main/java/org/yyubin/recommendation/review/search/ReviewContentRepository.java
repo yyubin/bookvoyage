@@ -7,4 +7,6 @@ import org.springframework.data.elasticsearch.repository.ElasticsearchRepository
 public interface ReviewContentRepository extends ElasticsearchRepository<ReviewContentDocument, Long> {
 
     Page<ReviewContentDocument> findByHighlightsNormOrderByReviewIdDesc(String highlightNorm, Pageable pageable);
+
+    Page<ReviewContentDocument> findByBookId(Long bookId, Pageable pageable);
 }

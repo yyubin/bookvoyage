@@ -19,8 +19,16 @@ public interface ReviewReactionJpaRepository extends JpaRepository<ReviewReactio
     @Query("SELECT r.content as emoji, COUNT(r) as count FROM ReviewReactionEntity r WHERE r.reviewId = :reviewId GROUP BY r.content")
     java.util.List<ReactionCountProjection> countByReviewIdGroupByContent(Long reviewId);
 
+    @Query("SELECT r.reviewId as reviewId, COUNT(r) as count FROM ReviewReactionEntity r WHERE r.reviewId IN :reviewIds GROUP BY r.reviewId")
+    java.util.List<ReviewReactionCount> countByReviewIds(java.util.List<Long> reviewIds);
+
     interface ReactionCountProjection {
         String getEmoji();
+        Long getCount();
+    }
+
+    interface ReviewReactionCount {
+        Long getReviewId();
         Long getCount();
     }
 }

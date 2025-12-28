@@ -15,4 +15,6 @@ public interface LoadReviewCommentPort {
     long countRepliesByParentId(Long parentCommentId);
 
     java.util.Map<Long, Long> countRepliesBatch(java.util.List<Long> parentCommentIds);
+
+    java.util.Map<Long, Long> countByReviewIdsBatch(java.util.List<Long> reviewIds);
 }

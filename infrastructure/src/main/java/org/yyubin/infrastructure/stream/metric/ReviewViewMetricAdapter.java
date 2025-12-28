@@ -1,5 +1,8 @@
 package org.yyubin.infrastructure.stream.metric;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -50,6 +53,29 @@ public class ReviewViewMetricAdapter implements ReviewViewMetricPort {
         } catch (NumberFormatException ex) {
             return Optional.empty();
         }
+    }
+
+    @Override
+    public Map<Long, Long> getBatchCachedCounts(List<Long> reviewIds) {
+        if (reviewIds == null || reviewIds.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<Long, Long> result = new HashMap<>();
+
+        // Fetch values one by one or use pipeline
+        for (Long reviewId : reviewIds) {
+            Object value = redisTemplate.opsForValue().get(counterKey(reviewId));
+            if (value != null) {
+                try {
+                    result.put(reviewId, Long.parseLong(value.toString()));
+                } catch (NumberFormatException ignored) {
+                    // Skip invalid values
+                }
+            }
+        }
+
+        return result;
     }
 
     private String counterKey(Long reviewId) {

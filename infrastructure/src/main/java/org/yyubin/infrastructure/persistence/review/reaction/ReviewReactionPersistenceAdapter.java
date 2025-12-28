@@ -1,6 +1,7 @@
 package org.yyubin.infrastructure.persistence.review.reaction;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -40,6 +41,19 @@ public class ReviewReactionPersistenceAdapter implements ReviewReactionPort {
         return projections.stream()
                 .map(p -> (ReactionCount) new ReactionCountImpl(p.getEmoji(), p.getCount()))
                 .toList();
+    }
+
+    @Override
+    public Map<Long, Long> countByReviewIdsBatch(List<Long> reviewIds) {
+        if (reviewIds == null || reviewIds.isEmpty()) {
+            return java.util.Collections.emptyMap();
+        }
+        var results = reviewReactionJpaRepository.countByReviewIds(reviewIds);
+        return results.stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        ReviewReactionJpaRepository.ReviewReactionCount::getReviewId,
+                        ReviewReactionJpaRepository.ReviewReactionCount::getCount
+                ));
     }
 
     private record ReactionCountImpl(String emoji, Long count) implements ReactionCount {

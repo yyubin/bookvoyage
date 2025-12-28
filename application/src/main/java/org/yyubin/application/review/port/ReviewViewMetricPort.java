@@ -1,5 +1,7 @@
 package org.yyubin.application.review.port;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -20,4 +22,9 @@ public interface ReviewViewMetricPort {
      * 캐시된 조회수 조회
      */
     Optional<Long> getCachedCount(Long reviewId);
+
+    /**
+     * 여러 리뷰의 캐시된 조회수를 배치로 조회
+     */
+    Map<Long, Long> getBatchCachedCounts(List<Long> reviewIds);
 }

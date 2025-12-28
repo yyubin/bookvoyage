@@ -49,7 +49,9 @@ public class ReviewSearchAdapter implements ReviewSearchPort {
             items.add(new ReviewSearchItemResult(
                     doc.getReviewId(),
                     doc.getBookId(),
+                    doc.getBookTitle(),
                     doc.getUserId(),
+                    doc.getAuthorNickname(),
                     doc.getSummary(),
                     doc.getHighlights(),
                     doc.getKeywords(),

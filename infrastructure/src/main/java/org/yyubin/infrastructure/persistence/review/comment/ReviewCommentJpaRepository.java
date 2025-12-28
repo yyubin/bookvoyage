@@ -26,8 +26,16 @@ public interface ReviewCommentJpaRepository extends JpaRepository<ReviewCommentE
     @org.springframework.data.jpa.repository.Query("SELECT c.parentCommentId as parentId, COUNT(c) as count FROM ReviewCommentEntity c WHERE c.parentCommentId IN :parentIds AND c.deleted = false GROUP BY c.parentCommentId")
     List<ParentCommentCount> countRepliesByParentIds(List<Long> parentIds);
 
+    @org.springframework.data.jpa.repository.Query("SELECT c.reviewId as reviewId, COUNT(c) as count FROM ReviewCommentEntity c WHERE c.reviewId IN :reviewIds AND c.deleted = false GROUP BY c.reviewId")
+    List<ReviewCommentCount> countByReviewIds(List<Long> reviewIds);
+
     interface ParentCommentCount {
         Long getParentId();
+        Long getCount();
+    }
+
+    interface ReviewCommentCount {
+        Long getReviewId();
         Long getCount();
     }
 }

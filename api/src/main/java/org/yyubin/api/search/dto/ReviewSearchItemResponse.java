@@ -8,7 +8,9 @@ import org.yyubin.application.review.search.dto.ReviewSearchItemResult;
 public record ReviewSearchItemResponse(
         Long reviewId,
         Long bookId,
+        String bookTitle,
         Long userId,
+        String authorNickname,
         String summary,
         List<String> highlights,
         List<String> keywords,
@@ -19,7 +21,9 @@ public record ReviewSearchItemResponse(
         return new ReviewSearchItemResponse(
                 result.reviewId(),
                 result.bookId(),
+                result.bookTitle(),
                 result.userId(),
+                result.authorNickname(),
                 result.summary(),
                 result.highlights(),
                 result.keywords(),

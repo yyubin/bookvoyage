@@ -78,4 +78,17 @@ public class ReviewCommentPersistenceAdapter implements LoadReviewCommentPort, S
                         ReviewCommentJpaRepository.ParentCommentCount::getCount
                 ));
     }
+
+    @Override
+    public java.util.Map<Long, Long> countByReviewIdsBatch(List<Long> reviewIds) {
+        if (reviewIds == null || reviewIds.isEmpty()) {
+            return java.util.Collections.emptyMap();
+        }
+        var results = reviewCommentJpaRepository.countByReviewIds(reviewIds);
+        return results.stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        ReviewCommentJpaRepository.ReviewCommentCount::getReviewId,
+                        ReviewCommentJpaRepository.ReviewCommentCount::getCount
+                ));
+    }
 }

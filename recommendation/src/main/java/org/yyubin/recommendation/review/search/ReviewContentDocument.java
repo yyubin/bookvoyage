@@ -25,6 +25,9 @@ public class ReviewContentDocument {
     @Field(type = FieldType.Long)
     private final Long userId;
 
+    @Field(type = FieldType.Keyword)
+    private final String authorNickname;
+
     @Field(type = FieldType.Long)
     private final Long bookId;
 
