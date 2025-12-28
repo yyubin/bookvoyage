@@ -90,7 +90,9 @@ public class ReviewCommentService implements CreateCommentUseCase, UpdateComment
         }
         publishCommentEvent("COMMENT_CREATED", saved, review);
         sendMentionNotifications(mentions, writerId, command.reviewId(), command.parentCommentId());
-        return ReviewCommentResult.from(saved);
+
+        org.yyubin.domain.user.User author = loadUserPort.loadById(writerId);
+        return ReviewCommentResult.from(saved, author);
     }
 
     @Override
@@ -111,7 +113,10 @@ public class ReviewCommentService implements CreateCommentUseCase, UpdateComment
 
         var mapped = comments.stream()
                 .limit(query.size())
-                .map(ReviewCommentResult::from)
+                .map(comment -> {
+                    org.yyubin.domain.user.User author = loadUserPort.loadById(comment.getUserId());
+                    return ReviewCommentResult.from(comment, author);
+                })
                 .toList();
 
         Long nextCursor = comments.size() > query.size()
@@ -144,7 +149,9 @@ public class ReviewCommentService implements CreateCommentUseCase, UpdateComment
 
         ReviewComment updated = comment.updateContent(command.content(), mentionParser.parse(command.content()));
         ReviewComment saved = saveReviewCommentPort.save(updated);
-        return ReviewCommentResult.from(saved);
+
+        org.yyubin.domain.user.User author = loadUserPort.loadById(writerId);
+        return ReviewCommentResult.from(saved, author);
     }
 
     @Override

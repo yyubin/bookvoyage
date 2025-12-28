@@ -1,17 +1,18 @@
 package org.yyubin.api.review.dto;
 
-import java.time.LocalDateTime;
 import java.util.List;
+import org.yyubin.api.common.TimeFormatter;
 import org.yyubin.application.review.dto.ReviewCommentResult;
 
 public record CommentResponse(
         Long commentId,
         Long reviewId,
         Long userId,
+        String authorNickname,
         String content,
         Long parentCommentId,
-        LocalDateTime createdAt,
-        LocalDateTime editedAt,
+        String createdAt,
+        String editedAt,
         List<MentionResponse> mentions
 ) {
 
@@ -20,10 +21,11 @@ public record CommentResponse(
                 result.commentId(),
                 result.reviewId(),
                 result.userId(),
+                result.authorNickname(),
                 result.content(),
                 result.parentCommentId(),
-                result.createdAt(),
-                result.editedAt(),
+                TimeFormatter.formatRelativeTime(result.createdAt()),
+                result.editedAt() != null ? TimeFormatter.formatRelativeTime(result.editedAt()) : null,
                 result.mentions().stream().map(MentionResponse::from).toList()
         );
     }

@@ -10,6 +10,7 @@ public record ReviewCommentResult(
         Long commentId,
         Long reviewId,
         Long userId,
+        String authorNickname,
         String content,
         Long parentCommentId,
         LocalDateTime createdAt,
@@ -17,12 +18,13 @@ public record ReviewCommentResult(
         List<Mention> mentions
 ) {
 
-    public static ReviewCommentResult from(ReviewComment comment) {
+    public static ReviewCommentResult from(ReviewComment comment, org.yyubin.domain.user.User author) {
         ReviewCommentId parent = comment.getParentId();
         return new ReviewCommentResult(
                 comment.getId().getValue(),
                 comment.getReviewId().getValue(),
                 comment.getUserId().value(),
+                author.nickname(),
                 comment.getContent(),
                 parent != null ? parent.getValue() : null,
                 comment.getCreatedAt(),
