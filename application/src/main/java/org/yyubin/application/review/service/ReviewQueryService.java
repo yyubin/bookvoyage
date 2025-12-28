@@ -43,6 +43,7 @@ public class ReviewQueryService implements GetReviewUseCase, GetUserReviewsUseCa
     private final EventPublisher eventPublisher;
     private final HighlightNormalizer highlightNormalizer;
     private final org.yyubin.application.user.port.LoadUserPort loadUserPort;
+    private final org.yyubin.application.review.port.ReviewLikePort reviewLikePort;
 
     @Override
     public ReviewResult query(GetReviewQuery query) {
@@ -81,6 +82,13 @@ public class ReviewQueryService implements GetReviewUseCase, GetUserReviewsUseCa
                     .orElse(null);
         }
 
+        // 좋아요 여부 및 개수 조회
+        boolean isLiked = false;
+        if (query.viewerId() != null) {
+            isLiked = reviewLikePort.exists(review.getId(), new UserId(query.viewerId()));
+        }
+        long likeCount = reviewLikePort.countByReviewId(review.getId());
+
         return ReviewResult.fromWithViewCountAndInteraction(
                 review,
                 book,
@@ -90,7 +98,9 @@ public class ReviewQueryService implements GetReviewUseCase, GetUserReviewsUseCa
                 viewForResponse,
                 bookmarked,
                 reactions,
-                userReaction
+                userReaction,
+                isLiked,
+                likeCount
         );
     }
 

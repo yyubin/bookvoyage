@@ -38,7 +38,9 @@ public record ReviewResult(
         List<org.yyubin.domain.review.Mention> mentions,
         boolean bookmarked,
         List<ReactionSummary> reactions,
-        String userReaction
+        String userReaction,
+        boolean isLiked,
+        long likeCount
 ) {
 
     public record ReactionSummary(String emoji, long count) {
@@ -75,7 +77,9 @@ public record ReviewResult(
                 review.getMentions(),
                 false,
                 Collections.emptyList(),
-                null
+                null,
+                false,
+                0L
         );
     }
 
@@ -110,7 +114,9 @@ public record ReviewResult(
                 review.getMentions(),
                 false,
                 Collections.emptyList(),
-                null
+                null,
+                false,
+                0L
         );
     }
 
@@ -123,7 +129,9 @@ public record ReviewResult(
             long viewCount,
             boolean bookmarked,
             List<ReactionSummary> reactions,
-            String userReaction
+            String userReaction,
+            boolean isLiked,
+            long likeCount
     ) {
         return new ReviewResult(
                 review.getId().getValue(),
@@ -155,7 +163,9 @@ public record ReviewResult(
                 review.getMentions(),
                 bookmarked,
                 reactions != null ? reactions : Collections.emptyList(),
-                userReaction
+                userReaction,
+                isLiked,
+                likeCount
         );
     }
 }

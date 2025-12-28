@@ -38,7 +38,9 @@ public record ReviewResponse(
         List<MentionResponse> mentions,
         boolean bookmarked,
         List<ReactionSummaryResponse> reactions,
-        String userReaction
+        String userReaction,
+        boolean isLiked,
+        long likeCount
 ) {
 
     public record ReactionSummaryResponse(String emoji, long count) {
@@ -77,7 +79,9 @@ public record ReviewResponse(
                 result.reactions().stream()
                         .map(r -> new ReactionSummaryResponse(r.emoji(), r.count()))
                         .toList(),
-                result.userReaction()
+                result.userReaction(),
+                result.isLiked(),
+                result.likeCount()
         );
     }
 }
