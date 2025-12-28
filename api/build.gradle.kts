@@ -38,6 +38,12 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
     implementation("com.fasterxml.jackson.core:jackson-databind")
 
+    // Neo4j (recommendation 모듈에서 사용)
+    implementation("org.springframework.boot:spring-boot-starter-data-neo4j")
+
+    // Elasticsearch (recommendation 모듈에서 사용)
+    implementation("org.springframework.boot:spring-boot-starter-data-elasticsearch")
+
     // API Documentation - SpringDoc OpenAPI 3
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
 
