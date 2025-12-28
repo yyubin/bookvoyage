@@ -35,8 +35,14 @@ public record ReviewResult(
         BookGenre genre,
         List<String> keywords,
         List<String> highlights,
-        List<org.yyubin.domain.review.Mention> mentions
+        List<org.yyubin.domain.review.Mention> mentions,
+        boolean bookmarked,
+        List<ReactionSummary> reactions,
+        String userReaction
 ) {
+
+    public record ReactionSummary(String emoji, long count) {
+    }
 
     public static ReviewResult from(Review review, Book book, org.yyubin.domain.user.User author, List<String> keywords, List<String> highlights) {
         return new ReviewResult(
@@ -66,7 +72,10 @@ public record ReviewResult(
                 review.getGenre(),
                 keywords != null ? keywords : Collections.emptyList(),
                 highlights != null ? highlights : Collections.emptyList(),
-                review.getMentions()
+                review.getMentions(),
+                false,
+                Collections.emptyList(),
+                null
         );
     }
 
@@ -98,7 +107,55 @@ public record ReviewResult(
                 review.getGenre(),
                 keywords != null ? keywords : Collections.emptyList(),
                 highlights != null ? highlights : Collections.emptyList(),
-                review.getMentions()
+                review.getMentions(),
+                false,
+                Collections.emptyList(),
+                null
+        );
+    }
+
+    public static ReviewResult fromWithViewCountAndInteraction(
+            Review review,
+            Book book,
+            org.yyubin.domain.user.User author,
+            List<String> keywords,
+            List<String> highlights,
+            long viewCount,
+            boolean bookmarked,
+            List<ReactionSummary> reactions,
+            String userReaction
+    ) {
+        return new ReviewResult(
+                review.getId().getValue(),
+                author.id().value(),
+                author.nickname(),
+                author.tasteTag(),
+                book.getId().getValue(),
+                book.getMetadata().getTitle(),
+                book.getMetadata().getAuthors(),
+                book.getMetadata().getIsbn10(),
+                book.getMetadata().getIsbn13(),
+                book.getMetadata().getCoverUrl(),
+                book.getMetadata().getPublisher(),
+                book.getMetadata().getPublishedDate(),
+                book.getMetadata().getDescription(),
+                book.getMetadata().getLanguage(),
+                book.getMetadata().getPageCount(),
+                book.getMetadata().getGoogleVolumeId(),
+                review.getRating().getValue(),
+                review.getSummary(),
+                review.getContent(),
+                review.getCreatedAt(),
+                review.getVisibility(),
+                review.isDeleted(),
+                viewCount,
+                review.getGenre(),
+                keywords != null ? keywords : Collections.emptyList(),
+                highlights != null ? highlights : Collections.emptyList(),
+                review.getMentions(),
+                bookmarked,
+                reactions != null ? reactions : Collections.emptyList(),
+                userReaction
         );
     }
 }

@@ -18,6 +18,7 @@ import org.yyubin.application.review.dto.ReviewResult;
 import org.yyubin.application.review.port.LoadBookPort;
 import org.yyubin.application.review.port.LoadReviewPort;
 import org.yyubin.application.review.port.ReviewViewMetricPort;
+import org.yyubin.application.review.port.ReviewReactionPort;
 import org.yyubin.application.review.query.GetReviewQuery;
 import org.yyubin.application.review.query.GetReviewsByHighlightQuery;
 import org.yyubin.application.review.query.GetUserReviewsQuery;
@@ -37,6 +38,8 @@ public class ReviewQueryService implements GetReviewUseCase, GetUserReviewsUseCa
     private final LoadKeywordsUseCase loadKeywordsUseCase;
     private final LoadHighlightsUseCase loadHighlightsUseCase;
     private final ReviewViewMetricPort reviewViewMetricPort;
+    private final ReviewReactionPort reviewReactionPort;
+    private final org.yyubin.application.bookmark.port.ReviewBookmarkRepository reviewBookmarkRepository;
     private final EventPublisher eventPublisher;
     private final HighlightNormalizer highlightNormalizer;
     private final org.yyubin.application.user.port.LoadUserPort loadUserPort;
@@ -55,13 +58,39 @@ public class ReviewQueryService implements GetReviewUseCase, GetUserReviewsUseCa
         long viewForResponse = reviewViewMetricPort.getCachedCount(review.getId().getValue())
                 .orElse(review.getViewCount());
 
-        return ReviewResult.fromWithViewCount(
+        // 북마크 여부 조회 (로그인한 경우만)
+        boolean bookmarked = false;
+        if (query.viewerId() != null) {
+            bookmarked = reviewBookmarkRepository.exists(
+                    new UserId(query.viewerId()),
+                    ReviewId.of(review.getId().getValue())
+            );
+        }
+
+        // 리액션 집계 조회
+        var reactionCounts = reviewReactionPort.countByReviewIdGroupByContent(review.getId().getValue());
+        List<ReviewResult.ReactionSummary> reactions = reactionCounts.stream()
+                .map(rc -> new ReviewResult.ReactionSummary(rc.getEmoji(), rc.getCount()))
+                .collect(Collectors.toList());
+
+        // 사용자의 리액션 조회 (로그인한 경우만)
+        String userReaction = null;
+        if (query.viewerId() != null) {
+            userReaction = reviewReactionPort.loadByReviewIdAndUserId(review.getId().getValue(), query.viewerId())
+                    .map(reaction -> reaction.getContent())
+                    .orElse(null);
+        }
+
+        return ReviewResult.fromWithViewCountAndInteraction(
                 review,
                 book,
                 author,
                 loadKeywordsUseCase.loadKeywords(ReviewId.of(review.getId().getValue())),
                 loadHighlightsUseCase.loadHighlights(ReviewId.of(review.getId().getValue())),
-                viewForResponse
+                viewForResponse,
+                bookmarked,
+                reactions,
+                userReaction
         );
     }
 

@@ -35,8 +35,14 @@ public record ReviewResponse(
         String genre,
         List<String> keywords,
         List<String> highlights,
-        List<MentionResponse> mentions
+        List<MentionResponse> mentions,
+        boolean bookmarked,
+        List<ReactionSummaryResponse> reactions,
+        String userReaction
 ) {
+
+    public record ReactionSummaryResponse(String emoji, long count) {
+    }
 
     public static ReviewResponse from(ReviewResult result) {
         return new ReviewResponse(
@@ -66,7 +72,12 @@ public record ReviewResponse(
                 result.genre() != null ? result.genre().displayName() : null,
                 result.keywords(),
                 result.highlights(),
-                result.mentions().stream().map(MentionResponse::from).toList()
+                result.mentions().stream().map(MentionResponse::from).toList(),
+                result.bookmarked(),
+                result.reactions().stream()
+                        .map(r -> new ReactionSummaryResponse(r.emoji(), r.count()))
+                        .toList(),
+                result.userReaction()
         );
     }
 }

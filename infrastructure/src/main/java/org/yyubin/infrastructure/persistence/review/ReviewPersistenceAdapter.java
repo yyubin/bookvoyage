@@ -81,4 +81,14 @@ public class ReviewPersistenceAdapter implements SaveReviewPort, LoadReviewPort,
         ReviewEntity entity = ReviewEntity.fromDomain(review);
         return reviewJpaRepository.save(entity).toDomain();
     }
+
+    @Override
+    public long countByBookId(Long bookId) {
+        return reviewJpaRepository.countByBookId(bookId);
+    }
+
+    @Override
+    public Double calculateAverageRating(Long bookId) {
+        return reviewJpaRepository.calculateAverageRating(bookId);
+    }
 }
