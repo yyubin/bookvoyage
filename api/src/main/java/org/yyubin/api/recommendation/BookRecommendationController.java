@@ -30,7 +30,8 @@ public class BookRecommendationController {
             @RequestParam(value = "limit", required = false) @Min(1) @Max(MAX_LIMIT) Integer limit,
             @RequestParam(value = "forceRefresh", required = false, defaultValue = "false") boolean forceRefresh
     ) {
-        Long userId = PrincipalUtils.requireUserId(principal);
+        // 비로그인 사용자도 접근 가능 (userId = null)
+        Long userId = PrincipalUtils.resolveUserId(principal);
         int requestLimit = limit == null ? DEFAULT_LIMIT : Math.min(limit, MAX_LIMIT);
 
         GetBookRecommendationsQuery query = new GetBookRecommendationsQuery(

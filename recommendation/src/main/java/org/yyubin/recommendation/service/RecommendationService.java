@@ -30,7 +30,7 @@ public class RecommendationService {
     /**
      * 사용자 맞춤 추천 생성
      *
-     * @param userId 사용자 ID
+     * @param userId 사용자 ID (nullable - null이면 비로그인 사용자)
      * @param limit 추천할 도서 수
      * @param forceRefresh 캐시 무시하고 재계산 여부
      * @return 추천 결과 리스트
@@ -38,6 +38,12 @@ public class RecommendationService {
     public List<RecommendationResult> generateRecommendations(Long userId, int limit, boolean forceRefresh) {
         log.info("Generating recommendations for user {} (limit: {}, forceRefresh: {})",
                 userId, limit, forceRefresh);
+
+        // 비로그인 사용자는 기본 추천 반환
+        if (userId == null) {
+            log.info("Generating default recommendations for non-logged-in user");
+            return generateDefaultRecommendations(limit);
+        }
 
         // 1. 캐시 확인
         if (!forceRefresh && cacheService.hasCachedRecommendations(userId)) {
@@ -48,12 +54,13 @@ public class RecommendationService {
         // 2. 후보 생성
         List<RecommendationCandidate> candidates = generateCandidates(userId);
 
+        // 3. Fallback: 개인화 데이터가 없으면 인기 도서로 대체
         if (candidates.isEmpty()) {
-            log.warn("No candidates generated for user {}", userId);
-            return List.of();
+            log.warn("No personalized candidates generated for user {}, falling back to popular books", userId);
+            return generateDefaultRecommendations(limit);
         }
 
-        // 3. 중복 제거 (같은 bookId는 점수가 높은 것만 유지)
+        // 4. 중복 제거 (같은 bookId는 점수가 높은 것만 유지)
         Map<Long, RecommendationCandidate> uniqueCandidates = candidates.stream()
                 .collect(Collectors.toMap(
                         RecommendationCandidate::getBookId,
@@ -63,13 +70,13 @@ public class RecommendationService {
 
         log.debug("Unique candidates: {} (from {} total)", uniqueCandidates.size(), candidates.size());
 
-        // 4. 스코어링
+        // 5. 스코어링
         Map<Long, Double> scores = hybridScorer.batchCalculate(userId, new ArrayList<>(uniqueCandidates.values()));
 
-        // 5. Redis에 저장
+        // 6. Redis에 저장
         cacheService.saveRecommendations(userId, scores);
 
-        // 6. 정렬 및 결과 반환
+        // 7. 정렬 및 결과 반환
         List<RecommendationResult> results = scores.entrySet().stream()
                 .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())
                 .limit(limit)
@@ -84,7 +91,7 @@ public class RecommendationService {
                 })
                 .toList();
 
-        // 7. 순위 매기기
+        // 8. 순위 매기기
         int rank = 1;
         for (RecommendationResult result : results) {
             result.setRank(rank++);
@@ -92,6 +99,52 @@ public class RecommendationService {
 
         log.info("Generated {} recommendations for user {}", results.size(), userId);
         return results;
+    }
+
+    /**
+     * 기본 추천 생성 (비로그인 또는 초기 사용자용)
+     * - 인기 도서 기반 추천 반환
+     *
+     * @param limit 추천할 도서 수
+     * @return 추천 결과 리스트
+     */
+    public List<RecommendationResult> generateDefaultRecommendations(int limit) {
+        log.info("Generating default recommendations (limit: {})", limit);
+
+        try {
+            // Elasticsearch에서 인기 도서 후보 생성
+            List<RecommendationCandidate> popularCandidates =
+                    elasticsearchCandidateGenerator.generateCandidates(null, limit);
+
+            if (popularCandidates.isEmpty()) {
+                log.warn("No popular books found for default recommendations");
+                return List.of();
+            }
+
+            // 후보를 결과로 변환 (스코어링 없이 초기 점수 사용)
+            List<RecommendationResult> results = popularCandidates.stream()
+                    .limit(limit)
+                    .map(candidate -> RecommendationResult.builder()
+                            .bookId(candidate.getBookId())
+                            .score(candidate.getInitialScore())
+                            .source(candidate.getSource().name())
+                            .reason(candidate.getReason())
+                            .build())
+                    .toList();
+
+            // 순위 매기기
+            int rank = 1;
+            for (RecommendationResult result : results) {
+                result.setRank(rank++);
+            }
+
+            log.info("Generated {} default recommendations", results.size());
+            return results;
+
+        } catch (Exception e) {
+            log.error("Failed to generate default recommendations", e);
+            return List.of();
+        }
     }
 
     /**

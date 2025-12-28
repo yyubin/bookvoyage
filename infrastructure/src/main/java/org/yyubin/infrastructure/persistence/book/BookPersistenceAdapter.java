@@ -1,5 +1,6 @@
 package org.yyubin.infrastructure.persistence.book;
 
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -45,6 +46,13 @@ public class BookPersistenceAdapter implements LoadBookPort, SaveBookPort {
     public Optional<Book> loadById(Long bookId) {
         return bookJpaRepository.findById(bookId)
                 .map(BookEntity::toDomain);
+    }
+
+    @Override
+    public List<Book> findAll() {
+        return bookJpaRepository.findAll().stream()
+                .map(BookEntity::toDomain)
+                .toList();
     }
 
     @Override

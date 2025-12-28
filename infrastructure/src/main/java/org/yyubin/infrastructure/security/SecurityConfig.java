@@ -47,9 +47,11 @@ public class SecurityConfig {
                         // 공개 엔드포인트
                         .requestMatchers(
                                 "/api/auth/**",
+                                "/api/admin/**",
                                 "/api/search",
                                 "/api/reviews/search",
                                 "/api/books/search",
+                                "/api/recommendations/books",
                                 "/oauth2/**",
                                 "/login/**",
                                 "/error",

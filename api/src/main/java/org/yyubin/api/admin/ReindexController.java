@@ -36,6 +36,8 @@ public class ReindexController {
     private final LoadHighlightsUseCase loadHighlightsUseCase;
     private final EventPublisher eventPublisher;
     private final ReviewSearchIndexEventPublisher reviewSearchIndexEventPublisher;
+    private final org.yyubin.recommendation.port.SearchBookPort searchBookPort;
+    private final org.yyubin.infrastructure.persistence.book.BookJpaRepository bookJpaRepository;
 
     @PostMapping("/reindex-reviews")
     public ResponseEntity<Map<String, Object>> reindexAllReviews() {
@@ -139,5 +141,74 @@ public class ReindexController {
                 .filter(h -> h != null && !h.isBlank())
                 .map(String::trim)
                 .toList();
+    }
+
+    @PostMapping("/reindex-books")
+    public ResponseEntity<Map<String, Object>> reindexAllBooks() {
+        log.info("Starting book reindexing to Elasticsearch...");
+
+        List<org.yyubin.infrastructure.persistence.book.BookEntity> bookEntities = bookJpaRepository.findAll();
+        int successCount = 0;
+        int failCount = 0;
+
+        List<org.yyubin.recommendation.search.document.BookDocument> documents = new java.util.ArrayList<>();
+
+        for (org.yyubin.infrastructure.persistence.book.BookEntity entity : bookEntities) {
+            try {
+                java.util.List<String> authors = entity.getAuthors() != null && !entity.getAuthors().isBlank()
+                        ? java.util.Arrays.asList(entity.getAuthors().split(","))
+                        : java.util.List.of();
+
+                String searchableText = org.yyubin.recommendation.search.document.BookDocument.buildSearchableText(
+                        entity.getTitle(), entity.getDescription(), authors);
+
+                org.yyubin.recommendation.search.document.BookDocument document =
+                        org.yyubin.recommendation.search.document.BookDocument.builder()
+                                .id(String.valueOf(entity.getId()))
+                                .title(entity.getTitle())
+                                .description(entity.getDescription())
+                                .isbn(entity.getIsbn13())
+                                .authors(authors)
+                                .genres(java.util.List.of()) // Simple reindex, stats will come from batch
+                                .topics(java.util.List.of())
+                                .publishedDate(entity.getPublishedDate() != null ?
+                                        java.time.LocalDate.parse(entity.getPublishedDate()) : null)
+                                .viewCount(0) // Initial values, will be updated by batch job
+                                .wishlistCount(0)
+                                .reviewCount(0)
+                                .averageRating(null)
+                                .searchableText(searchableText)
+                                .build();
+
+                documents.add(document);
+                successCount++;
+
+                // Batch save every 100 documents
+                if (documents.size() >= 100) {
+                    searchBookPort.saveAll(documents);
+                    log.info("Indexed {} books", documents.size());
+                    documents.clear();
+                }
+
+            } catch (Exception e) {
+                log.error("Failed to reindex book {}", entity.getId(), e);
+                failCount++;
+            }
+        }
+
+        // Save remaining documents
+        if (!documents.isEmpty()) {
+            searchBookPort.saveAll(documents);
+            log.info("Indexed final batch of {} books", documents.size());
+        }
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("total", bookEntities.size());
+        result.put("success", successCount);
+        result.put("failed", failCount);
+        result.put("note", "Basic index created. Run batch job 'elasticsearchSyncJob' for full statistics");
+
+        log.info("Book reindexing completed: {}", result);
+        return ResponseEntity.ok(result);
     }
 }
