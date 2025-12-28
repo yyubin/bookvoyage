@@ -1,6 +1,9 @@
 package org.yyubin.infrastructure.persistence.user;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,5 +56,19 @@ public class UserPersistenceAdapter implements
     public User update(User user) {
         UserEntity entity = userJpaRepository.save(UserEntity.fromDomain(user));
         return entity.toDomain();
+    }
+
+    @Override
+    public Map<Long, User> loadByIdsBatch(List<Long> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return java.util.Collections.emptyMap();
+        }
+
+        List<UserEntity> entities = userJpaRepository.findAllById(userIds);
+        return entities.stream()
+                .collect(Collectors.toMap(
+                        UserEntity::getId,
+                        UserEntity::toDomain
+                ));
     }
 }

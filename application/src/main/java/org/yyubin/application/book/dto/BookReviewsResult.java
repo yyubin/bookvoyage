@@ -10,6 +10,7 @@ public record BookReviewsResult(
     public record ReviewSummary(
             Long reviewId,
             Long userId,
+            String authorNickname,
             String title,
             Float rating,
             String content,

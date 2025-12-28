@@ -19,6 +19,7 @@ public class BookReviewService implements GetBookReviewsUseCase {
 
     private final SearchBookReviewsPort searchBookReviewsPort;
     private final ReviewStatisticsPort reviewStatisticsPort;
+    private final org.yyubin.application.user.port.LoadUserPort loadUserPort;
 
     @Override
     public BookReviewsResult query(GetBookReviewsQuery query) {
@@ -29,25 +30,37 @@ public class BookReviewService implements GetBookReviewsUseCase {
                 query.sort()
         );
 
-        // Extract review IDs for batch statistics query
+        // Extract review IDs and user IDs for batch queries
         List<Long> reviewIds = searchResult.reviews().stream()
                 .map(SearchBookReviewsPort.ReviewDocument::reviewId)
+                .toList();
+
+        List<Long> userIds = searchResult.reviews().stream()
+                .map(SearchBookReviewsPort.ReviewDocument::userId)
+                .distinct()
                 .toList();
 
         // Batch fetch statistics
         Map<Long, ReviewStatisticsPort.ReviewStatistics> statisticsMap =
                 reviewStatisticsPort.getBatchStatistics(reviewIds);
 
-        // Combine ES results with statistics
+        // Batch fetch user information
+        Map<Long, org.yyubin.domain.user.User> userMap = loadUserPort.loadByIdsBatch(userIds);
+
+        // Combine ES results with statistics and user info
         var reviews = searchResult.reviews().stream()
                 .map(doc -> {
                     ReviewStatisticsPort.ReviewStatistics stats = statisticsMap.getOrDefault(
                             doc.reviewId(),
                             new ReviewStatisticsPort.ReviewStatistics(0, 0, 0L)
                     );
+                    org.yyubin.domain.user.User user = userMap.get(doc.userId());
+                    String authorNickname = user != null ? user.nickname() : "Unknown";
+
                     return new BookReviewsResult.ReviewSummary(
                             doc.reviewId(),
                             doc.userId(),
+                            authorNickname,
                             doc.title(),
                             doc.rating(),
                             doc.content(),

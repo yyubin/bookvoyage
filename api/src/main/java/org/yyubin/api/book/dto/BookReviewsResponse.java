@@ -13,12 +13,13 @@ public record BookReviewsResponse(
     public record ReviewSummaryResponse(
             Long reviewId,
             Long userId,
+            String authorNickname,
             String title,
             Float rating,
             String content,
             String createdAt,
             String likeCount,
-            Integer commentCount,
+            String commentCount,
             String viewCount
     ) {
     }
@@ -28,12 +29,13 @@ public record BookReviewsResponse(
                 .map(r -> new ReviewSummaryResponse(
                         r.reviewId(),
                         r.userId(),
+                        r.authorNickname(),
                         r.title(),
                         r.rating(),
                         r.content(),
                         TimeFormatter.formatRelativeTime(r.createdAt()),
                         CountFormatter.format(r.likeCount() != null ? r.likeCount() : 0),
-                        r.commentCount(),
+                        CountFormatter.format(r.commentCount() != null ? r.commentCount() : 0),
                         CountFormatter.format(r.viewCount() != null ? r.viewCount() : 0L)
                 ))
                 .toList();
