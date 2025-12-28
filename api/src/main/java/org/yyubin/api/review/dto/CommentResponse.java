@@ -13,7 +13,8 @@ public record CommentResponse(
         Long parentCommentId,
         String createdAt,
         String editedAt,
-        List<MentionResponse> mentions
+        List<MentionResponse> mentions,
+        long replyCount
 ) {
 
     public static CommentResponse from(ReviewCommentResult result) {
@@ -26,7 +27,8 @@ public record CommentResponse(
                 result.parentCommentId(),
                 TimeFormatter.formatRelativeTime(result.createdAt()),
                 result.editedAt() != null ? TimeFormatter.formatRelativeTime(result.editedAt()) : null,
-                result.mentions().stream().map(MentionResponse::from).toList()
+                result.mentions().stream().map(MentionResponse::from).toList(),
+                result.replyCount()
         );
     }
 }

@@ -42,4 +42,40 @@ public class ReviewCommentPersistenceAdapter implements LoadReviewCommentPort, S
         }
         return entities.stream().map(ReviewCommentEntity::toDomain).toList();
     }
+
+    @Override
+    public long countByReviewId(Long reviewId) {
+        return reviewCommentJpaRepository.countByReviewIdAndDeletedFalse(reviewId);
+    }
+
+    @Override
+    public List<ReviewComment> loadRepliesByParentId(Long parentCommentId, Long cursor, int size) {
+        List<ReviewCommentEntity> entities;
+        if (cursor != null) {
+            entities = reviewCommentJpaRepository.findByParentCommentIdAndDeletedFalseAndIdLessThanOrderByIdDesc(
+                    parentCommentId, cursor, PageRequest.of(0, size));
+        } else {
+            entities = reviewCommentJpaRepository.findByParentCommentIdAndDeletedFalseOrderByIdDesc(
+                    parentCommentId, PageRequest.of(0, size));
+        }
+        return entities.stream().map(ReviewCommentEntity::toDomain).toList();
+    }
+
+    @Override
+    public long countRepliesByParentId(Long parentCommentId) {
+        return reviewCommentJpaRepository.countByParentCommentIdAndDeletedFalse(parentCommentId);
+    }
+
+    @Override
+    public java.util.Map<Long, Long> countRepliesBatch(List<Long> parentCommentIds) {
+        if (parentCommentIds == null || parentCommentIds.isEmpty()) {
+            return java.util.Collections.emptyMap();
+        }
+        var results = reviewCommentJpaRepository.countRepliesByParentIds(parentCommentIds);
+        return results.stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        ReviewCommentJpaRepository.ParentCommentCount::getParentId,
+                        ReviewCommentJpaRepository.ParentCommentCount::getCount
+                ));
+    }
 }

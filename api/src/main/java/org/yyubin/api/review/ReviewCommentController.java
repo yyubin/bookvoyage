@@ -21,12 +21,14 @@ import org.yyubin.api.review.dto.UpdateCommentRequest;
 import org.yyubin.application.review.CreateCommentUseCase;
 import org.yyubin.application.review.DeleteCommentUseCase;
 import org.yyubin.application.review.GetCommentsUseCase;
+import org.yyubin.application.review.GetRepliesUseCase;
 import org.yyubin.application.review.dto.PagedCommentResult;
 import org.yyubin.application.review.UpdateCommentUseCase;
 import org.yyubin.application.review.command.CreateCommentCommand;
 import org.yyubin.application.review.command.DeleteCommentCommand;
 import org.yyubin.application.review.command.UpdateCommentCommand;
 import org.yyubin.application.review.query.GetCommentsQuery;
+import org.yyubin.application.review.query.GetRepliesQuery;
 import org.yyubin.infrastructure.security.oauth2.CustomOAuth2User;
 
 @RestController
@@ -38,6 +40,7 @@ public class ReviewCommentController {
     private final UpdateCommentUseCase updateCommentUseCase;
     private final DeleteCommentUseCase deleteCommentUseCase;
     private final GetCommentsUseCase getCommentsUseCase;
+    private final GetRepliesUseCase getRepliesUseCase;
 
     @GetMapping("/{reviewId}/comments")
     public ResponseEntity<CommentPageResponse> getComments(
@@ -87,6 +90,18 @@ public class ReviewCommentController {
         Long userId = Long.parseLong(userDetails.getUsername());
         deleteCommentUseCase.execute(new DeleteCommentCommand(commentId, userId));
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/comments/{commentId}/replies")
+    public ResponseEntity<CommentPageResponse> getReplies(
+            @PathVariable Long commentId,
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(defaultValue = "20") int size,
+            @AuthenticationPrincipal Object principal
+    ) {
+        Long viewerId = resolveViewerId(principal);
+        PagedCommentResult result = getRepliesUseCase.query(new GetRepliesQuery(commentId, viewerId, cursor, size));
+        return ResponseEntity.ok(CommentPageResponse.from(result));
     }
 
     private Long resolveViewerId(Object principal) {

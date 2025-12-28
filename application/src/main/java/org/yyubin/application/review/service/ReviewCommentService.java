@@ -33,7 +33,7 @@ import org.yyubin.application.notification.NotificationMessages;
 @Service
 @RequiredArgsConstructor
 public class ReviewCommentService implements CreateCommentUseCase, UpdateCommentUseCase, DeleteCommentUseCase,
-        GetCommentsUseCase {
+        GetCommentsUseCase, org.yyubin.application.review.GetRepliesUseCase {
 
     private final LoadReviewPort loadReviewPort;
     private final LoadReviewCommentPort loadReviewCommentPort;
@@ -92,7 +92,8 @@ public class ReviewCommentService implements CreateCommentUseCase, UpdateComment
         sendMentionNotifications(mentions, writerId, command.reviewId(), command.parentCommentId());
 
         org.yyubin.domain.user.User author = loadUserPort.loadById(writerId);
-        return ReviewCommentResult.from(saved, author);
+        long replyCount = 0; // 새로 생성된 댓글은 대댓글이 없음
+        return ReviewCommentResult.from(saved, author, replyCount);
     }
 
     @Override
@@ -111,11 +112,22 @@ public class ReviewCommentService implements CreateCommentUseCase, UpdateComment
         int fetchSize = query.size() + 1;
         var comments = loadReviewCommentPort.loadByReviewId(query.reviewId(), query.cursor(), fetchSize);
 
+        // 전체 댓글 수 조회
+        long totalCount = loadReviewCommentPort.countByReviewId(query.reviewId());
+
+        // 대댓글 수 일괄 조회
+        var commentIds = comments.stream()
+                .limit(query.size())
+                .map(c -> c.getId().getValue())
+                .toList();
+        var replyCounts = loadReviewCommentPort.countRepliesBatch(commentIds);
+
         var mapped = comments.stream()
                 .limit(query.size())
                 .map(comment -> {
                     org.yyubin.domain.user.User author = loadUserPort.loadById(comment.getUserId());
-                    return ReviewCommentResult.from(comment, author);
+                    long replyCount = replyCounts.getOrDefault(comment.getId().getValue(), 0L);
+                    return ReviewCommentResult.from(comment, author, replyCount);
                 })
                 .toList();
 
@@ -123,7 +135,7 @@ public class ReviewCommentService implements CreateCommentUseCase, UpdateComment
                 ? comments.get(query.size()).getId().getValue()
                 : null;
 
-        return new PagedCommentResult(mapped, nextCursor);
+        return new PagedCommentResult(mapped, nextCursor, totalCount);
     }
 
     @Override
@@ -151,7 +163,9 @@ public class ReviewCommentService implements CreateCommentUseCase, UpdateComment
         ReviewComment saved = saveReviewCommentPort.save(updated);
 
         org.yyubin.domain.user.User author = loadUserPort.loadById(writerId);
-        return ReviewCommentResult.from(saved, author);
+        long replyCount = saved.getParentId() == null ?
+                loadReviewCommentPort.countRepliesByParentId(saved.getId().getValue()) : 0;
+        return ReviewCommentResult.from(saved, author, replyCount);
     }
 
     @Override
@@ -175,6 +189,48 @@ public class ReviewCommentService implements CreateCommentUseCase, UpdateComment
         ReviewComment deleted = comment.markDeleted();
         saveReviewCommentPort.save(deleted);
         publishCommentEvent("COMMENT_DELETED", deleted, review);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PagedCommentResult query(org.yyubin.application.review.query.GetRepliesQuery query) {
+        // 부모 댓글 존재 확인
+        ReviewComment parentComment = loadReviewCommentPort.loadById(query.parentCommentId());
+        if (parentComment.isDeleted()) {
+            throw new IllegalArgumentException("Parent comment not found: " + query.parentCommentId());
+        }
+
+        // 리뷰 권한 확인
+        Review review = loadReviewPort.loadById(parentComment.getReviewId().getValue());
+        if (review.isDeleted()) {
+            throw new IllegalArgumentException("Review not found: " + parentComment.getReviewId().getValue());
+        }
+        if (!review.getVisibility().isPublic()) {
+            if (query.viewerId() == null || !review.isWrittenBy(new UserId(query.viewerId()))) {
+                throw new IllegalArgumentException("Review not found: " + parentComment.getReviewId().getValue());
+            }
+        }
+
+        int fetchSize = query.size() + 1;
+        var replies = loadReviewCommentPort.loadRepliesByParentId(query.parentCommentId(), query.cursor(), fetchSize);
+
+        // 전체 대댓글 수 조회
+        long totalCount = loadReviewCommentPort.countRepliesByParentId(query.parentCommentId());
+
+        var mapped = replies.stream()
+                .limit(query.size())
+                .map(reply -> {
+                    org.yyubin.domain.user.User author = loadUserPort.loadById(reply.getUserId());
+                    long replyCount = 0; // 대댓글은 replyCount가 0
+                    return ReviewCommentResult.from(reply, author, replyCount);
+                })
+                .toList();
+
+        Long nextCursor = replies.size() > query.size()
+                ? replies.get(query.size()).getId().getValue()
+                : null;
+
+        return new PagedCommentResult(mapped, nextCursor, totalCount);
     }
 
     private void sendMentionNotifications(java.util.List<org.yyubin.domain.review.Mention> mentions, UserId writer, Long reviewId, Long commentId) {

@@ -4,6 +4,7 @@ import java.util.List;
 
 public record PagedCommentResult(
         List<ReviewCommentResult> comments,
-        Long nextCursor
+        Long nextCursor,
+        long totalCount
 ) {
 }
