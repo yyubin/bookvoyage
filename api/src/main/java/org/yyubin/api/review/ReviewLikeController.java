@@ -2,7 +2,9 @@ package org.yyubin.api.review;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.yyubin.api.common.PrincipalUtils;
 import org.yyubin.api.review.dto.ReviewLikeResponse;
 import org.yyubin.application.review.ToggleReviewLikeUseCase;
 import org.yyubin.application.review.command.ToggleReviewLikeCommand;
@@ -16,12 +18,10 @@ public class ReviewLikeController {
 
     @PostMapping
     public ResponseEntity<ReviewLikeResponse> toggleLike(
-            @PathVariable Long reviewId,
-            @RequestAttribute(value = "userId", required = false) Long userId
+            @AuthenticationPrincipal Object principal,
+            @PathVariable Long reviewId
     ) {
-        if (userId == null) {
-            return ResponseEntity.status(401).build();
-        }
+        Long userId = PrincipalUtils.requireUserId(principal);
 
         ToggleReviewLikeUseCase.ToggleResult result = toggleReviewLikeUseCase.execute(
                 new ToggleReviewLikeCommand(reviewId, userId)
