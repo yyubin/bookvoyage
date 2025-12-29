@@ -29,19 +29,33 @@ public class ReviewRecommendationService {
      * 피드용 리뷰 추천
      */
     public List<ReviewRecommendationResult> recommendFeed(Long userId, int limit, boolean forceRefresh) {
-        return generate(userId, null, limit, forceRefresh);
+        return generate(userId, null, null, limit, forceRefresh);
+    }
+
+    /**
+     * 피드용 리뷰 추천 (cursor 기반 페이징)
+     */
+    public List<ReviewRecommendationResult> recommendFeed(Long userId, Long cursor, int limit, boolean forceRefresh) {
+        return generate(userId, null, cursor, limit, forceRefresh);
     }
 
     /**
      * 특정 도서 컨텍스트의 리뷰 추천
      */
     public List<ReviewRecommendationResult> recommendForBook(Long userId, Long bookId, int limit, boolean forceRefresh) {
-        return generate(userId, bookId, limit, forceRefresh);
+        return generate(userId, bookId, null, limit, forceRefresh);
     }
 
-    private List<ReviewRecommendationResult> generate(Long userId, Long bookContextId, int limit, boolean forceRefresh) {
+    /**
+     * 특정 도서 컨텍스트의 리뷰 추천 (cursor 기반 페이징)
+     */
+    public List<ReviewRecommendationResult> recommendForBook(Long userId, Long bookId, Long cursor, int limit, boolean forceRefresh) {
+        return generate(userId, bookId, cursor, limit, forceRefresh);
+    }
+
+    private List<ReviewRecommendationResult> generate(Long userId, Long bookContextId, Long cursor, int limit, boolean forceRefresh) {
         if (!forceRefresh && cacheService.exists(userId, bookContextId)) {
-            return cacheService.get(userId, bookContextId, limit);
+            return cacheService.get(userId, bookContextId, cursor, limit);
         }
 
         List<ReviewRecommendationCandidate> candidates = generateCandidates(userId, bookContextId);
@@ -64,9 +78,8 @@ public class ReviewRecommendationService {
         Map<Long, Double> scores = hybridScorer.batchCalculate(userId, bookContextId, new ArrayList<>(unique.values()));
         cacheService.save(userId, bookContextId, scores);
 
-        List<ReviewRecommendationResult> results = scores.entrySet().stream()
+        List<ReviewRecommendationResult> allResults = scores.entrySet().stream()
                 .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())
-                .limit(limit)
                 .map(entry -> {
                     ReviewRecommendationCandidate candidate = unique.get(entry.getKey());
                     return ReviewRecommendationResult.builder()
@@ -79,6 +92,9 @@ public class ReviewRecommendationService {
                             .build();
                 })
                 .toList();
+
+        // cursor 기반 페이징
+        List<ReviewRecommendationResult> results = applyCursorPagination(allResults, cursor, limit);
 
         int rank = 1;
         for (ReviewRecommendationResult result : results) {
@@ -95,5 +111,30 @@ public class ReviewRecommendationService {
             return elasticsearchCandidateGenerator.generateBookScopedCandidates(bookContextId, maxCandidates);
         }
         return elasticsearchCandidateGenerator.generateFeedCandidates(userId, maxCandidates);
+    }
+
+    private List<ReviewRecommendationResult> applyCursorPagination(
+            List<ReviewRecommendationResult> allResults,
+            Long cursor,
+            int limit
+    ) {
+        if (cursor == null) {
+            return allResults.stream().limit(limit).toList();
+        }
+
+        // cursor 이후의 항목들만 필터링
+        boolean foundCursor = false;
+        List<ReviewRecommendationResult> results = new ArrayList<>();
+        for (ReviewRecommendationResult result : allResults) {
+            if (foundCursor) {
+                results.add(result);
+                if (results.size() >= limit) {
+                    break;
+                }
+            } else if (result.getReviewId().equals(cursor)) {
+                foundCursor = true;
+            }
+        }
+        return results;
     }
 }

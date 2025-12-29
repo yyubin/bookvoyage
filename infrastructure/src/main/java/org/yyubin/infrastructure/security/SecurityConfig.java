@@ -52,6 +52,7 @@ public class SecurityConfig {
                                 "/api/reviews/search",
                                 "/api/books/search",
                                 "/api/recommendations/books",
+                                "/api/tracking/**",
                                 "/oauth2/**",
                                 "/login/**",
                                 "/error",

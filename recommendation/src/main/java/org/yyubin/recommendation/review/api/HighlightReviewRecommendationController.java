@@ -12,7 +12,7 @@ import org.yyubin.recommendation.review.HighlightReviewRecommendationService;
 @RestController
 @RequestMapping("/recommendations/reviews")
 @RequiredArgsConstructor
-public class ReviewRecommendationController {
+public class HighlightReviewRecommendationController {
 
     private final HighlightReviewRecommendationService reviewRecommendationService;
 

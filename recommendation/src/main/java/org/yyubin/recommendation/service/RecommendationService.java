@@ -36,19 +36,32 @@ public class RecommendationService {
      * @return 추천 결과 리스트
      */
     public List<RecommendationResult> generateRecommendations(Long userId, int limit, boolean forceRefresh) {
-        log.info("Generating recommendations for user {} (limit: {}, forceRefresh: {})",
-                userId, limit, forceRefresh);
+        return generateRecommendations(userId, null, limit, forceRefresh);
+    }
+
+    /**
+     * 사용자 맞춤 추천 생성 (cursor 기반 페이징)
+     *
+     * @param userId 사용자 ID (nullable - null이면 비로그인 사용자)
+     * @param cursor 이전 페이지의 마지막 bookId
+     * @param limit 추천할 도서 수
+     * @param forceRefresh 캐시 무시하고 재계산 여부
+     * @return 추천 결과 리스트
+     */
+    public List<RecommendationResult> generateRecommendations(Long userId, Long cursor, int limit, boolean forceRefresh) {
+        log.info("Generating recommendations for user {} (cursor: {}, limit: {}, forceRefresh: {})",
+                userId, cursor, limit, forceRefresh);
 
         // 비로그인 사용자는 기본 추천 반환
         if (userId == null) {
             log.info("Generating default recommendations for non-logged-in user");
-            return generateDefaultRecommendations(limit);
+            return generateDefaultRecommendations(cursor, limit);
         }
 
         // 1. 캐시 확인
         if (!forceRefresh && cacheService.hasCachedRecommendations(userId)) {
             log.debug("Using cached recommendations for user {}", userId);
-            return cacheService.getRecommendations(userId, limit);
+            return cacheService.getRecommendations(userId, cursor, limit);
         }
 
         // 2. 후보 생성
@@ -77,9 +90,8 @@ public class RecommendationService {
         cacheService.saveRecommendations(userId, scores);
 
         // 7. 정렬 및 결과 반환
-        List<RecommendationResult> results = scores.entrySet().stream()
+        List<RecommendationResult> allResults = scores.entrySet().stream()
                 .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())
-                .limit(limit)
                 .map(entry -> {
                     RecommendationCandidate candidate = uniqueCandidates.get(entry.getKey());
                     return RecommendationResult.builder()
@@ -91,7 +103,10 @@ public class RecommendationService {
                 })
                 .toList();
 
-        // 8. 순위 매기기
+        // 8. cursor 기반 페이징
+        List<RecommendationResult> results = applyCursorPagination(allResults, cursor, limit);
+
+        // 9. 순위 매기기
         int rank = 1;
         for (RecommendationResult result : results) {
             result.setRank(rank++);
@@ -109,12 +124,24 @@ public class RecommendationService {
      * @return 추천 결과 리스트
      */
     public List<RecommendationResult> generateDefaultRecommendations(int limit) {
-        log.info("Generating default recommendations (limit: {})", limit);
+        return generateDefaultRecommendations(null, limit);
+    }
+
+    /**
+     * 기본 추천 생성 (cursor 기반 페이징)
+     *
+     * @param cursor 이전 페이지의 마지막 bookId
+     * @param limit 추천할 도서 수
+     * @return 추천 결과 리스트
+     */
+    public List<RecommendationResult> generateDefaultRecommendations(Long cursor, int limit) {
+        log.info("Generating default recommendations (cursor: {}, limit: {})", cursor, limit);
 
         try {
-            // Elasticsearch에서 인기 도서 후보 생성
+            // Elasticsearch에서 인기 도서 후보 생성 (cursor 고려하여 더 많이 가져옴)
+            int fetchLimit = cursor != null ? limit * 3 : limit;
             List<RecommendationCandidate> popularCandidates =
-                    elasticsearchCandidateGenerator.generateCandidates(null, limit);
+                    elasticsearchCandidateGenerator.generateCandidates(null, fetchLimit);
 
             if (popularCandidates.isEmpty()) {
                 log.warn("No popular books found for default recommendations");
@@ -122,8 +149,7 @@ public class RecommendationService {
             }
 
             // 후보를 결과로 변환 (스코어링 없이 초기 점수 사용)
-            List<RecommendationResult> results = popularCandidates.stream()
-                    .limit(limit)
+            List<RecommendationResult> allResults = popularCandidates.stream()
                     .map(candidate -> RecommendationResult.builder()
                             .bookId(candidate.getBookId())
                             .score(candidate.getInitialScore())
@@ -131,6 +157,9 @@ public class RecommendationService {
                             .reason(candidate.getReason())
                             .build())
                     .toList();
+
+            // cursor 기반 페이징
+            List<RecommendationResult> results = applyCursorPagination(allResults, cursor, limit);
 
             // 순위 매기기
             int rank = 1;
@@ -156,6 +185,18 @@ public class RecommendationService {
      */
     public List<RecommendationResult> getCachedRecommendations(Long userId, int limit) {
         return cacheService.getRecommendations(userId, limit);
+    }
+
+    /**
+     * 캐시된 추천 조회 (cursor 기반 페이징)
+     *
+     * @param userId 사용자 ID
+     * @param cursor 이전 페이지의 마지막 bookId
+     * @param limit 조회할 개수
+     * @return 추천 결과 리스트
+     */
+    public List<RecommendationResult> getCachedRecommendations(Long userId, Long cursor, int limit) {
+        return cacheService.getRecommendations(userId, cursor, limit);
     }
 
     /**
@@ -233,6 +274,31 @@ public class RecommendationService {
                 .cacheTtlSeconds(cacheStats.getTtlSeconds())
                 .hasCachedRecommendations(cacheStats.isExists())
                 .build();
+    }
+
+    private List<RecommendationResult> applyCursorPagination(
+            List<RecommendationResult> allResults,
+            Long cursor,
+            int limit
+    ) {
+        if (cursor == null) {
+            return allResults.stream().limit(limit).toList();
+        }
+
+        // cursor 이후의 항목들만 필터링
+        boolean foundCursor = false;
+        List<RecommendationResult> results = new ArrayList<>();
+        for (RecommendationResult result : allResults) {
+            if (foundCursor) {
+                results.add(result);
+                if (results.size() >= limit) {
+                    break;
+                }
+            } else if (result.getBookId().equals(cursor)) {
+                foundCursor = true;
+            }
+        }
+        return results;
     }
 
     @lombok.Data

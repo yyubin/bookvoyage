@@ -26,13 +26,14 @@ public class BookRecommendationService implements GetBookRecommendationsUseCase 
 
     @Override
     public List<BookRecommendationResult> query(GetBookRecommendationsQuery query) {
-        log.info("Getting book recommendations for user {} (limit: {}, forceRefresh: {})",
-                query.userId(), query.limit(), query.forceRefresh());
+        log.info("Getting book recommendations for user {} (cursor: {}, limit: {}, forceRefresh: {})",
+                query.userId(), query.cursor(), query.limit(), query.forceRefresh());
 
         // 1. 추천 시스템에서 bookId 목록 가져오기
         List<BookRecommendationPort.RecommendationItem> recommendations =
                 bookRecommendationPort.getRecommendations(
                         query.userId(),
+                        query.cursor(),
                         query.limit(),
                         query.forceRefresh()
                 );

@@ -48,24 +48,40 @@ public class ReviewRecommendationCacheService {
     }
 
     public List<ReviewRecommendationResult> get(Long userId, Long bookContextId, int limit) {
+        return get(userId, bookContextId, null, limit);
+    }
+
+    public List<ReviewRecommendationResult> get(Long userId, Long bookContextId, Long cursor, int limit) {
         String key = key(userId, bookContextId);
         try {
-            Set<ZSetOperations.TypedTuple<String>> tuples =
-                    redisTemplate.opsForZSet().reverseRangeWithScores(key, 0, limit - 1);
-            if (tuples == null || tuples.isEmpty()) {
+            // 전체 결과를 가져옴
+            Set<ZSetOperations.TypedTuple<String>> allTuples =
+                    redisTemplate.opsForZSet().reverseRangeWithScores(key, 0, -1);
+            if (allTuples == null || allTuples.isEmpty()) {
                 return List.of();
             }
 
             List<ReviewRecommendationResult> results = new ArrayList<>();
+            boolean foundCursor = cursor == null;
             int rank = 1;
-            for (ZSetOperations.TypedTuple<String> tuple : tuples) {
+
+            for (ZSetOperations.TypedTuple<String> tuple : allTuples) {
                 if (tuple.getValue() != null && tuple.getValue().startsWith("review:")) {
                     Long reviewId = Long.parseLong(tuple.getValue().substring("review:".length()));
-                    results.add(ReviewRecommendationResult.builder()
-                            .reviewId(reviewId)
-                            .score(tuple.getScore())
-                            .rank(rank++)
-                            .build());
+
+                    if (foundCursor) {
+                        results.add(ReviewRecommendationResult.builder()
+                                .reviewId(reviewId)
+                                .score(tuple.getScore())
+                                .rank(rank++)
+                                .build());
+
+                        if (results.size() >= limit) {
+                            break;
+                        }
+                    } else if (reviewId.equals(cursor)) {
+                        foundCursor = true;
+                    }
                 }
             }
             return results;

@@ -74,33 +74,54 @@ public class RecommendationCacheService {
      * @return 추천 결과 리스트
      */
     public List<RecommendationResult> getRecommendations(Long userId, int limit) {
+        return getRecommendations(userId, null, limit);
+    }
+
+    /**
+     * 추천 결과 조회 (cursor 기반 페이징)
+     *
+     * @param userId 사용자 ID
+     * @param cursor 이전 페이지의 마지막 bookId
+     * @param limit 조회할 개수
+     * @return 추천 결과 리스트
+     */
+    public List<RecommendationResult> getRecommendations(Long userId, Long cursor, int limit) {
         String key = getRecommendationKey(userId);
 
         try {
-            // 점수 높은 순으로 조회
-            Set<ZSetOperations.TypedTuple<String>> results = redisTemplate.opsForZSet()
-                    .reverseRangeWithScores(key, 0, limit - 1);
+            // 전체 결과를 가져옴 (점수 높은 순)
+            Set<ZSetOperations.TypedTuple<String>> allResults = redisTemplate.opsForZSet()
+                    .reverseRangeWithScores(key, 0, -1);
 
-            if (results == null || results.isEmpty()) {
+            if (allResults == null || allResults.isEmpty()) {
                 log.debug("No cached recommendations for user {}", userId);
                 return List.of();
             }
 
             List<RecommendationResult> recommendations = new ArrayList<>();
+            boolean foundCursor = cursor == null;
             int rank = 1;
 
-            for (ZSetOperations.TypedTuple<String> tuple : results) {
+            for (ZSetOperations.TypedTuple<String> tuple : allResults) {
                 String member = tuple.getValue();
                 Double score = tuple.getScore();
 
                 if (member != null && member.startsWith("book:")) {
                     Long bookId = Long.parseLong(member.substring(5));
 
-                    recommendations.add(RecommendationResult.builder()
-                            .bookId(bookId)
-                            .score(score)
-                            .rank(rank++)
-                            .build());
+                    if (foundCursor) {
+                        recommendations.add(RecommendationResult.builder()
+                                .bookId(bookId)
+                                .score(score)
+                                .rank(rank++)
+                                .build());
+
+                        if (recommendations.size() >= limit) {
+                            break;
+                        }
+                    } else if (bookId.equals(cursor)) {
+                        foundCursor = true;
+                    }
                 }
             }
 

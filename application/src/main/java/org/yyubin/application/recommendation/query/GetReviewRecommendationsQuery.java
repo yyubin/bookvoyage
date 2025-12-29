@@ -1,12 +1,12 @@
 package org.yyubin.application.recommendation.query;
 
-public record GetBookRecommendationsQuery(
+public record GetReviewRecommendationsQuery(
         Long userId,
         Long cursor,
         int limit,
         boolean forceRefresh
 ) {
-    public GetBookRecommendationsQuery {
+    public GetReviewRecommendationsQuery {
         if (limit <= 0) {
             limit = 20;
         }
