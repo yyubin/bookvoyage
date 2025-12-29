@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.elasticsearch.annotations.DateFormat;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
@@ -16,7 +17,7 @@ import java.time.LocalDateTime;
  * Elasticsearch Review Document
  * - 리뷰 텍스트 검색 및 분석용
  */
-@Document(indexName = "reviews", createIndex = false)
+@Document(indexName = "review_content", createIndex = false)
 @Setting(settingPath = "elasticsearch/review-settings.json")
 @Data
 @Builder
@@ -52,7 +53,9 @@ public class ReviewDocument {
     private String visibility;
 
     // 작성일
-    @Field(type = FieldType.Date)
+    @Field(type = FieldType.Date,
+           format = DateFormat.date_hour_minute_second_millis,
+           pattern = "uuuu-MM-dd'T'HH:mm:ss.SSS")
     private LocalDateTime createdAt;
 
     // 좋아요 수 (인기도 지표)
