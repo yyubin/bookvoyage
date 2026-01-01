@@ -74,4 +74,18 @@ recommendation:
     caps:
       dwell-max: 1.5
       scroll-max: 0.5
+  sampling:
+    enabled: true
+    tier1:
+      size: 10
+      strategy: PARTIAL
+      fixed-top-n: 3
+    tier2:
+      size: 40
+      strategy: WINDOW
+      fixed-top-n: 8
+    tier3:
+      size: 50
+      strategy: FULL
+      fixed-top-n: 0
 

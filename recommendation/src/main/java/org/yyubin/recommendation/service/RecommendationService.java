@@ -36,7 +36,7 @@ public class RecommendationService {
      * @return 추천 결과 리스트
      */
     public List<RecommendationResult> generateRecommendations(Long userId, int limit, boolean forceRefresh) {
-        return generateRecommendations(userId, null, limit, forceRefresh);
+        return generateRecommendations(userId, null, limit, forceRefresh, false, null);
     }
 
     /**
@@ -49,8 +49,30 @@ public class RecommendationService {
      * @return 추천 결과 리스트
      */
     public List<RecommendationResult> generateRecommendations(Long userId, Long cursor, int limit, boolean forceRefresh) {
-        log.info("Generating recommendations for user {} (cursor: {}, limit: {}, forceRefresh: {})",
-                userId, cursor, limit, forceRefresh);
+        return generateRecommendations(userId, cursor, limit, forceRefresh, false, null);
+    }
+
+    /**
+     * 사용자 맞춤 추천 생성 (샘플링 지원)
+     *
+     * @param userId 사용자 ID (nullable - null이면 비로그인 사용자)
+     * @param cursor 이전 페이지의 마지막 bookId
+     * @param limit 추천할 도서 수
+     * @param forceRefresh 캐시 무시하고 재계산 여부
+     * @param enableSampling 윈도우 샘플링 활성화 여부
+     * @param sessionId 세션 ID (샘플링 일관성 보장용)
+     * @return 추천 결과 리스트
+     */
+    public List<RecommendationResult> generateRecommendations(
+            Long userId,
+            Long cursor,
+            int limit,
+            boolean forceRefresh,
+            boolean enableSampling,
+            String sessionId
+    ) {
+        log.info("Generating recommendations for user {} (cursor: {}, limit: {}, forceRefresh: {}, sampling: {})",
+                userId, cursor, limit, forceRefresh, enableSampling);
 
         // 비로그인 사용자는 기본 추천 반환
         if (userId == null) {
@@ -58,10 +80,10 @@ public class RecommendationService {
             return generateDefaultRecommendations(cursor, limit);
         }
 
-        // 1. 캐시 확인
+        // 1. 캐시 확인 (샘플링 파라미터 전달)
         if (!forceRefresh && cacheService.hasCachedRecommendations(userId)) {
-            log.debug("Using cached recommendations for user {}", userId);
-            return cacheService.getRecommendations(userId, cursor, limit);
+            log.debug("Using cached recommendations for user {} (sampling: {})", userId, enableSampling);
+            return cacheService.getRecommendationsWithSampling(userId, cursor, limit, sessionId, enableSampling);
         }
 
         // 2. 후보 생성

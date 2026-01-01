@@ -13,6 +13,7 @@ import org.yyubin.application.recommendation.dto.BookRecommendationResult;
 import org.yyubin.application.recommendation.query.GetBookRecommendationsQuery;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/recommendations/books")
@@ -29,17 +30,26 @@ public class BookRecommendationController {
             @AuthenticationPrincipal Object principal,
             @RequestParam(value = "cursor", required = false) Long cursor,
             @RequestParam(value = "limit", required = false) @Min(1) @Max(MAX_LIMIT) Integer limit,
-            @RequestParam(value = "forceRefresh", required = false, defaultValue = "false") boolean forceRefresh
+            @RequestParam(value = "forceRefresh", required = false, defaultValue = "false") boolean forceRefresh,
+            @RequestParam(value = "enableSampling", required = false, defaultValue = "true") boolean enableSampling,
+            @RequestHeader(value = "X-Session-Id", required = false) String sessionId
     ) {
         // 비로그인 사용자도 접근 가능 (userId = null)
         Long userId = PrincipalUtils.resolveUserId(principal);
         int requestLimit = limit == null ? DEFAULT_LIMIT : Math.min(limit, MAX_LIMIT);
 
+        // 세션 ID가 없으면 임시 생성 (새로고침 시나리오)
+        String effectiveSessionId = sessionId != null && !sessionId.isEmpty()
+                ? sessionId
+                : UUID.randomUUID().toString();
+
         GetBookRecommendationsQuery query = new GetBookRecommendationsQuery(
                 userId,
                 cursor,
                 requestLimit,
-                forceRefresh
+                forceRefresh,
+                enableSampling,
+                effectiveSessionId
         );
 
         List<BookRecommendationResult> results = getBookRecommendationsUseCase.query(query);

@@ -16,12 +16,21 @@ public class BookRecommendationAdapter implements BookRecommendationPort {
     private final RecommendationService recommendationService;
 
     @Override
-    public List<RecommendationItem> getRecommendations(Long userId, Long cursor, int limit, boolean forceRefresh) {
+    public List<RecommendationItem> getRecommendations(
+            Long userId,
+            Long cursor,
+            int limit,
+            boolean forceRefresh,
+            boolean enableSampling,
+            String sessionId
+    ) {
         List<RecommendationResult> results = recommendationService.generateRecommendations(
                 userId,
                 cursor,
                 limit,
-                forceRefresh
+                forceRefresh,
+                enableSampling,
+                sessionId
         );
 
         return results.stream()
