@@ -71,7 +71,7 @@ public class ReviewSearchAdapter implements ReviewSearchPort {
         List<String> tokens = tokenize(keyword);
         StringBuilder json = new StringBuilder();
         json.append("{\"bool\":{");
-        json.append("\"must\":[");
+        json.append("\"should\":[");
         json.append("{\"multi_match\":{");
         json.append("\"query\":\"").append(escape(keyword)).append("\",");
         json.append("\"fields\":[");
@@ -79,12 +79,11 @@ public class ReviewSearchAdapter implements ReviewSearchPort {
         json.append("\"bookTitle.ngram^0.8\",\"summary.ngram^0.5\",\"highlights.ngram^0.5\",\"content.ngram^0.3\"");
         json.append("]}");
         json.append("}");
-        json.append("]");
 
         // keywords 부분 일치 검색 (trailing wildcard만 사용 - 성능 최적화)
         // "실존" 검색 시 "실존*" → "실존주의", "실존적" 매칭 (빠름)
         if (!tokens.isEmpty()) {
-            json.append(",\"should\":[");
+            json.append(",");
             for (int i = 0; i < tokens.size(); i++) {
                 if (i > 0) {
                     json.append(',');
@@ -94,17 +93,19 @@ public class ReviewSearchAdapter implements ReviewSearchPort {
                 json.append("\"boost\":3.0");
                 json.append("}}}");
             }
-            json.append("]");
         }
+        json.append("]");
 
         if (cursor != null) {
             json.append(",\"filter\":[{\"range\":{\"reviewId\":{\"lt\":").append(cursor).append("}}}]");
         }
+        json.append(",\"minimum_should_match\":1");
         json.append("}}");
 
         Query query = new StringQuery(json.toString());
         query.setPageable(PageRequest.of(0, size));
-        query.addSort(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Order.desc("reviewId")));
+        query.addSort(Sort.by(Sort.Order.desc("_score")));
+        query.addSort(Sort.by(Sort.Order.desc("reviewId"))); // 동점 처리
         return query;
     }
 
@@ -113,8 +114,8 @@ public class ReviewSearchAdapter implements ReviewSearchPort {
         StringBuilder json = new StringBuilder();
         json.append("{\"bool\":{");
 
-        // 1. must: 키워드 검색
-        json.append("\"must\":[");
+        // 1. should: 키워드 검색
+        json.append("\"should\":[");
         json.append("{\"multi_match\":{");
         json.append("\"query\":\"").append(escape(filter.keyword())).append("\",");
         json.append("\"fields\":[");
@@ -122,11 +123,10 @@ public class ReviewSearchAdapter implements ReviewSearchPort {
         json.append("\"bookTitle.ngram^0.8\",\"summary.ngram^0.5\",\"highlights.ngram^0.5\",\"content.ngram^0.3\"");
         json.append("]}");
         json.append("}");
-        json.append("]");
 
         // 2. should: 키워드 매칭 부스트 (trailing wildcard만 - 성능 최적화)
         if (!tokens.isEmpty()) {
-            json.append(",\"should\":[");
+            json.append(",");
             for (int i = 0; i < tokens.size(); i++) {
                 if (i > 0) {
                     json.append(',');
@@ -136,8 +136,8 @@ public class ReviewSearchAdapter implements ReviewSearchPort {
                 json.append("\"boost\":3.0");
                 json.append("}}}");
             }
-            json.append("]");
         }
+        json.append("]");
 
         // 3. filter: 필터 조건들
         List<String> filters = new ArrayList<>();
@@ -200,6 +200,7 @@ public class ReviewSearchAdapter implements ReviewSearchPort {
             json.append("]");
         }
 
+        json.append(",\"minimum_should_match\":1");
         json.append("}}");
 
         Query query = new StringQuery(json.toString());

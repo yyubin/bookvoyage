@@ -6,7 +6,12 @@ public record ReviewSyncDto(
         Long id,
         Long userId,
         Long bookId,
+        String bookTitle,
+        String summary,
         String content,
+        java.util.List<String> highlights,
+        java.util.List<String> highlightsNorm,
+        java.util.List<String> keywords,
         Float rating,
         String visibility,
         LocalDateTime createdAt,
@@ -14,5 +19,6 @@ public record ReviewSyncDto(
         int bookmarkCount,
         int commentCount,
         long viewCount,
-        Float dwellScore
+        Float dwellScore,
+        String genre
 ) { }

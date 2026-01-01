@@ -32,9 +32,21 @@ public class ReviewDocument {
     @Field(type = FieldType.Long)
     private Long userId;
 
+    // 리뷰 ID (cursor/정렬용)
+    @Field(type = FieldType.Long)
+    private Long reviewId;
+
     // 도서 ID
     @Field(type = FieldType.Long)
     private Long bookId;
+
+    // 도서 제목
+    @Field(type = FieldType.Text, analyzer = "nori_analyzer")
+    private String bookTitle;
+
+    // 리뷰 요약
+    @Field(type = FieldType.Text, analyzer = "nori_analyzer")
+    private String summary;
 
     // 리뷰 제목
     @Field(type = FieldType.Text, analyzer = "nori_analyzer")
@@ -44,9 +56,25 @@ public class ReviewDocument {
     @Field(type = FieldType.Text, analyzer = "nori_analyzer")
     private String content;
 
+    // 하이라이트 문장
+    @Field(type = FieldType.Text, analyzer = "nori_analyzer")
+    private java.util.List<String> highlights;
+
+    // 하이라이트 정규화
+    @Field(type = FieldType.Keyword)
+    private java.util.List<String> highlightsNorm;
+
+    // 태그/키워드
+    @Field(type = FieldType.Keyword)
+    private java.util.List<String> keywords;
+
     // 평점
     @Field(type = FieldType.Float)
     private Float rating;
+
+    // 장르
+    @Field(type = FieldType.Keyword)
+    private String genre;
 
     // 공개 여부
     @Field(type = FieldType.Keyword)

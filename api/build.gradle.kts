@@ -30,6 +30,7 @@ dependencies {
     implementation(project(":infrastructure"))
     implementation(project(":support"))
     implementation(project(":recommendation"))
+    implementation(project(":batch"))
 
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-validation")
