@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.yyubin.recommendation.config.WindowSamplingConfig;
+import org.yyubin.recommendation.sampling.strategy.ShuffleStrategy;
+import org.yyubin.recommendation.sampling.strategy.ShuffleStrategyFactory;
 import org.yyubin.recommendation.service.RecommendationResult;
 
 import java.util.*;
@@ -16,6 +18,8 @@ import java.util.*;
  * - 다양성 확보: 매 새로고침마다 다른 결과 제공
  * - 저비용: 기존 캐시 활용, 추가 쿼리 불필요
  * - 일관성: 같은 세션 내에서는 일관된 순서 유지
+ * <p>
+ * 리팩토링: 책임 연쇄 패턴 적용으로 전략 분리
  */
 @Slf4j
 @Component
@@ -23,6 +27,7 @@ import java.util.*;
 public class WindowSampler {
 
     private final WindowSamplingConfig config;
+    private final ShuffleStrategyFactory strategyFactory;
 
     /**
      * 추천 리스트에 윈도우 샘플링 적용
@@ -50,27 +55,33 @@ public class WindowSampler {
         int currentIndex = 0;
 
         // Tier 1: 고품질 보장 구간
-        currentIndex = applyTier1Sampling(
+        currentIndex = applyTierSampling(
                 recommendations,
                 result,
                 currentIndex,
-                sessionRandom
+                config.getTier1(),
+                sessionRandom,
+                "Tier 1"
         );
 
         // Tier 2: 균형 구간
-        currentIndex = applyTier2Sampling(
+        currentIndex = applyTierSampling(
                 recommendations,
                 result,
                 currentIndex,
-                sessionRandom
+                config.getTier2(),
+                sessionRandom,
+                "Tier 2"
         );
 
         // Tier 3: 탐색 구간
-        applyTier3Sampling(
+        applyTierSampling(
                 recommendations,
                 result,
                 currentIndex,
-                sessionRandom
+                config.getTier3(),
+                sessionRandom,
+                "Tier 3"
         );
 
         log.info("Sampling complete: {} items processed", result.size());
@@ -78,165 +89,49 @@ public class WindowSampler {
     }
 
     /**
-     * Tier 1 샘플링: 상위 N개는 고정, 나머지는 가벼운 셔플
+     * Tier별 샘플링 적용 (책임 연쇄 패턴)
+     *
+     * @param source 원본 리스트
+     * @param target 결과 리스트
+     * @param startIndex 시작 인덱스
+     * @param tierConfig Tier 설정
+     * @param random Random 인스턴스
+     * @param tierName Tier 이름 (로깅용)
+     * @return 다음 시작 인덱스
      */
-    private int applyTier1Sampling(
+    private int applyTierSampling(
             List<RecommendationResult> source,
             List<RecommendationResult> target,
             int startIndex,
-            Random random
+            WindowSamplingConfig.TierConfig tierConfig,
+            Random random,
+            String tierName
     ) {
-        int tier1Size = Math.min(config.getTier1().getSize(), source.size() - startIndex);
-        if (tier1Size <= 0) return startIndex;
-
-        List<RecommendationResult> tier1 = new ArrayList<>(
-                source.subList(startIndex, startIndex + tier1Size)
-        );
-
-        switch (config.getTier1().getStrategy()) {
-            case NONE -> {
-                // 완전 고정
-                target.addAll(tier1);
-                log.debug("Tier 1: Fixed {} items", tier1Size);
-            }
-            case PARTIAL -> {
-                // 상위 N개 고정, 나머지 셔플
-                int fixedCount = Math.min(config.getTier1().getFixedTopN(), tier1.size());
-                target.addAll(tier1.subList(0, fixedCount));
-
-                if (tier1.size() > fixedCount) {
-                    List<RecommendationResult> shufflePart = new ArrayList<>(
-                            tier1.subList(fixedCount, tier1.size())
-                    );
-                    Collections.shuffle(shufflePart, random);
-                    target.addAll(shufflePart);
-                }
-                log.debug("Tier 1: Fixed top {}, shuffled {} items", fixedCount, tier1.size() - fixedCount);
-            }
-            case FULL -> {
-                // 전체 셔플
-                Collections.shuffle(tier1, random);
-                target.addAll(tier1);
-                log.debug("Tier 1: Fully shuffled {} items", tier1Size);
-            }
-            case WINDOW -> {
-                // Tier 1에서는 WINDOW를 PARTIAL처럼 처리
-                int fixedCount = Math.min(config.getTier1().getFixedTopN(), tier1.size());
-                target.addAll(tier1.subList(0, fixedCount));
-
-                if (tier1.size() > fixedCount) {
-                    List<RecommendationResult> shufflePart = new ArrayList<>(
-                            tier1.subList(fixedCount, tier1.size())
-                    );
-                    Collections.shuffle(shufflePart, random);
-                    target.addAll(shufflePart);
-                }
-                log.debug("Tier 1: Window strategy treated as PARTIAL - Fixed top {}, shuffled {} items",
-                        fixedCount, tier1.size() - fixedCount);
-            }
+        // Tier 크기 계산
+        int tierSize = Math.min(tierConfig.getSize(), source.size() - startIndex);
+        if (tierSize <= 0) {
+            return startIndex;
         }
 
-        return startIndex + tier1Size;
-    }
-
-    /**
-     * Tier 2 샘플링: 윈도우 단위로 나눠서 각각 셔플
-     */
-    private int applyTier2Sampling(
-            List<RecommendationResult> source,
-            List<RecommendationResult> target,
-            int startIndex,
-            Random random
-    ) {
-        int tier2Size = Math.min(config.getTier2().getSize(), source.size() - startIndex);
-        if (tier2Size <= 0) return startIndex;
-
-        List<RecommendationResult> tier2 = new ArrayList<>(
-                source.subList(startIndex, startIndex + tier2Size)
+        // Tier 추출
+        List<RecommendationResult> tierItems = new ArrayList<>(
+                source.subList(startIndex, startIndex + tierSize)
         );
 
-        if (config.getTier2().getStrategy() == WindowSamplingConfig.ShuffleStrategy.WINDOW) {
-            // 윈도우 크기로 분할하여 각각 셔플
-            int windowSize = config.getTier2().getFixedTopN(); // 여기서는 windowSize로 활용
-            if (windowSize <= 0) windowSize = 8; // 기본값
-
-            int windowCount = 0;
-            for (int i = 0; i < tier2.size(); i += windowSize) {
-                int endIdx = Math.min(i + windowSize, tier2.size());
-                List<RecommendationResult> window = new ArrayList<>(tier2.subList(i, endIdx));
-                Collections.shuffle(window, random);
-                target.addAll(window);
-                windowCount++;
-            }
-            log.debug("Tier 2: Window shuffled {} items across {} windows (window size: {})",
-                    tier2Size, windowCount, windowSize);
-
-        } else if (config.getTier2().getStrategy() == WindowSamplingConfig.ShuffleStrategy.FULL) {
-            Collections.shuffle(tier2, random);
-            target.addAll(tier2);
-            log.debug("Tier 2: Fully shuffled {} items", tier2Size);
-
-        } else if (config.getTier2().getStrategy() == WindowSamplingConfig.ShuffleStrategy.PARTIAL) {
-            // PARTIAL 전략: 상위 N개 고정, 나머지 셔플
-            int fixedCount = Math.min(config.getTier2().getFixedTopN(), tier2.size());
-            target.addAll(tier2.subList(0, fixedCount));
-
-            if (tier2.size() > fixedCount) {
-                List<RecommendationResult> shufflePart = new ArrayList<>(
-                        tier2.subList(fixedCount, tier2.size())
-                );
-                Collections.shuffle(shufflePart, random);
-                target.addAll(shufflePart);
-            }
-            log.debug("Tier 2: Partial - Fixed top {}, shuffled {} items", fixedCount, tier2.size() - fixedCount);
-
-        } else {
-            // NONE: 셔플 없음
-            target.addAll(tier2);
-            log.debug("Tier 2: No shuffle {} items", tier2Size);
-        }
-
-        return startIndex + tier2Size;
-    }
-
-    /**
-     * Tier 3 샘플링: 완전 랜덤
-     */
-    private void applyTier3Sampling(
-            List<RecommendationResult> source,
-            List<RecommendationResult> target,
-            int startIndex,
-            Random random
-    ) {
-        if (startIndex >= source.size()) return;
-
-        List<RecommendationResult> tier3 = new ArrayList<>(
-                source.subList(startIndex, source.size())
+        // 전략 선택 및 실행
+        ShuffleStrategy strategy = strategyFactory.getStrategy(tierConfig.getStrategy());
+        ShuffleStrategy.ShuffleConfig shuffleConfig = new ShuffleStrategy.ShuffleConfig(
+                tierConfig.getFixedTopN(),
+                tierConfig.getFixedTopN() // windowSize로도 사용
         );
 
-        if (config.getTier3().getStrategy() == WindowSamplingConfig.ShuffleStrategy.FULL) {
-            Collections.shuffle(tier3, random);
-            log.debug("Tier 3: Fully shuffled {} items", tier3.size());
-        } else if (config.getTier3().getStrategy() == WindowSamplingConfig.ShuffleStrategy.WINDOW) {
-            // WINDOW 전략
-            int windowSize = config.getTier3().getFixedTopN();
-            if (windowSize <= 0) windowSize = 10; // 기본값
+        List<RecommendationResult> shuffled = strategy.shuffle(tierItems, shuffleConfig, random);
+        target.addAll(shuffled);
 
-            int windowCount = 0;
-            for (int i = 0; i < tier3.size(); i += windowSize) {
-                int endIdx = Math.min(i + windowSize, tier3.size());
-                List<RecommendationResult> window = new ArrayList<>(tier3.subList(i, endIdx));
-                Collections.shuffle(window, random);
-                target.addAll(window);
-                windowCount++;
-            }
-            log.debug("Tier 3: Window shuffled {} items across {} windows", tier3.size(), windowCount);
-            return;
-        } else {
-            log.debug("Tier 3: No shuffle {} items", tier3.size());
-        }
+        log.debug("{}: processed {} items with {} strategy",
+                tierName, tierSize, tierConfig.getStrategy());
 
-        target.addAll(tier3);
+        return startIndex + tierSize;
     }
 
     /**
