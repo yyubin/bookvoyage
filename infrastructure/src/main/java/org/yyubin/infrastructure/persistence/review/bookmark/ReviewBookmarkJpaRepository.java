@@ -15,6 +15,17 @@ public interface ReviewBookmarkJpaRepository extends JpaRepository<ReviewBookmar
 
     List<ReviewBookmarkEntity> findByUserIdOrderByIdDesc(Long userId);
 
+    List<ReviewBookmarkEntity> findByUserIdInOrderByCreatedAtDesc(
+            List<Long> userIds,
+            org.springframework.data.domain.Pageable pageable
+    );
+
+    List<ReviewBookmarkEntity> findByUserIdInAndCreatedAtBeforeOrderByCreatedAtDesc(
+            List<Long> userIds,
+            java.time.LocalDateTime cursor,
+            org.springframework.data.domain.Pageable pageable
+    );
+
     java.util.Optional<ReviewBookmarkEntity> findByUserIdAndReviewId(Long userId, Long reviewId);
 
     long countByReviewId(Long reviewId);

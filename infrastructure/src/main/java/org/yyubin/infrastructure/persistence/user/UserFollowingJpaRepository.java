@@ -28,6 +28,14 @@ public interface UserFollowingJpaRepository extends JpaRepository<UserFollowingE
 
     List<UserFollowingEntity> findByFolloweeIdAndIdLessThanOrderByIdDesc(Long followeeId, Long id, Pageable pageable);
 
+    List<UserFollowingEntity> findByFolloweeIdOrderByCreatedAtDesc(Long followeeId, Pageable pageable);
+
+    List<UserFollowingEntity> findByFolloweeIdAndCreatedAtBeforeOrderByCreatedAtDesc(
+            Long followeeId,
+            java.time.LocalDateTime cursor,
+            Pageable pageable
+    );
+
     long countByFollowerId(Long followerId);
 
     long countByFolloweeId(Long followeeId);

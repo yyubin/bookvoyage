@@ -52,6 +52,19 @@ public interface ReviewJpaRepository extends JpaRepository<ReviewEntity, Long> {
 
     List<ReviewEntity> findByUserIdAndDeletedFalseAndVisibilityAndIdLessThanOrderByIdDesc(Long userId, ReviewVisibility visibility, Long id, Pageable pageable);
 
+    List<ReviewEntity> findByUserIdInAndDeletedFalseAndVisibilityOrderByCreatedAtDesc(
+            List<Long> userIds,
+            ReviewVisibility visibility,
+            Pageable pageable
+    );
+
+    List<ReviewEntity> findByUserIdInAndDeletedFalseAndVisibilityAndCreatedAtBeforeOrderByCreatedAtDesc(
+            List<Long> userIds,
+            ReviewVisibility visibility,
+            java.time.LocalDateTime cursor,
+            Pageable pageable
+    );
+
     List<ReviewEntity> findByUpdatedAtAfterOrderByIdAsc(java.time.LocalDateTime updatedAt, Pageable pageable);
 
     @Query(value = """

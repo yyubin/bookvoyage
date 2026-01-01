@@ -17,6 +17,14 @@ public interface ReviewLikeJpaRepository extends JpaRepository<ReviewLikeEntity,
 
     long countByReviewId(Long reviewId);
 
+    List<ReviewLikeEntity> findByUserIdInOrderByCreatedAtDesc(List<Long> userIds, org.springframework.data.domain.Pageable pageable);
+
+    List<ReviewLikeEntity> findByUserIdInAndCreatedAtBeforeOrderByCreatedAtDesc(
+            List<Long> userIds,
+            java.time.LocalDateTime cursor,
+            org.springframework.data.domain.Pageable pageable
+    );
+
     @Query("SELECT l.reviewId as reviewId, COUNT(l) as count FROM ReviewLikeEntity l WHERE l.reviewId IN :reviewIds GROUP BY l.reviewId")
     List<ReviewLikeCount> countByReviewIds(List<Long> reviewIds);
 
