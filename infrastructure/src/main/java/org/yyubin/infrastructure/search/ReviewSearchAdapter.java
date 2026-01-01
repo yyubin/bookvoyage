@@ -81,16 +81,19 @@ public class ReviewSearchAdapter implements ReviewSearchPort {
         json.append("}");
         json.append("]");
 
+        // keywords 부분 일치 검색 (trailing wildcard만 사용 - 성능 최적화)
+        // "실존" 검색 시 "실존*" → "실존주의", "실존적" 매칭 (빠름)
         if (!tokens.isEmpty()) {
             json.append(",\"should\":[");
-            json.append("{\"terms\":{\"keywords\":[");
             for (int i = 0; i < tokens.size(); i++) {
                 if (i > 0) {
                     json.append(',');
                 }
-                json.append("\"").append(escape(tokens.get(i))).append("\"");
+                json.append("{\"wildcard\":{\"keywords\":{");
+                json.append("\"value\":\"").append(escape(tokens.get(i))).append("*\",");  // leading wildcard 제거
+                json.append("\"boost\":3.0");
+                json.append("}}}");
             }
-            json.append("],\"boost\":2.0}}");
             json.append("]");
         }
 
@@ -121,17 +124,18 @@ public class ReviewSearchAdapter implements ReviewSearchPort {
         json.append("}");
         json.append("]");
 
-        // 2. should: 키워드 매칭 부스트
+        // 2. should: 키워드 매칭 부스트 (trailing wildcard만 - 성능 최적화)
         if (!tokens.isEmpty()) {
             json.append(",\"should\":[");
-            json.append("{\"terms\":{\"keywords\":[");
             for (int i = 0; i < tokens.size(); i++) {
                 if (i > 0) {
                     json.append(',');
                 }
-                json.append("\"").append(escape(tokens.get(i))).append("\"");
+                json.append("{\"wildcard\":{\"keywords\":{");
+                json.append("\"value\":\"").append(escape(tokens.get(i))).append("*\",");  // leading wildcard 제거
+                json.append("\"boost\":3.0");
+                json.append("}}}");
             }
-            json.append("],\"boost\":2.0}}");
             json.append("]");
         }
 
