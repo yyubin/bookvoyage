@@ -89,3 +89,7 @@ recommendation:
       strategy: FULL
       fixed-top-n: 0
 
+ai:
+  enrichment:
+    enabled: ${AI_ENRICHMENT_ENABLED:false}
+

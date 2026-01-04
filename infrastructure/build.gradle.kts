@@ -46,6 +46,15 @@ dependencies {
     // Redisson for distributed lock
     implementation("org.redisson:redisson:3.27.0")
 
+    // Redis VL (Vector Library) for AI
+    implementation("com.redis:redisvl:0.12.2")
+    implementation("redis.clients:jedis:5.1.0")
+
+    // LangChain4J for LLM integration
+    implementation("dev.langchain4j:langchain4j:0.35.0")
+    implementation("dev.langchain4j:langchain4j-open-ai:0.35.0")
+    implementation("dev.langchain4j:langchain4j-embeddings-all-minilm-l6-v2:0.35.0")
+
     compileOnly("org.projectlombok:lombok")
     runtimeOnly("com.mysql:mysql-connector-j")
     annotationProcessor("org.projectlombok:lombok")

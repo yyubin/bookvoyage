@@ -34,6 +34,9 @@ dependencies {
     // Spring Security는 Port 인터페이스에만 필요 (GrantedAuthority 등)
     compileOnly("org.springframework.security:spring-security-core")
 
+    implementation("com.fasterxml.jackson.core:jackson-databind")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
 
