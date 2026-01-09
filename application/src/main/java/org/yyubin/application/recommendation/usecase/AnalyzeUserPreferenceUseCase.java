@@ -54,7 +54,7 @@ public class AnalyzeUserPreferenceUseCase {
 
         // 3. SemanticCache 확인
         return cachePort.get(cacheKey, "user_analysis")
-            .map(this::parseAnalysisFromJson)
+            .map(response -> parseAnalysisFromJson(user.id().value(), response))
             .orElseGet(() -> analyzeWithLLM(user, cacheKey));
     }
 
@@ -71,7 +71,7 @@ public class AnalyzeUserPreferenceUseCase {
         cachePort.put(cacheKey, response, "user_analysis");
 
         // 파싱
-        UserAnalysis analysis = parseAnalysisFromJson(response);
+        UserAnalysis analysis = parseAnalysisFromJson(user.id().value(), response);
         persistAnalysis(user.id().value(), response, analysis, cacheKey);
         return analysis;
     }
@@ -110,25 +110,58 @@ public class AnalyzeUserPreferenceUseCase {
         );
     }
 
-    private UserAnalysis parseAnalysisFromJson(String json) {
+    private UserAnalysis parseAnalysisFromJson(Long userId, String json) {
         try {
-            // JSON에서 ``` 제거
             String cleanJson = json;
-            if (json.contains("```json")) {
-                cleanJson = json.substring(
-                    json.indexOf("```json") + 7,
-                    json.lastIndexOf("```")
-                ).trim();
+            if (json.contains("```")) {
+                int start = json.indexOf("```");
+                int end = json.lastIndexOf("```");
+                if (end > start) {
+                    cleanJson = json.substring(start + 3, end).trim();
+                    if (cleanJson.startsWith("json")) {
+                        cleanJson = cleanJson.substring(4).trim();
+                    }
+                }
             }
 
-            // TODO: 실제 JSON 파싱 구현
-            // 임시로 빈 객체 반환
+            int firstBrace = cleanJson.indexOf('{');
+            int lastBrace = cleanJson.lastIndexOf('}');
+            if (firstBrace >= 0 && lastBrace > firstBrace) {
+                cleanJson = cleanJson.substring(firstBrace, lastBrace + 1);
+            }
+
+            var root = objectMapper.readTree(cleanJson);
+
+            String personaType = root.hasNonNull("persona_type")
+                ? root.get("persona_type").asText()
+                : "general_reader";
+            String summary = root.hasNonNull("summary")
+                ? root.get("summary").asText()
+                : "독서를 즐기는 사용자입니다";
+
+            List<String> keywords = new ArrayList<>();
+            var keywordsNode = root.get("keywords");
+            if (keywordsNode != null && keywordsNode.isArray()) {
+                keywordsNode.forEach(node -> keywords.add(node.asText()));
+            }
+
+            List<UserAnalysis.BookRecommendation> recommendations = new ArrayList<>();
+            var recsNode = root.get("recommendations");
+            if (recsNode != null && recsNode.isArray()) {
+                recsNode.forEach(node -> {
+                    String title = node.hasNonNull("book_title") ? node.get("book_title").asText() : "";
+                    String author = node.hasNonNull("author") ? node.get("author").asText() : "";
+                    String reason = node.hasNonNull("reason") ? node.get("reason").asText() : "";
+                    recommendations.add(UserAnalysis.BookRecommendation.of(title, author, reason));
+                });
+            }
+
             return UserAnalysis.of(
-                1L,
-                "general_reader",
-                "독서를 즐기는 사용자입니다",
-                java.util.List.of("독서", "성장"),
-                java.util.List.of()
+                userId,
+                personaType,
+                summary,
+                keywords,
+                recommendations
             );
 
         } catch (Exception e) {
