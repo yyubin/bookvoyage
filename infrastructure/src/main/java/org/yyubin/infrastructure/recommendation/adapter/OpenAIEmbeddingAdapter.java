@@ -4,6 +4,7 @@ import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.openai.OpenAiEmbeddingModel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.yyubin.application.recommendation.port.out.EmbeddingPort;
 
@@ -11,6 +12,12 @@ import java.time.Duration;
 
 @Slf4j
 @Component
+@ConditionalOnProperty(
+    prefix = "ai.enrichment",
+    name = "enabled",
+    havingValue = "true",
+    matchIfMissing = true
+)
 public class OpenAIEmbeddingAdapter implements EmbeddingPort {
 
     private final EmbeddingModel embeddingModel;

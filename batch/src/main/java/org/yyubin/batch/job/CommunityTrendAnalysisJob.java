@@ -3,6 +3,7 @@ package org.yyubin.batch.job;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.yyubin.application.recommendation.usecase.AnalyzeCommunityTrendUseCase;
@@ -15,6 +16,12 @@ import org.yyubin.domain.recommendation.CommunityTrend;
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(
+    prefix = "ai.enrichment",
+    name = "enabled",
+    havingValue = "true",
+    matchIfMissing = true
+)
 public class CommunityTrendAnalysisJob {
 
     private final AnalyzeCommunityTrendUseCase useCase;

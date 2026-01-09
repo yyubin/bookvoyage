@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.yyubin.domain.userbook.ReadingStatus;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,6 +38,19 @@ public interface UserBookJpaRepository extends JpaRepository<UserBookEntity, Lon
     long countByUserIdAndStatusAndDeletedFalse(Long userId, ReadingStatus status);
 
     long countByUserIdAndDeletedFalse(Long userId);
+
+    @Query("""
+        SELECT new org.yyubin.infrastructure.persistence.userbook.ShelfAdditionCountRow(ub.bookId, COUNT(ub.id))
+        FROM UserBookEntity ub
+        WHERE ub.deleted = false AND ub.createdAt >= :start AND ub.createdAt < :end
+        GROUP BY ub.bookId
+        ORDER BY COUNT(ub.id) DESC
+        """)
+    List<ShelfAdditionCountRow> findTopShelfAdditions(
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end,
+            org.springframework.data.domain.Pageable pageable
+    );
 
     // Soft delete
     @Modifying

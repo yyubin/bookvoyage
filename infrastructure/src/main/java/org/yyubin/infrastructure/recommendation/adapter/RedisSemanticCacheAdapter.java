@@ -3,6 +3,8 @@ package org.yyubin.infrastructure.recommendation.adapter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.yyubin.application.recommendation.port.out.EmbeddingPort;
 import org.yyubin.application.recommendation.port.out.SemanticCachePort;
@@ -13,12 +15,15 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.*;
 
-/**
- * Redis Semantic Cache Adapter
- * 현재는 간단한 해시 기반 캐싱, 추후 Vector Similarity Search로 업그레이드 예정
- */
 @Slf4j
 @Component
+@ConditionalOnProperty(
+    prefix = "ai.semantic-cache",
+    name = "enabled",
+    havingValue = "true",
+    matchIfMissing = true
+)
+@ConditionalOnBean(EmbeddingPort.class)
 public class RedisSemanticCacheAdapter implements SemanticCachePort {
 
     private final JedisPooled jedis;

@@ -3,6 +3,7 @@ package org.yyubin.application.recommendation.usecase;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.yyubin.application.recommendation.port.out.AiPromptPort;
@@ -29,6 +30,12 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@ConditionalOnProperty(
+    prefix = "ai.enrichment",
+    name = "enabled",
+    havingValue = "true",
+    matchIfMissing = true
+)
 public class AnalyzeUserPreferenceUseCase {
 
     private final LoadUserPort loadUserPort;

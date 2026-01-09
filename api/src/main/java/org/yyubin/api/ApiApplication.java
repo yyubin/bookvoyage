@@ -7,6 +7,9 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 @SpringBootApplication(scanBasePackages = "org.yyubin")
 @ConfigurationPropertiesScan(basePackages = "org.yyubin")
 @EnableJpaRepositories(basePackages = "org.yyubin.infrastructure.persistence")
@@ -14,9 +17,9 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 public class ApiApplication {
 
     public static void main(String[] args) {
-        // Load .env file
+        // Load .env from current or parent directories (IDE runs often set cwd to api/)
         Dotenv dotenv = Dotenv.configure()
-                .directory("./")
+                .directory(findEnvDirectory())
                 .ignoreIfMissing()
                 .load();
 
@@ -28,4 +31,14 @@ public class ApiApplication {
         SpringApplication.run(ApiApplication.class, args);
     }
 
+    private static String findEnvDirectory() {
+        Path current = Paths.get("").toAbsolutePath();
+        while (current != null) {
+            if (current.resolve(".env").toFile().exists()) {
+                return current.toString();
+            }
+            current = current.getParent();
+        }
+        return "./";
+    }
 }
