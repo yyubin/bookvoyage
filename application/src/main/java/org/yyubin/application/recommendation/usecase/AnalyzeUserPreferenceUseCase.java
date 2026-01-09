@@ -7,9 +7,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.yyubin.application.recommendation.port.out.AiPromptPort;
-import org.yyubin.application.recommendation.port.out.AiUserAnalysisPort;
 import org.yyubin.application.recommendation.port.out.LLMPort;
 import org.yyubin.application.recommendation.port.out.SemanticCachePort;
+import org.yyubin.application.recommendation.service.UserAnalysisPersistenceService;
 import org.yyubin.application.user.port.LoadUserPort;
 import org.yyubin.domain.ai.AiPromptVersion;
 import org.yyubin.domain.ai.AiResultStatus;
@@ -41,8 +41,8 @@ public class AnalyzeUserPreferenceUseCase {
     private final LoadUserPort loadUserPort;
     private final SemanticCachePort cachePort;
     private final LLMPort llmPort;
-    private final AiUserAnalysisPort analysisPort;
     private final AiPromptPort promptPort;
+    private final UserAnalysisPersistenceService persistenceService;
     private final ObjectMapper objectMapper;
 
     public UserAnalysis execute(Long userId) {
@@ -185,6 +185,6 @@ public class AnalyzeUserPreferenceUseCase {
             recommendations
         );
 
-        analysisPort.save(record);
+        persistenceService.save(record);
     }
 }
