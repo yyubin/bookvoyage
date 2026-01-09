@@ -59,3 +59,4 @@ batch:
     elasticsearch: "0 */30 * * * *" # 매 30분마다 실행
     recommendation: "0 0 * * * *"   # 매 1시간마다 실행
     view-flush: "0 */15 * * * *"    # 조회수 플러시 15분마다
+    communityTrend: "0 0 * * * *"   # 커뮤니티 트렌드 분석 매 1시간마다

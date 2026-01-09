@@ -58,7 +58,7 @@ public class GenerateRecommendationExplanationUseCase {
 
         // 3. SemanticCache 확인
         String explanation = cachePort.get(cacheKey, "recommendation_explanation")
-            .orElseGet(() -> generateWithLLM(user, bookTitle, scoreDetails, cacheKey));
+            .orElseGet(() -> generateWithLLM(user, bookId, bookTitle, scoreDetails, cacheKey));
 
         // 4. RecommendationExplanation 생성
         Map<String, String> reasons = parseReasonsFromExplanation(explanation, scoreDetails);
@@ -73,6 +73,7 @@ public class GenerateRecommendationExplanationUseCase {
 
     private String generateWithLLM(
         User user,
+        Long bookId,
         String bookTitle,
         Map<String, String> scoreDetails,
         String cacheKey

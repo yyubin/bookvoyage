@@ -47,5 +47,7 @@ public class BatchProperties {
         private String neo4j = "0 */10 * * * *";
         private String elasticsearch = "0 */30 * * * *";
         private String recommendation = "0 0 * * * *";
+        private String viewFlush = "0 */15 * * * *";
+        private String communityTrend = "0 0 * * * *";
     }
 }
