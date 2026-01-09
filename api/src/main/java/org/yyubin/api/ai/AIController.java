@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -28,6 +29,7 @@ import org.yyubin.domain.recommendation.UserAnalysis;
     havingValue = "true",
     matchIfMissing = true
 )
+@Slf4j
 public class AIController {
 
     private final AnalyzeCommunityTrendUseCase analyzeCommunityTrendUseCase;
@@ -41,6 +43,7 @@ public class AIController {
     @GetMapping("/community-trend")
     public ResponseEntity<CommunityTrendResponse> getCommunityTrend() {
         CommunityTrend trend = analyzeCommunityTrendUseCase.execute();
+        log.debug("Community trend: {}", trend);
         return ResponseEntity.ok(CommunityTrendResponse.from(trend));
     }
 
