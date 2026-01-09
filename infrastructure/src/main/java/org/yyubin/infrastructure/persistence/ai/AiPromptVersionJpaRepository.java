@@ -7,5 +7,7 @@ public interface AiPromptVersionJpaRepository extends JpaRepository<AiPromptVers
 
     Optional<AiPromptVersionEntity> findFirstByPromptIdAndActiveTrueOrderByVersionDesc(Long promptId);
 
+    Optional<AiPromptVersionEntity> findFirstByPromptIdOrderByVersionDesc(Long promptId);
+
     Optional<AiPromptVersionEntity> findByPromptIdAndVersion(Long promptId, int version);
 }
