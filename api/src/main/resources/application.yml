@@ -109,6 +109,11 @@ book:
       default-limit: ${SHELF_ADDITION_TREND_DEFAULT_LIMIT:20}
       timezone: ${SHELF_ADDITION_TREND_TIMEZONE:Asia/Seoul}
 
+search:
+  query-log:
+    stream:
+      key: ${SEARCH_QUERY_STREAM_KEY:search:query:log}
+
 # SpringDoc OpenAPI 설정
 springdoc:
   api-docs:

@@ -39,4 +39,10 @@ public class BatchScheduler {
     public void syncReviewContent() {
         batchJobRunner.run("reviewContentSyncJob");
     }
+
+    @Scheduled(cron = "${batch.schedule.search-query-log:0 */1 * * * *}")
+    @SchedulerLock(name = "searchQueryLogFlush", lockAtLeastFor = "30s", lockAtMostFor = "2m")
+    public void flushSearchQueryLogs() {
+        batchJobRunner.run("searchQueryLogFlushJob");
+    }
 }

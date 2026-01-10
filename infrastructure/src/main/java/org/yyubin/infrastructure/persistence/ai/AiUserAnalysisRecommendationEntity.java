@@ -21,7 +21,7 @@ import org.yyubin.domain.ai.AiUserAnalysisRecommendation;
     name = "ai_user_analysis_recommendation",
     indexes = {
         @Index(name = "idx_ai_user_analysis_rec_analysis", columnList = "analysis_id"),
-        @Index(name = "idx_ai_user_analysis_rec_rank", columnList = "analysis_id, rank")
+        @Index(name = "idx_ai_user_analysis_rec_rank", columnList = "analysis_id, recommendation_rank")
     }
 )
 @Getter
@@ -53,7 +53,7 @@ public class AiUserAnalysisRecommendationEntity {
     @Column(name = "reason", nullable = false, columnDefinition = "TEXT")
     private String reason;
 
-    @Column(name = "rank", nullable = false)
+    @Column(name = "recommendation_rank", nullable = false)
     private int rank;
 
     public AiUserAnalysisRecommendation toDomain() {
