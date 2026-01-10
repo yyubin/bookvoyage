@@ -4,9 +4,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import org.yyubin.application.review.port.ReviewViewFlushPort;
 import org.yyubin.application.review.port.ReviewViewMetricPort;
 import org.yyubin.infrastructure.config.MetricProperties;
 
@@ -16,6 +18,7 @@ public class ReviewViewMetricAdapter implements ReviewViewMetricPort {
 
     private final RedisTemplate<String, String> redisTemplate;
     private final MetricProperties metricProperties;
+    private final ReviewViewFlushPort reviewViewFlushPort;
 
     @Override
     public long incrementAndGet(Long reviewId, Long userId) {
@@ -30,10 +33,11 @@ public class ReviewViewMetricAdapter implements ReviewViewMetricPort {
             redisTemplate.expire(dedupKey, java.time.Duration.ofSeconds(metricProperties.getDedupTtlSeconds()));
             if (added != null && added == 0) {
                 // 이미 본 사용자면 현재 카운터 반환
-                return getCachedCount(reviewId).orElse(0L);
+                return getCountWithFallback(reviewId);
             }
         }
 
+        ensureCounterInitialized(reviewId);
         Long value = redisTemplate.opsForValue().increment(counterKey(reviewId));
         redisTemplate.expire(counterKey(reviewId), java.time.Duration.ofSeconds(metricProperties.getCounterTtlSeconds()));
         return value != null ? value : 0L;
@@ -78,11 +82,49 @@ public class ReviewViewMetricAdapter implements ReviewViewMetricPort {
         return result;
     }
 
+    @Override
+    public long getCountWithFallback(Long reviewId) {
+        return getCachedCount(reviewId)
+            .orElseGet(() -> reviewViewFlushPort.findCurrentViewCount(reviewId).orElse(0L));
+    }
+
+    @Override
+    public Map<Long, Long> getBatchCountsWithFallback(List<Long> reviewIds) {
+        if (reviewIds == null || reviewIds.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<Long, Long> result = new HashMap<>(getBatchCachedCounts(reviewIds));
+        Set<Long> cachedIds = result.keySet();
+
+        for (Long reviewId : reviewIds) {
+            if (cachedIds.contains(reviewId)) {
+                continue;
+            }
+            reviewViewFlushPort.findCurrentViewCount(reviewId)
+                .ifPresent(count -> result.put(reviewId, count));
+        }
+
+        return result;
+    }
+
     private String counterKey(Long reviewId) {
         return "metric:review:view:" + reviewId;
     }
 
     private String dedupKey(Long reviewId) {
         return "metric:review:viewdedup:" + reviewId;
+    }
+
+    private void ensureCounterInitialized(Long reviewId) {
+        if (getCachedCount(reviewId).isPresent()) {
+            return;
+        }
+        long base = reviewViewFlushPort.findCurrentViewCount(reviewId).orElse(0L);
+        redisTemplate.opsForValue().setIfAbsent(
+            counterKey(reviewId),
+            Long.toString(base),
+            java.time.Duration.ofSeconds(metricProperties.getCounterTtlSeconds())
+        );
     }
 }

@@ -27,4 +27,14 @@ public interface ReviewViewMetricPort {
      * 여러 리뷰의 캐시된 조회수를 배치로 조회
      */
     Map<Long, Long> getBatchCachedCounts(List<Long> reviewIds);
+
+    /**
+     * 캐시 미스 시 DB 조회수로 폴백
+     */
+    long getCountWithFallback(Long reviewId);
+
+    /**
+     * 여러 리뷰의 조회수를 캐시 미스 시 DB로 폴백하여 조회
+     */
+    Map<Long, Long> getBatchCountsWithFallback(List<Long> reviewIds);
 }

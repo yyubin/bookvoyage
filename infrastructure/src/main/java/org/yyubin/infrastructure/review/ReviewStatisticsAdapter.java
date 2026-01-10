@@ -31,7 +31,7 @@ public class ReviewStatisticsAdapter implements ReviewStatisticsPort {
         Map<Long, Long> commentCounts = commentPort.countByReviewIdsBatch(reviewIds);
 
         // Batch query for view counts
-        Map<Long, Long> viewCounts = viewMetricPort.getBatchCachedCounts(reviewIds);
+        Map<Long, Long> viewCounts = viewMetricPort.getBatchCountsWithFallback(reviewIds);
 
         // Combine results (순서: likeCount, commentCount, viewCount)
         Map<Long, ReviewStatistics> result = new HashMap<>();
