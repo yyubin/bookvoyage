@@ -8,6 +8,7 @@ import org.yyubin.application.review.port.LoadBookPort;
 import org.yyubin.application.review.port.SaveBookPort;
 import org.yyubin.application.userbook.AddUserBookUseCase;
 import org.yyubin.application.userbook.DeleteUserBookUseCase;
+import org.yyubin.application.userbook.EnsureCompletedUserBookUseCase;
 import org.yyubin.application.userbook.GetLatestReadingBooksUseCase;
 import org.yyubin.application.userbook.GetUserBookStatisticsUseCase;
 import org.yyubin.application.userbook.GetUserBookUseCase;
@@ -18,6 +19,7 @@ import org.yyubin.application.userbook.UpdateUserBookRatingUseCase;
 import org.yyubin.application.userbook.UpdateUserBookStatusUseCase;
 import org.yyubin.application.userbook.command.AddUserBookCommand;
 import org.yyubin.application.userbook.command.DeleteUserBookCommand;
+import org.yyubin.application.userbook.command.EnsureCompletedUserBookCommand;
 import org.yyubin.application.userbook.command.UpdateUserBookMemoCommand;
 import org.yyubin.application.userbook.command.UpdateUserBookProgressCommand;
 import org.yyubin.application.userbook.command.UpdateUserBookRatingCommand;
@@ -50,7 +52,8 @@ public class UserBookService implements
         UpdateUserBookMemoUseCase,
         DeleteUserBookUseCase,
         GetUserBookStatisticsUseCase,
-        GetLatestReadingBooksUseCase {
+        GetLatestReadingBooksUseCase,
+        EnsureCompletedUserBookUseCase {
 
     private final UserBookPort userBookPort;
     private final UserBookQueryPort userBookQueryPort;
@@ -166,6 +169,37 @@ public class UserBookService implements
         userBookPort.findByUserAndBook(userId, BookId.of(command.bookId()))
                 .orElseThrow(() -> new IllegalArgumentException("UserBook not found"));
         userBookPort.delete(userId, BookId.of(command.bookId()));
+    }
+
+    @Override
+    @Transactional
+    public void execute(EnsureCompletedUserBookCommand command) {
+        UserId userId = new UserId(command.userId());
+        BookId bookId = BookId.of(command.bookId());
+
+        UserBook existing = userBookPort.findByUserAndBookIncludingDeleted(userId, bookId)
+                .orElse(null);
+
+        if (existing == null) {
+            userBookPort.save(UserBook.create(userId, bookId, ReadingStatus.COMPLETED));
+            return;
+        }
+
+        boolean needsRestore = existing.isDeleted();
+        boolean needsCompletion = !existing.isCompleted();
+
+        if (!needsRestore && !needsCompletion) {
+            return;
+        }
+
+        UserBook updated = existing;
+        if (needsRestore) {
+            updated = updated.restore();
+        }
+        if (needsCompletion) {
+            updated = updated.markAsCompleted();
+        }
+        userBookPort.save(updated);
     }
 
     @Override

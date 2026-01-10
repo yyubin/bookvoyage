@@ -29,6 +29,8 @@ import org.yyubin.application.review.port.LoadBookPort;
 import org.yyubin.application.review.port.LoadReviewPort;
 import org.yyubin.application.review.port.SaveBookPort;
 import org.yyubin.application.review.port.SaveReviewPort;
+import org.yyubin.application.userbook.EnsureCompletedUserBookUseCase;
+import org.yyubin.application.userbook.command.EnsureCompletedUserBookCommand;
 import org.yyubin.application.user.port.FollowQueryPort;
 import org.yyubin.application.user.port.LoadUserPort;
 import org.yyubin.domain.book.Book;
@@ -61,6 +63,7 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
     private final FollowQueryPort followQueryPort;
     private final EventPublisher eventPublisher;
     private final ReviewSearchIndexEventPublisher reviewSearchIndexEventPublisher;
+    private final EnsureCompletedUserBookUseCase ensureCompletedUserBookUseCase;
 
     @Override
     @Transactional
@@ -83,6 +86,10 @@ public class ReviewService implements CreateReviewUseCase, UpdateReviewUseCase, 
         );
 
         Review savedReview = saveReviewPort.save(review);
+        ensureCompletedUserBookUseCase.execute(new EnsureCompletedUserBookCommand(
+                userId.value(),
+                book.getId().getValue()
+        ));
         registerKeywordsUseCase.register(savedReview.getId(), command.keywords());
         registerHighlightsUseCase.register(savedReview.getId(), command.highlights());
         notifyFollowersOnNewReview(savedReview);

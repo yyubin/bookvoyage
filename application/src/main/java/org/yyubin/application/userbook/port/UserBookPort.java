@@ -12,6 +12,8 @@ public interface UserBookPort {
 
     Optional<UserBook> findByUserAndBook(UserId userId, BookId bookId);
 
+    Optional<UserBook> findByUserAndBookIncludingDeleted(UserId userId, BookId bookId);
+
     boolean exists(UserId userId, BookId bookId);
 
     UserBook save(UserBook userBook);

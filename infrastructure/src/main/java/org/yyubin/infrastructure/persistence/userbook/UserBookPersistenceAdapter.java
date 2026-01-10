@@ -30,6 +30,14 @@ public class UserBookPersistenceAdapter implements UserBookPort, UserBookQueryPo
     }
 
     @Override
+    public Optional<UserBook> findByUserAndBookIncludingDeleted(UserId userId, BookId bookId) {
+        return userBookJpaRepository.findByUserIdAndBookId(
+                userId.value(),
+                bookId.getValue()
+        ).map(UserBookEntity::toDomain);
+    }
+
+    @Override
     public boolean exists(UserId userId, BookId bookId) {
         return userBookJpaRepository.existsByUserIdAndBookIdAndDeletedFalse(
                 userId.value(),
