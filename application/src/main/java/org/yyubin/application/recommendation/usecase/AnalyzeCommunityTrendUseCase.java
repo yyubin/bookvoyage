@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.StreamSupport;
 
 /**
@@ -52,6 +53,12 @@ public class AnalyzeCommunityTrendUseCase {
         return cachePort.get(cacheKey, "community_trend")
             .map(this::parseTrendFromJson)
             .orElseGet(() -> analyzeWithLLM(cacheKey));
+    }
+
+    public Optional<CommunityTrend> findCachedTrend() {
+        String cacheKey = buildCacheKey();
+        return cachePort.get(cacheKey, "community_trend")
+            .map(this::parseTrendFromJson);
     }
 
     private CommunityTrend analyzeWithLLM(String cacheKey) {
