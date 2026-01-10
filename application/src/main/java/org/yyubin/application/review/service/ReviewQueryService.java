@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.yyubin.application.event.EventPayload;
 import org.yyubin.application.event.EventPublisher;
 import org.yyubin.application.event.EventTopics;
+import org.yyubin.application.review.CheckUserReviewUseCase;
 import org.yyubin.application.review.GetReviewUseCase;
 import org.yyubin.application.review.GetReviewsByHighlightUseCase;
 import org.yyubin.application.review.GetUserReviewsUseCase;
@@ -17,13 +18,16 @@ import org.yyubin.application.review.dto.PagedReviewResult;
 import org.yyubin.application.review.dto.ReviewResult;
 import org.yyubin.application.review.port.LoadBookPort;
 import org.yyubin.application.review.port.LoadReviewPort;
+import org.yyubin.application.review.port.ReviewExistencePort;
 import org.yyubin.application.review.port.ReviewViewMetricPort;
 import org.yyubin.application.review.port.ReviewReactionPort;
+import org.yyubin.application.review.query.CheckUserReviewQuery;
 import org.yyubin.application.review.query.GetReviewQuery;
 import org.yyubin.application.review.query.GetReviewsByHighlightQuery;
 import org.yyubin.application.review.query.GetUserReviewsQuery;
 import org.yyubin.domain.book.Book;
 import org.yyubin.domain.review.Review;
+import org.yyubin.domain.book.BookId;
 import org.yyubin.domain.review.ReviewId;
 import org.yyubin.domain.review.HighlightNormalizer;
 import org.yyubin.domain.user.UserId;
@@ -31,13 +35,14 @@ import org.yyubin.domain.user.UserId;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class ReviewQueryService implements GetReviewUseCase, GetUserReviewsUseCase, GetReviewsByHighlightUseCase {
+public class ReviewQueryService implements GetReviewUseCase, GetUserReviewsUseCase, GetReviewsByHighlightUseCase, CheckUserReviewUseCase {
 
     private final LoadReviewPort loadReviewPort;
     private final LoadBookPort loadBookPort;
     private final LoadKeywordsUseCase loadKeywordsUseCase;
     private final LoadHighlightsUseCase loadHighlightsUseCase;
     private final ReviewViewMetricPort reviewViewMetricPort;
+    private final ReviewExistencePort reviewExistencePort;
     private final ReviewReactionPort reviewReactionPort;
     private final org.yyubin.application.bookmark.port.ReviewBookmarkRepository reviewBookmarkRepository;
     private final EventPublisher eventPublisher;
@@ -101,6 +106,17 @@ public class ReviewQueryService implements GetReviewUseCase, GetUserReviewsUseCa
                 userReaction,
                 isLiked,
                 likeCount
+        );
+    }
+
+    @Override
+    public boolean query(CheckUserReviewQuery query) {
+        if (query.userId() == null || query.bookId() == null) {
+            return false;
+        }
+        return reviewExistencePort.existsByUserAndBook(
+            new UserId(query.userId()),
+            BookId.of(query.bookId())
         );
     }
 

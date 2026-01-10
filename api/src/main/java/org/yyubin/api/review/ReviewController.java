@@ -22,11 +22,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.yyubin.api.common.PrincipalUtils;
 import org.yyubin.api.review.dto.CreateReviewRequest;
 import org.yyubin.api.review.dto.ReviewResponse;
 import org.yyubin.api.review.dto.ReviewPageResponse;
 import org.yyubin.api.review.dto.UserReviewPageResponse;
 import org.yyubin.api.review.dto.UpdateReviewRequest;
+import org.yyubin.api.review.dto.ReviewExistenceResponse;
+import org.yyubin.application.review.CheckUserReviewUseCase;
 import org.yyubin.application.review.CreateReviewUseCase;
 import org.yyubin.application.review.DeleteReviewUseCase;
 import org.yyubin.application.review.GetReviewUseCase;
@@ -41,6 +44,7 @@ import org.yyubin.application.review.command.UpdateReviewCommand;
 import org.yyubin.application.review.query.GetReviewQuery;
 import org.yyubin.application.review.query.GetReviewsByHighlightQuery;
 import org.yyubin.application.review.query.GetUserReviewsQuery;
+import org.yyubin.application.review.query.CheckUserReviewQuery;
 import org.yyubin.domain.review.ReviewVisibility;
 import org.yyubin.domain.review.BookGenre;
 import org.yyubin.infrastructure.security.oauth2.CustomOAuth2User;
@@ -57,6 +61,7 @@ public class ReviewController {
     private final GetUserReviewsUseCase getUserReviewsUseCase;
     private final GetReviewsByHighlightUseCase getReviewsByHighlightUseCase;
     private final UpdateReviewUseCase updateReviewUseCase;
+    private final CheckUserReviewUseCase checkUserReviewUseCase;
 
     @Operation(
             summary = "리뷰 상세 조회",
@@ -76,6 +81,25 @@ public class ReviewController {
         Long viewerId = resolveViewerId(principal);
         ReviewResult result = getReviewUseCase.query(new GetReviewQuery(reviewId, viewerId));
         return ResponseEntity.ok(ReviewResponse.from(result));
+    }
+
+    @Operation(
+            summary = "사용자 리뷰 보유 여부 조회",
+            description = "로그인한 사용자가 특정 책에 대한 리뷰를 보유하고 있는지 확인합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 필요", content = @Content)
+    })
+    @GetMapping("/exists")
+    public ResponseEntity<ReviewExistenceResponse> hasReview(
+            @Parameter(description = "책 ID", required = true, example = "1")
+            @RequestParam("bookId") Long bookId,
+            @Parameter(hidden = true) @AuthenticationPrincipal Object principal
+    ) {
+        Long userId = PrincipalUtils.requireUserId(principal);
+        boolean exists = checkUserReviewUseCase.query(new CheckUserReviewQuery(userId, bookId));
+        return ResponseEntity.ok(ReviewExistenceResponse.of(exists));
     }
 
     @Operation(

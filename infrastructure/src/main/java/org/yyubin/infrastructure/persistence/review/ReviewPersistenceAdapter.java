@@ -7,13 +7,16 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.yyubin.application.review.port.LoadReviewPort;
 import org.yyubin.application.review.port.ReviewCountPort;
+import org.yyubin.application.review.port.ReviewExistencePort;
 import org.yyubin.application.review.port.SaveReviewPort;
+import org.yyubin.domain.book.BookId;
+import org.yyubin.domain.user.UserId;
 import org.yyubin.domain.review.Review;
 
 @Component
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class ReviewPersistenceAdapter implements SaveReviewPort, LoadReviewPort, ReviewCountPort {
+public class ReviewPersistenceAdapter implements SaveReviewPort, LoadReviewPort, ReviewCountPort, ReviewExistencePort {
 
     private final ReviewJpaRepository reviewJpaRepository;
 
@@ -90,5 +93,10 @@ public class ReviewPersistenceAdapter implements SaveReviewPort, LoadReviewPort,
     @Override
     public Double calculateAverageRating(Long bookId) {
         return reviewJpaRepository.calculateAverageRating(bookId);
+    }
+
+    @Override
+    public boolean existsByUserAndBook(UserId userId, BookId bookId) {
+        return reviewJpaRepository.existsByUserIdAndBookId(userId.value(), bookId.getValue());
     }
 }
