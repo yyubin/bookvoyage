@@ -3,6 +3,7 @@ package org.yyubin.application.review.service;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.yyubin.application.event.EventPayload;
@@ -32,6 +33,7 @@ import org.yyubin.domain.review.ReviewId;
 import org.yyubin.domain.review.HighlightNormalizer;
 import org.yyubin.domain.user.UserId;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -52,8 +54,12 @@ public class ReviewQueryService implements GetReviewUseCase, GetUserReviewsUseCa
 
     @Override
     public ReviewResult query(GetReviewQuery query) {
+        log.debug("Querying review {} with viewerId: {}", query.reviewId(), query.viewerId());
         Review review = loadReviewPort.loadById(query.reviewId());
+        log.debug("Loaded review {} - visibility: {}, deleted: {}",
+            review.getId().getValue(), review.getVisibility(), review.isDeleted());
         validateViewPermission(review, query.viewerId());
+        log.debug("View permission validated for review {}", review.getId().getValue());
         Book book = loadBookPort.loadById(review.getBookId().getValue())
                 .orElseThrow(() -> new IllegalArgumentException("Book not found: " + review.getBookId().getValue()));
         org.yyubin.domain.user.User author = loadUserPort.loadById(review.getUserId());
@@ -197,18 +203,23 @@ public class ReviewQueryService implements GetReviewUseCase, GetUserReviewsUseCa
 
     private void validateViewPermission(Review review, Long viewerId) {
         if (review.isDeleted()) {
+            log.warn("Access denied: Review {} is deleted", review.getId().getValue());
             throw new IllegalArgumentException("Review not found: " + review.getId().getValue());
         }
 
         if (review.getVisibility().isPublic()) {
+            log.debug("Review {} is public - access granted", review.getId().getValue());
             return;
         }
 
         if (viewerId == null) {
+            log.warn("Access denied: Review {} is private and viewerId is null", review.getId().getValue());
             throw new IllegalArgumentException("Review not found: " + review.getId().getValue());
         }
 
         if (!review.isWrittenBy(new UserId(viewerId))) {
+            log.warn("Access denied: Review {} - viewer {} is not the author",
+                review.getId().getValue(), viewerId);
             throw new IllegalArgumentException("Review not found: " + review.getId().getValue());
         }
     }

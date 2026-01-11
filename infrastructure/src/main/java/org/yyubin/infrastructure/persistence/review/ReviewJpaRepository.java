@@ -96,4 +96,9 @@ public interface ReviewJpaRepository extends JpaRepository<ReviewEntity, Long> {
             @Param("cursor") Long cursor,
             @Param("limit") int limit
     );
+
+    List<ReviewEntity> findByUserIdInAndCreatedAtAfter(
+            List<Long> userIds,
+            java.time.LocalDateTime createdAt
+    );
 }
