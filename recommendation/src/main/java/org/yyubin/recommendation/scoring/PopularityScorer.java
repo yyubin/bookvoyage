@@ -25,8 +25,8 @@ public class PopularityScorer implements Scorer {
         }
 
         // TODO: Elasticsearch에서 bookId로 조회하여 실시간 인기도 계산
-        // 현재는 간단히 처리
-        return 0.5;
+        // 비-인기도 후보는 인기도 점수 미반영
+        return 0.0;
     }
 
     @Override
