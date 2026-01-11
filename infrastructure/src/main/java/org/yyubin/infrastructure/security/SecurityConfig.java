@@ -68,6 +68,7 @@ public class SecurityConfig {
                         ).permitAll()
                         // 리뷰 조회 API - GET 메서드만 허용
                         .requestMatchers(org.springframework.http.HttpMethod.GET,
+                                "/api/books/*",
                                 "/api/reviews/*",  // 리뷰 상세 조회
                                 "/api/reviews/highlights",  // 하이라이트 기반 검색
                                 "/api/reviews/users/*"  // 사용자별 리뷰 목록
