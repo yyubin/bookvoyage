@@ -31,6 +31,10 @@ public class RecommendationProperties {
     public static class SearchConfig {
         private int maxCandidates = 500;
         private double minScore = 0.1;
+        private int contextReviewLimit = 5;
+        private int contextLibraryLimit = 5;
+        private int contextSearchLimit = 5;
+        private int contextSearchDays = 30;
     }
 
     @Getter
