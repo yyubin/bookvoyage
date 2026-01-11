@@ -21,7 +21,6 @@ public class HybridScorer {
 
     private final GraphScorer graphScorer;
     private final SemanticScorer semanticScorer;
-    private final EngagementScorer engagementScorer;
     private final PopularityScorer popularityScorer;
     private final FreshnessScorer freshnessScorer;
     private final RecommendationProperties properties;
@@ -37,7 +36,6 @@ public class HybridScorer {
         // 각 스코어러의 점수 계산
         double graphScore = graphScorer.score(userId, candidate);
         double semanticScore = semanticScorer.score(userId, candidate);
-        double engagementScore = engagementScorer.score(userId, candidate);
         double popularityScore = popularityScorer.score(userId, candidate);
         double freshnessScore = freshnessScorer.score(userId, candidate);
 
@@ -46,12 +44,11 @@ public class HybridScorer {
         double finalScore =
                 graphScore * weights.getGraph() +
                         semanticScore * weights.getSemantic() +
-                        engagementScore * weights.getEngagement() +
                         popularityScore * weights.getPopularity() +
                         freshnessScore * weights.getFreshness();
 
-        log.trace("Scores for book {} (user {}): graph={}, semantic={}, engagement={}, popularity={}, freshness={}, final={}",
-                candidate.getBookId(), userId, graphScore, semanticScore, engagementScore,
+        log.trace("Scores for book {} (user {}): graph={}, semantic={}, popularity={}, freshness={}, final={}",
+                candidate.getBookId(), userId, graphScore, semanticScore,
                 popularityScore, freshnessScore, finalScore);
 
         return finalScore;
@@ -84,7 +81,6 @@ public class HybridScorer {
                 .bookId(candidate.getBookId())
                 .graphScore(graphScorer.score(userId, candidate))
                 .semanticScore(semanticScorer.score(userId, candidate))
-                .engagementScore(engagementScorer.score(userId, candidate))
                 .popularityScore(popularityScorer.score(userId, candidate))
                 .freshnessScore(freshnessScorer.score(userId, candidate))
                 .finalScore(calculateFinalScore(userId, candidate))
@@ -102,7 +98,6 @@ public class HybridScorer {
         private Long bookId;
         private double graphScore;
         private double semanticScore;
-        private double engagementScore;
         private double popularityScore;
         private double freshnessScore;
         private double finalScore;

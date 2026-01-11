@@ -43,7 +43,6 @@ public class RecommendationProperties {
         public static class Weights {
             private double graph = 0.4;
             private double semantic = 0.3;
-            private double engagement = 0.15;
             private double popularity = 0.1;
             private double freshness = 0.05;
         }

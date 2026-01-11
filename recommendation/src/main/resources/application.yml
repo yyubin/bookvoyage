@@ -39,7 +39,6 @@ recommendation:
     weights:
       graph: 0.4
       semantic: 0.3
-      engagement: 0.15
       popularity: 0.1
       freshness: 0.05
   cache:
@@ -92,4 +91,3 @@ recommendation:
 ai:
   enrichment:
     enabled: ${AI_ENRICHMENT_ENABLED:false}
-

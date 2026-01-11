@@ -26,7 +26,6 @@ public class SessionBoostEventConsumer {
     private final DefaultRedisScript<Long> trimScript = new DefaultRedisScript<>(TRIM_SCRIPT, Long.class);
     private final ReviewTrackingCounterAdapter reviewTrackingCounterAdapter;
 
-    private static final String BUCKET_BOOKS = "books";
     private static final String BUCKET_REVIEWS = "reviews";
     private static final String TRIM_SCRIPT = """
             local key = KEYS[1]
@@ -98,10 +97,6 @@ public class SessionBoostEventConsumer {
 
         switch (eventType) {
             case "REVIEW_CREATED" -> {
-                Long bookId = asLong(payload.metadata(), "bookId");
-                if (bookId != null) {
-                    ops.add(boostBooks(payload.userId(), bookId, 0.05));
-                }
                 Long reviewId = asLong(payload.metadata(), "reviewId");
                 if (reviewId != null) {
                     ops.add(boostReviews(payload.userId(), reviewId, 0.05));
@@ -118,19 +113,11 @@ public class SessionBoostEventConsumer {
                 if (reviewId != null) {
                     ops.add(boostReviews(payload.userId(), reviewId, 0.02));
                 }
-                Long bookId = asLong(payload.metadata(), "bookId");
-                if (bookId != null) {
-                    ops.add(boostBooks(payload.userId(), bookId, 0.01));
-                }
             }
             case "COMMENT_CREATED" -> {
                 Long reviewId = asLong(payload.metadata(), "reviewId");
                 if (reviewId != null) {
                     ops.add(boostReviews(payload.userId(), reviewId, 0.08));
-                }
-                Long bookId = asLong(payload.metadata(), "bookId");
-                if (bookId != null) {
-                    ops.add(boostBooks(payload.userId(), bookId, 0.03));
                 }
             }
             case "COMMENT_DELETED" -> {
@@ -139,22 +126,11 @@ public class SessionBoostEventConsumer {
                     ops.add(boostReviews(payload.userId(), reviewId, -0.02));
                 }
             }
-            case "WISHLIST_ADD" -> {
-                Long bookId = asLong(payload.metadata(), "bookId");
-                if (bookId != null) {
-                    ops.add(boostBooks(payload.userId(), bookId, 0.2));
-                }
-            }
             case "BOOKMARK_ADD" -> {
                 // review/book 공용 이벤트. reviewId 우선 처리
                 Long reviewId = asLong(payload.metadata(), "reviewId");
                 if (reviewId != null) {
                     ops.add(boostReviews(payload.userId(), reviewId, 0.15));
-                } else {
-                    Long bookId = asLong(payload.metadata(), "bookId");
-                    if (bookId != null) {
-                        ops.add(boostBooks(payload.userId(), bookId, 0.1));
-                    }
                 }
             }
             case "BOOKMARK_REMOVE" -> {
@@ -168,10 +144,6 @@ public class SessionBoostEventConsumer {
                 if (reviewId != null) {
                     ops.add(boostReviews(payload.userId(), reviewId, 0.1));
                 }
-                Long bookId = asLong(payload.metadata(), "bookId");
-                if (bookId != null) {
-                    ops.add(boostBooks(payload.userId(), bookId, 0.05));
-                }
             }
             case "REACTION_DELETED" -> {
                 Long reviewId = asLong(payload.metadata(), "reviewId");
@@ -184,10 +156,6 @@ public class SessionBoostEventConsumer {
                 if (reviewId != null) {
                     ops.add(boostReviews(payload.userId(), reviewId, 0.12));
                     reviewTrackingCounterAdapter.incrementClick(reviewId);
-                }
-                Long bookId = asLong(payload.metadata(), "bookId");
-                if (bookId != null) {
-                    ops.add(boostBooks(payload.userId(), bookId, 0.05));
                 }
             }
             case "REVIEW_SCROLLED", "REVIEW_REACHED" -> {
@@ -212,10 +180,6 @@ public class SessionBoostEventConsumer {
             }
         }
         return ops;
-    }
-
-    private BoostOp boostBooks(Long userId, Long id, double delta) {
-        return new BoostOp(key(userId, BUCKET_BOOKS), id.toString(), delta);
     }
 
     private BoostOp boostReviews(Long userId, Long id, double delta) {
