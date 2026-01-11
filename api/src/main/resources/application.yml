@@ -55,6 +55,9 @@ jwt:
   access-token-expiration: 3600000 # 1 hour
   refresh-token-expiration: 604800000 # 7 days
 
+test-account:
+  email-domain: ${TEST_EMAIL_DOMAIN:test.bookvoyage.com}
+
 server:
   port: ${SERVER_PORT:8080}
 

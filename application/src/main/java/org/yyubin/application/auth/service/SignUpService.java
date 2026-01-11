@@ -16,6 +16,7 @@ import org.yyubin.domain.user.AuthProvider;
 import org.yyubin.domain.user.PasswordPolicy;
 import org.yyubin.domain.user.Role;
 import org.yyubin.domain.user.User;
+import org.yyubin.support.auth.TestAccountProperties;
 import org.yyubin.support.jwt.JwtProvider;
 import org.yyubin.support.nickname.NicknameGenerator;
 
@@ -28,9 +29,18 @@ public class SignUpService implements SignUpUseCase {
     private final PasswordEncoderPort passwordEncoderPort;
     private final JwtProvider jwtProvider;
     private final NotificationSettingPort notificationSettingPort;
+    private final TestAccountProperties testAccountProperties;
 
     @Override
     public AuthResult execute(String email, String password, String username, String bio) {
+
+        // 테스트 이메일 도메인 검증
+        if (!testAccountProperties.isTestEmail(email)) {
+            throw new IllegalArgumentException(
+                "Self-registration is only available for test accounts. " +
+                "Please use email ending with @" + testAccountProperties.getEmailDomain()
+            );
+        }
 
         // 비밀번호 정책 검증
         PasswordPolicy.validate(password);

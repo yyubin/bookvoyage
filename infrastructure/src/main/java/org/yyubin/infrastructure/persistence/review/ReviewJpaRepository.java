@@ -47,6 +47,8 @@ public interface ReviewJpaRepository extends JpaRepository<ReviewEntity, Long> {
 
     List<ReviewEntity> findByUserIdAndDeletedFalseOrderByIdDesc(Long userId, Pageable pageable);
 
+    List<ReviewEntity> findByUserIdAndDeletedFalseOrderByCreatedAtDesc(Long userId, Pageable pageable);
+
     List<ReviewEntity> findByUserIdAndDeletedFalseAndIdLessThanOrderByIdDesc(Long userId, Long id, Pageable pageable);
 
     List<ReviewEntity> findByUserIdAndDeletedFalseAndVisibilityOrderByIdDesc(Long userId, ReviewVisibility visibility, Pageable pageable);

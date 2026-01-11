@@ -106,6 +106,9 @@ public class AiPromptSeedRunner implements ApplicationRunner {
             - 사용자 ID: {userId}
             - 닉네임: {nickname}
 
+            아래 JSON은 사용자의 최근 활동 요약입니다. 이를 근거로 분석하세요:
+            {contextJson}
+
             이 사용자의 독서 성향을 분석하고 다음 JSON 형식으로 응답하세요:
             {
               "persona_type": "성향을 나타내는 영문 키워드",

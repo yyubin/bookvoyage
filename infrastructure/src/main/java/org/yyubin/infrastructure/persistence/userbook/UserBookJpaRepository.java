@@ -25,6 +25,8 @@ public interface UserBookJpaRepository extends JpaRepository<UserBookEntity, Lon
     // Find by user
     List<UserBookEntity> findByUserIdAndDeletedFalse(Long userId);
 
+    List<UserBookEntity> findByUserIdAndDeletedFalseOrderByUpdatedAtDesc(Long userId, org.springframework.data.domain.Pageable pageable);
+
     List<UserBookEntity> findByUserIdAndStatusAndDeletedFalse(Long userId, ReadingStatus status);
 
     List<UserBookEntity> findByUserIdAndStatusAndDeletedFalseOrderByUpdatedAtDesc(Long userId, ReadingStatus status, org.springframework.data.domain.Pageable pageable);
