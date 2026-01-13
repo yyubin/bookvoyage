@@ -56,5 +56,8 @@ public class ReviewRecommendationProperties {
         private int exposureTtlHours = 24;
         private int exposureMaxItems = 200;
         private int exposureFilterLimit = 200;
+        private double feedGraphRatio = 0.3;
+        private double graphSimilarRatio = 0.6;
+        private int graphBookSeedLimit = 20;
     }
 }

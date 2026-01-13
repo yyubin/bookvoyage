@@ -19,4 +19,18 @@ public interface ReviewNodeRepository extends Neo4jRepository<ReviewNode, Long> 
             @Param("cursor") Long cursor,
             @Param("limit") int limit
     );
+
+    @Query("""
+            MATCH (r:Review)
+            WHERE r.bookId IN $bookIds
+              AND ($userId IS NULL OR r.userId <> $userId)
+            RETURN r
+            ORDER BY r.reviewId DESC
+            LIMIT $limit
+            """)
+    List<ReviewNode> findReviewsByBookIds(
+            @Param("bookIds") List<Long> bookIds,
+            @Param("userId") Long userId,
+            @Param("limit") int limit
+    );
 }

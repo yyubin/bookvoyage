@@ -74,4 +74,31 @@ public interface UserNodeRepository extends Neo4jRepository<UserNode, Long> {
             LIMIT $limit
             """)
     List<Object[]> findBooksByCollaborativeFiltering(@Param("userId") Long userId, @Param("limit") int limit);
+
+    /**
+     * 사용자가 상호작용한 도서 ID 조회
+     */
+    @Query("""
+            MATCH (u:User {id: $userId})-[:VIEWED|WISHLISTED|LIKED_REVIEW_OF]->(b:Book)
+            RETURN DISTINCT b.id AS bookId
+            LIMIT $limit
+            """)
+    List<Long> findInteractedBookIds(@Param("userId") Long userId, @Param("limit") int limit);
+
+    /**
+     * 유사 사용자 기반 리뷰 추천 (다른 사용자의 좋아요 리뷰)
+     */
+    @Query("""
+            MATCH (u1:User {id: $userId})-[:VIEWED|WISHLISTED]->(b1:Book)<-[:VIEWED|WISHLISTED]-(u2:User)
+            MATCH (u2)-[lr:LIKED_REVIEW_OF]->(b2:Book)
+            WHERE u1 <> u2 AND lr.reviewId IS NOT NULL
+              AND NOT EXISTS {
+                MATCH (u1)-[lr2:LIKED_REVIEW_OF]->(:Book)
+                WHERE lr2.reviewId = lr.reviewId
+              }
+            RETURN lr.reviewId AS reviewId, b2.id AS bookId, COUNT(DISTINCT u2) AS score
+            ORDER BY score DESC
+            LIMIT $limit
+            """)
+    List<Object[]> findReviewIdsBySimilarUsers(@Param("userId") Long userId, @Param("limit") int limit);
 }

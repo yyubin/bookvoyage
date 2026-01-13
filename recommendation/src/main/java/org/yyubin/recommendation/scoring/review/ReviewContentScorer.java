@@ -21,6 +21,8 @@ public class ReviewContentScorer {
             case BOOK_POPULAR -> 0.7;
             case POPULARITY -> 0.6;
             case RECENT -> 0.55;
+            case GRAPH_SIMILAR_USER -> 0.85;
+            case GRAPH_BOOK_AFFINITY -> 0.75;
         };
     }
 }

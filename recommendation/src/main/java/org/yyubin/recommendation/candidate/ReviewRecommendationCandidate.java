@@ -27,6 +27,8 @@ public class ReviewRecommendationCandidate {
         BOOK_POPULAR,      // 특정 도서 내 인기 리뷰
         SIMILAR_REVIEW,    // 비슷한 리뷰 기반
         FOLLOWED_USER,     // 팔로우 유저/사회적 신호
-        RECENT             // 최신성 기반
+        RECENT,            // 최신성 기반
+        GRAPH_SIMILAR_USER, // 유사 사용자 기반
+        GRAPH_BOOK_AFFINITY // 관심 도서 기반
     }
 }

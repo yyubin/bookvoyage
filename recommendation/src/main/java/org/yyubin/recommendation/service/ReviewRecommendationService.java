@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.yyubin.recommendation.candidate.ReviewElasticsearchCandidateGenerator;
+import org.yyubin.recommendation.candidate.ReviewNeo4jCandidateGenerator;
 import org.yyubin.recommendation.candidate.ReviewRecommendationCandidate;
 import org.yyubin.recommendation.config.ReviewRecommendationProperties;
 import org.yyubin.recommendation.scoring.review.ReviewHybridScorer;
@@ -21,6 +22,7 @@ import org.yyubin.recommendation.scoring.review.ReviewHybridScorer;
 public class ReviewRecommendationService {
 
     private final ReviewElasticsearchCandidateGenerator elasticsearchCandidateGenerator;
+    private final ReviewNeo4jCandidateGenerator neo4jCandidateGenerator;
     private final ReviewHybridScorer hybridScorer;
     private final ReviewRecommendationCacheService cacheService;
     private final ReviewRecommendationExposureService exposureService;
@@ -126,7 +128,15 @@ public class ReviewRecommendationService {
         if (bookContextId != null) {
             return elasticsearchCandidateGenerator.generateBookScopedCandidates(bookContextId, maxCandidates);
         }
-        return elasticsearchCandidateGenerator.generateFeedCandidates(userId, maxCandidates);
+        int graphLimit = Math.max(0, (int) Math.round(maxCandidates * properties.getSearch().getFeedGraphRatio()));
+        int esLimit = Math.max(1, maxCandidates - graphLimit);
+
+        List<ReviewRecommendationCandidate> candidates = new ArrayList<>();
+        if (graphLimit > 0) {
+            candidates.addAll(neo4jCandidateGenerator.generateFeedCandidates(userId, graphLimit));
+        }
+        candidates.addAll(elasticsearchCandidateGenerator.generateFeedCandidates(userId, esLimit));
+        return candidates;
     }
 
     private List<ReviewRecommendationCandidate> filterRecentlyExposed(

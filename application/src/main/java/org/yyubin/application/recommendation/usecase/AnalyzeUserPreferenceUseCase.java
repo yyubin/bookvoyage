@@ -7,23 +7,31 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.yyubin.application.recommendation.port.out.AiPromptPort;
+import org.yyubin.application.recommendation.port.out.AiUserAnalysisPort;
 import org.yyubin.application.recommendation.port.out.LLMPort;
 import org.yyubin.application.recommendation.port.out.SemanticCachePort;
 import org.yyubin.application.recommendation.port.out.UserAnalysisContextPort;
 import org.yyubin.application.recommendation.service.UserAnalysisPersistenceService;
+import org.yyubin.application.book.search.SearchBooksUseCase;
+import org.yyubin.application.book.search.dto.BookSearchPage;
+import org.yyubin.application.book.search.query.PrintType;
+import org.yyubin.application.book.search.query.SearchBooksQuery;
+import org.yyubin.application.book.search.query.SearchOrder;
 import org.yyubin.application.user.port.LoadUserPort;
 import org.yyubin.domain.ai.AiPromptVersion;
 import org.yyubin.domain.ai.AiResultStatus;
 import org.yyubin.domain.ai.AiUserAnalysisRecord;
 import org.yyubin.domain.ai.AiUserAnalysisRecommendation;
+import org.yyubin.domain.book.BookSearchItem;
 import org.yyubin.domain.recommendation.UserAnalysis;
 import org.yyubin.domain.user.User;
 import org.yyubin.domain.user.UserId;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+import java.util.Optional;
 
 /**
  * 사용자 독서 취향 분석 Use Case
@@ -44,8 +52,10 @@ public class AnalyzeUserPreferenceUseCase {
     private final SemanticCachePort cachePort;
     private final LLMPort llmPort;
     private final AiPromptPort promptPort;
+    private final AiUserAnalysisPort analysisPort;
     private final UserAnalysisContextPort userAnalysisContextPort;
     private final UserAnalysisPersistenceService persistenceService;
+    private final SearchBooksUseCase searchBooksUseCase;
     private final ObjectMapper objectMapper;
 
     private static final int RECENT_REVIEW_LIMIT = 8;
@@ -66,13 +76,32 @@ public class AnalyzeUserPreferenceUseCase {
             LocalDateTime.now().minusDays(RECENT_SEARCH_DAYS)
         );
 
-        // 3. 캐시 키 생성 (최근 활동 기반)
-        String cacheKey = buildCacheKey(user, context);
+        // 3. 캐시 키 생성 (날짜 기반 - 하루 1회 분석)
+        String cacheKey = buildCacheKey(user);
 
         // 4. SemanticCache 확인
         return cachePort.get(cacheKey, "user_analysis")
             .map(response -> parseAnalysisFromJson(user.id().value(), response))
-            .orElseGet(() -> analyzeWithLLM(user, context, cacheKey));
+            .orElseGet(() -> loadFromDatabaseOrAnalyze(user, context, cacheKey));
+    }
+
+    private UserAnalysis loadFromDatabaseOrAnalyze(
+        User user,
+        UserAnalysisContextPort.UserAnalysisContext context,
+        String cacheKey
+    ) {
+        Optional<AiUserAnalysisRecord> latest = analysisPort.findLatestByUserId(user.id().value());
+        if (latest.isPresent()
+            && latest.get().status() == AiResultStatus.SUCCESS
+            && isSameDay(latest.get().generatedAt(), LocalDate.now())) {
+            UserAnalysis analysis = toUserAnalysis(latest.get());
+            String cachePayload = serializeAnalysis(analysis);
+            if (!cachePayload.isBlank()) {
+                cachePort.put(cacheKey, cachePayload, "user_analysis");
+            }
+            return analysis;
+        }
+        return analyzeWithLLM(user, context, cacheKey);
     }
 
     private UserAnalysis analyzeWithLLM(
@@ -88,18 +117,19 @@ public class AnalyzeUserPreferenceUseCase {
         // LLM 호출
         String response = llmPort.complete(prompt, 800);
 
-        // 캐싱
-        cachePort.put(cacheKey, response, "user_analysis");
-
         // 파싱
         UserAnalysis analysis = parseAnalysisFromJson(user.id().value(), response);
+        analysis = validateRecommendations(analysis);
+        String cachePayload = serializeAnalysis(analysis);
+        if (!cachePayload.isBlank()) {
+            cachePort.put(cacheKey, cachePayload, "user_analysis");
+        }
         persistAnalysis(user.id().value(), response, analysis, cacheKey);
         return analysis;
     }
 
-    private String buildCacheKey(User user, UserAnalysisContextPort.UserAnalysisContext context) {
-        String signature = buildContextSignature(context);
-        return String.format("user_analysis_%s_%s", user.id().value(), signature);
+    private String buildCacheKey(User user) {
+        return String.format("user_analysis_%s_%s", user.id().value(), LocalDate.now());
     }
 
     private String buildPrompt(User user, UserAnalysisContextPort.UserAnalysisContext context) {
@@ -134,41 +164,14 @@ public class AnalyzeUserPreferenceUseCase {
                 }
               ]
             }
+
+            추천 도서는 실제로 존재하는 책만 포함하세요.
+            확실하지 않은 경우 recommendations를 빈 배열로 반환하세요.
             """,
             user.id().value(),
             user.nickname(),
             contextJson
         );
-    }
-
-    private String buildContextSignature(UserAnalysisContextPort.UserAnalysisContext context) {
-        if (context == null) {
-            return "none";
-        }
-
-        LocalDateTime latestReviewAt = context.recentReviews().stream()
-            .map(UserAnalysisContextPort.ReviewSnapshot::createdAt)
-            .filter(Objects::nonNull)
-            .max(LocalDateTime::compareTo)
-            .orElse(null);
-
-        LocalDateTime latestLibraryAt = context.recentLibraryUpdates().stream()
-            .map(UserAnalysisContextPort.UserBookSnapshot::updatedAt)
-            .filter(Objects::nonNull)
-            .max(LocalDateTime::compareTo)
-            .orElse(null);
-
-        String searchHash = String.valueOf(context.recentSearchQueries().hashCode());
-        String combined = String.format(
-            "%s|%s|%s|%s|%s",
-            context.recentReviews().size(),
-            latestReviewAt,
-            context.recentLibraryUpdates().size(),
-            latestLibraryAt,
-            searchHash
-        );
-
-        return Integer.toHexString(combined.hashCode());
     }
 
     private UserAnalysis parseAnalysisFromJson(Long userId, String json) {
@@ -228,6 +231,111 @@ public class AnalyzeUserPreferenceUseCase {
         } catch (Exception e) {
             log.error("Failed to parse LLM response", e);
             throw new RuntimeException("Failed to parse user analysis result", e);
+        }
+    }
+
+    private UserAnalysis validateRecommendations(UserAnalysis analysis) {
+        if (analysis.recommendations() == null || analysis.recommendations().isEmpty()) {
+            return analysis;
+        }
+
+        List<UserAnalysis.BookRecommendation> validated = new ArrayList<>();
+        for (UserAnalysis.BookRecommendation rec : analysis.recommendations()) {
+            String query = buildRecommendationQuery(rec);
+            if (query.isBlank()) {
+                continue;
+            }
+            try {
+                BookSearchPage page = searchBooksUseCase.query(
+                    new SearchBooksQuery(query, 0, 5, null, SearchOrder.RELEVANCE, PrintType.ALL)
+                );
+                if (page.items().isEmpty()) {
+                    continue;
+                }
+                BookSearchItem item = page.items().get(0);
+                String author = item.getAuthors().isEmpty() ? rec.author() : String.join(", ", item.getAuthors());
+                validated.add(UserAnalysis.BookRecommendation.of(item.getTitle(), author, rec.reason()));
+            } catch (Exception e) {
+                log.warn("Failed to validate recommendation [{}] via external search", query, e);
+            }
+        }
+
+        return new UserAnalysis(
+            analysis.userId(),
+            analysis.personaType(),
+            analysis.summary(),
+            analysis.keywords(),
+            validated,
+            analysis.analyzedAt()
+        );
+    }
+
+    private String buildRecommendationQuery(UserAnalysis.BookRecommendation rec) {
+        String title = rec.bookTitle() == null ? "" : rec.bookTitle().trim();
+        String author = rec.author() == null ? "" : rec.author().trim();
+        if (title.isEmpty() && author.isEmpty()) {
+            return "";
+        }
+        if (author.isEmpty()) {
+            return title;
+        }
+        if (title.isEmpty()) {
+            return author;
+        }
+        return title + " " + author;
+    }
+
+    private boolean isSameDay(LocalDateTime left, LocalDate right) {
+        if (left == null || right == null) {
+            return false;
+        }
+        return left.toLocalDate().isEqual(right);
+    }
+
+    private UserAnalysis toUserAnalysis(AiUserAnalysisRecord record) {
+        List<UserAnalysis.BookRecommendation> recommendations = new ArrayList<>();
+        if (record.recommendations() != null) {
+            for (AiUserAnalysisRecommendation rec : record.recommendations()) {
+                recommendations.add(UserAnalysis.BookRecommendation.of(
+                    rec.bookTitle(),
+                    rec.author(),
+                    rec.reason()
+                ));
+            }
+        }
+        return new UserAnalysis(
+            record.userId(),
+            record.personaType(),
+            record.summary(),
+            record.keywords(),
+            recommendations,
+            record.generatedAt()
+        );
+    }
+
+    private String serializeAnalysis(UserAnalysis analysis) {
+        if (analysis == null) {
+            return "";
+        }
+        try {
+            List<UserAnalysis.BookRecommendation> recs =
+                analysis.recommendations() == null ? List.of() : analysis.recommendations();
+            var payload = java.util.Map.of(
+                "persona_type", analysis.personaType(),
+                "summary", analysis.summary(),
+                "keywords", analysis.keywords(),
+                "recommendations", recs.stream()
+                    .map(rec -> java.util.Map.of(
+                        "book_title", rec.bookTitle(),
+                        "author", rec.author(),
+                        "reason", rec.reason()
+                    ))
+                    .toList()
+            );
+            return objectMapper.writeValueAsString(payload);
+        } catch (Exception e) {
+            log.warn("Failed to serialize analysis for cache", e);
+            return "";
         }
     }
 

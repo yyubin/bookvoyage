@@ -29,6 +29,8 @@ import org.yyubin.batch.sync.BookSyncDto;
 import org.yyubin.batch.sync.UserSyncDto;
 import org.yyubin.infrastructure.persistence.book.BookEntity;
 import org.yyubin.infrastructure.persistence.book.BookJpaRepository;
+import org.yyubin.infrastructure.persistence.review.ReviewEntity;
+import org.yyubin.infrastructure.persistence.review.ReviewJpaRepository;
 import org.yyubin.infrastructure.persistence.user.UserEntity;
 import org.yyubin.infrastructure.persistence.user.UserJpaRepository;
 import org.yyubin.recommendation.graph.node.AuthorNode;
@@ -42,7 +44,9 @@ import org.yyubin.recommendation.graph.node.WishlistedRelationship;
 import org.yyubin.recommendation.graph.repository.BookNodeRepository;
 import org.yyubin.recommendation.graph.repository.UserNodeRepository;
 import org.yyubin.recommendation.port.GraphBookPort;
+import org.yyubin.recommendation.port.GraphReviewPort;
 import org.yyubin.recommendation.port.GraphUserPort;
+import org.yyubin.recommendation.review.graph.ReviewNode;
 
 @Slf4j
 @Configuration
@@ -54,15 +58,18 @@ public class Neo4jSyncJobConfig {
     private final BatchProperties batchProperties;
     private final UserJpaRepository userJpaRepository;
     private final BookJpaRepository bookJpaRepository;
+    private final ReviewJpaRepository reviewJpaRepository;
     private final GraphUserPort graphUserPort;
     private final GraphBookPort graphBookPort;
+    private final GraphReviewPort graphReviewPort;
     private final BatchUserSyncService batchUserSyncService;
     private final BatchBookSyncService batchBookSyncService;
 
     @Bean
-    public Job neo4jSyncJob(Step syncBooksToNeo4jStep, Step syncUsersToNeo4jStep) {
+    public Job neo4jSyncJob(Step syncBooksToNeo4jStep, Step syncReviewsToNeo4jStep, Step syncUsersToNeo4jStep) {
         return new JobBuilder("neo4jSyncJob", jobRepository)
                 .start(syncBooksToNeo4jStep)
+                .next(syncReviewsToNeo4jStep)
                 .next(syncUsersToNeo4jStep)
                 .build();
     }
@@ -100,6 +107,22 @@ public class Neo4jSyncJobConfig {
                 .build();
     }
 
+    @Bean
+    public Step syncReviewsToNeo4jStep(
+            ItemReader<ReviewEntity> reviewReaderForNeo4j,
+            ItemProcessor<ReviewEntity, ReviewNode> reviewNodeProcessor,
+            ItemWriter<ReviewNode> reviewNodeWriter
+    ) {
+        int chunkSize = batchProperties.getSync().getNeo4j().getChunkSize();
+        return new StepBuilder("syncReviewsToNeo4jStep", jobRepository)
+                .<ReviewEntity, ReviewNode>chunk(chunkSize)
+                .transactionManager(transactionManager)
+                .reader(reviewReaderForNeo4j)
+                .processor(reviewNodeProcessor)
+                .writer(reviewNodeWriter)
+                .build();
+    }
+
 
     @Bean
     public RepositoryItemReader<BookEntity> bookReaderForNeo4j() {
@@ -117,6 +140,17 @@ public class Neo4jSyncJobConfig {
         return new RepositoryItemReaderBuilder<UserEntity>()
                 .name("userReaderForNeo4j")
                 .repository(userJpaRepository)
+                .methodName("findAll")
+                .pageSize(batchProperties.getSync().getNeo4j().getPageSize())
+                .sorts(Map.of("id", Sort.Direction.ASC))
+                .build();
+    }
+
+    @Bean
+    public RepositoryItemReader<ReviewEntity> reviewReaderForNeo4j() {
+        return new RepositoryItemReaderBuilder<ReviewEntity>()
+                .name("reviewReaderForNeo4j")
+                .repository(reviewJpaRepository)
                 .methodName("findAll")
                 .pageSize(batchProperties.getSync().getNeo4j().getPageSize())
                 .sorts(Map.of("id", Sort.Direction.ASC))
@@ -226,6 +260,16 @@ public class Neo4jSyncJobConfig {
     }
 
     @Bean
+    public ItemProcessor<ReviewEntity, ReviewNode> reviewNodeProcessor() {
+        return entity -> new ReviewNode(
+                entity.getId(),
+                entity.getUserId(),
+                entity.getBookId(),
+                new java.util.HashSet<>()
+        );
+    }
+
+    @Bean
     public ItemWriter<UserNode> userNodeWriter() {
         return items -> {
             if (items.isEmpty()) {
@@ -233,6 +277,17 @@ public class Neo4jSyncJobConfig {
             }
             log.info("Saving {} users to Neo4j", items.size());
             graphUserPort.saveAll(items);
+        };
+    }
+
+    @Bean
+    public ItemWriter<ReviewNode> reviewNodeWriter() {
+        return items -> {
+            if (items.isEmpty()) {
+                return;
+            }
+            log.info("Saving {} reviews to Neo4j", items.size());
+            graphReviewPort.saveAll(items);
         };
     }
 
