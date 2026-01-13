@@ -143,6 +143,11 @@ springdoc:
   packages-to-scan:
     - org.yyubin.api
 
+# Logging configuration
+logging:
+  level:
+    org.yyubin.infrastructure.external.book: DEBUG  # 책 검색 API 호출 로그
+
 ---
 spring:
   config:

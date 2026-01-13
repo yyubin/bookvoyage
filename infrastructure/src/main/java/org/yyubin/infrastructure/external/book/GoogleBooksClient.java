@@ -1,6 +1,5 @@
 package org.yyubin.infrastructure.external.book;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -9,15 +8,19 @@ import org.springframework.web.util.UriBuilder;
 import org.yyubin.application.book.search.exception.ExternalBookSearchException;
 import org.yyubin.infrastructure.external.book.dto.GoogleBooksSearchRequest;
 import org.yyubin.infrastructure.external.book.dto.GoogleBooksVolumeResponse;
-import org.springframework.beans.factory.annotation.Qualifier;
 
 @Component
-@RequiredArgsConstructor
 public class GoogleBooksClient {
 
     private final GoogleBooksProperties properties;
-    @Qualifier("googleBooksRestClient")
     private final RestClient restClient;
+
+    public GoogleBooksClient(GoogleBooksProperties properties) {
+        this.properties = properties;
+        this.restClient = RestClient.builder()
+                .baseUrl(properties.getBaseUrl())
+                .build();
+    }
 
     public GoogleBooksVolumeResponse search(GoogleBooksSearchRequest request) {
         try {

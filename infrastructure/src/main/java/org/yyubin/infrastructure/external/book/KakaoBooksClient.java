@@ -1,7 +1,5 @@
 package org.yyubin.infrastructure.external.book;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -12,12 +10,17 @@ import org.yyubin.infrastructure.external.book.dto.KakaoBooksSearchRequest;
 import org.yyubin.infrastructure.external.book.dto.KakaoBooksSearchResponse;
 
 @Component
-@RequiredArgsConstructor
 public class KakaoBooksClient {
 
     private final KakaoBooksProperties properties;
-    @Qualifier("kakaoBooksRestClient")
     private final RestClient restClient;
+
+    public KakaoBooksClient(KakaoBooksProperties properties) {
+        this.properties = properties;
+        this.restClient = RestClient.builder()
+                .baseUrl(properties.getBaseUrl())
+                .build();
+    }
 
     public KakaoBooksSearchResponse search(KakaoBooksSearchRequest request) {
         try {
