@@ -5,6 +5,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -17,6 +19,8 @@ import lombok.NoArgsConstructor;
 import org.yyubin.domain.book.Book;
 import org.yyubin.domain.book.BookId;
 import org.yyubin.domain.book.BookMetadata;
+import org.yyubin.domain.book.BookType;
+import org.yyubin.domain.book.WebNovelPlatform;
 
 @Entity
 @Table(name = "book")
@@ -65,6 +69,17 @@ public class BookEntity {
     @Column(name = "google_volume_id", length = 100)
     private String googleVolumeId;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "book_type", nullable = false, length = 30)
+    private BookType bookType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "platform", length = 30)
+    private WebNovelPlatform platform;
+
+    @Column(name = "platform_url", length = 500)
+    private String platformUrl;
+
     public static BookEntity fromDomain(Book book) {
         return BookEntity.builder()
                 .id(book.getId() != null ? book.getId().getValue() : null)
@@ -79,6 +94,9 @@ public class BookEntity {
                 .language(book.getMetadata().getLanguage())
                 .pageCount(book.getMetadata().getPageCount())
                 .googleVolumeId(book.getMetadata().getGoogleVolumeId())
+                .bookType(book.getMetadata().getBookType() != null ? book.getMetadata().getBookType() : BookType.PUBLISHED_BOOK)
+                .platform(book.getMetadata().getPlatform())
+                .platformUrl(book.getMetadata().getPlatformUrl())
                 .build();
     }
 
@@ -96,7 +114,10 @@ public class BookEntity {
                         this.description,
                         this.language,
                         this.pageCount,
-                        this.googleVolumeId
+                        this.googleVolumeId,
+                        this.bookType != null ? this.bookType : BookType.PUBLISHED_BOOK,
+                        this.platform,
+                        this.platformUrl
                 )
         );
     }
