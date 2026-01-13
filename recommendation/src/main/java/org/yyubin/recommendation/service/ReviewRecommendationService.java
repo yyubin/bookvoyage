@@ -23,6 +23,7 @@ public class ReviewRecommendationService {
     private final ReviewElasticsearchCandidateGenerator elasticsearchCandidateGenerator;
     private final ReviewHybridScorer hybridScorer;
     private final ReviewRecommendationCacheService cacheService;
+    private final ReviewRecommendationExposureService exposureService;
     private final ReviewRecommendationProperties properties;
 
     /**
@@ -55,10 +56,19 @@ public class ReviewRecommendationService {
 
     private List<ReviewRecommendationResult> generate(Long userId, Long bookContextId, Long cursor, int limit, boolean forceRefresh) {
         if (!forceRefresh && cacheService.exists(userId, bookContextId)) {
-            return cacheService.get(userId, bookContextId, cursor, limit);
+            List<ReviewRecommendationResult> cached = cacheService.get(userId, bookContextId, cursor, limit);
+            if (bookContextId == null && userId != null) {
+                exposureService.recordExposure(userId, cached.stream()
+                        .map(ReviewRecommendationResult::getReviewId)
+                        .toList());
+            }
+            return cached;
         }
 
         List<ReviewRecommendationCandidate> candidates = generateCandidates(userId, bookContextId);
+        if (bookContextId == null && userId != null) {
+            candidates = filterRecentlyExposed(userId, candidates);
+        }
         if (candidates.isEmpty()) {
             return List.of();
         }
@@ -101,6 +111,12 @@ public class ReviewRecommendationService {
             result.setRank(rank++);
         }
 
+        if (bookContextId == null && userId != null) {
+            exposureService.recordExposure(userId, results.stream()
+                    .map(ReviewRecommendationResult::getReviewId)
+                    .toList());
+        }
+
         log.info("Generated {} review recommendations for user {} (contextBook={})", results.size(), userId, bookContextId);
         return results;
     }
@@ -111,6 +127,21 @@ public class ReviewRecommendationService {
             return elasticsearchCandidateGenerator.generateBookScopedCandidates(bookContextId, maxCandidates);
         }
         return elasticsearchCandidateGenerator.generateFeedCandidates(userId, maxCandidates);
+    }
+
+    private List<ReviewRecommendationCandidate> filterRecentlyExposed(
+            Long userId,
+            List<ReviewRecommendationCandidate> candidates
+    ) {
+        var exposed = exposureService.loadRecentReviewIds(userId);
+        if (exposed.isEmpty()) {
+            return candidates;
+        }
+        List<ReviewRecommendationCandidate> filtered = candidates.stream()
+                .filter(candidate -> candidate.getReviewId() != null)
+                .filter(candidate -> !exposed.contains(candidate.getReviewId()))
+                .toList();
+        return filtered.isEmpty() ? candidates : filtered;
     }
 
     private List<ReviewRecommendationResult> applyCursorPagination(

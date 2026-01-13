@@ -3,7 +3,6 @@ package org.yyubin.api.review.dto;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 import java.util.List;
 
@@ -11,7 +10,7 @@ public record CreateReviewRequest(
         @NotBlank(message = "Book title is required")
         String title,
 
-        @NotEmpty(message = "At least one author is required")
+        // authors는 선택 사항 (null이나 빈 리스트는 "저자 미상"으로 자동 처리됨)
         List<String> authors,
 
         String isbn10,

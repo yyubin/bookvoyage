@@ -42,6 +42,84 @@ public interface ReviewDocumentRepository extends ElasticsearchRepository<Review
     Page<ReviewDocument> findByOrderByLikeCountDesc(Pageable pageable);
 
     /**
+     * 관심사 기반 리뷰 검색 (Multi-match)
+     */
+    @Query("""
+            {
+              "bool": {
+                "must": [
+                  {
+                    "multi_match": {
+                      "query": "?0",
+                      "fields": [
+                        "title^2",
+                        "summary^1.5",
+                        "content",
+                        "highlights",
+                        "searchableText",
+                        "keywords^2",
+                        "bookTitle^1.5",
+                        "genre^1.2"
+                      ],
+                      "type": "best_fields",
+                      "fuzziness": "AUTO"
+                    }
+                  }
+                ],
+                "filter": [
+                  { "term": { "visibility": "PUBLIC" } }
+                ],
+                "must_not": [
+                  { "term": { "userId": "?1" } }
+                ]
+              }
+            }
+            """)
+    Page<ReviewDocument> searchByMultiMatch(String query, Long userId, Pageable pageable);
+
+    /**
+     * 관심사 기반 리뷰 검색 (More Like This)
+     */
+    @Query("""
+            {
+              "bool": {
+                "must": [
+                  {
+                    "more_like_this": {
+                      "fields": [
+                        "title",
+                        "summary",
+                        "content",
+                        "highlights",
+                        "searchableText",
+                        "keywords",
+                        "bookTitle",
+                        "genre"
+                      ],
+                      "like": [
+                        {
+                          "_index": "review_content",
+                          "_id": "?0"
+                        }
+                      ],
+                      "min_term_freq": 1,
+                      "min_doc_freq": 1,
+                      "max_query_terms": 25
+                    }
+                  }
+                ],
+                "filter": [
+                  { "term": { "visibility": "PUBLIC" } }
+                ],
+                "must_not": [
+                  { "term": { "userId": "?1" } }
+                ]
+              }
+            }
+            """)
+    Page<ReviewDocument> findSimilarReviews(String reviewId, Long userId, Pageable pageable);
+
+    /**
      * 특정 도서의 인기 리뷰
      */
     @Query("""

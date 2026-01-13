@@ -117,17 +117,22 @@ public class BookMetadata {
     }
 
     private static List<String> normalizeAuthors(List<String> authors) {
+        // authors가 null이거나 empty면 "저자 미상"으로 fallback
         if (authors == null || authors.isEmpty()) {
-            throw new IllegalArgumentException("Book authors cannot be empty");
+            return Collections.singletonList("저자 미상");
         }
+
         List<String> cleaned = authors.stream()
                 .filter(Objects::nonNull)
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .toList();
+
+        // 필터링 후에도 비어있으면 "저자 미상"으로 fallback
         if (cleaned.isEmpty()) {
-            throw new IllegalArgumentException("Book authors cannot be empty");
+            return Collections.singletonList("저자 미상");
         }
+
         return Collections.unmodifiableList(cleaned);
     }
 }

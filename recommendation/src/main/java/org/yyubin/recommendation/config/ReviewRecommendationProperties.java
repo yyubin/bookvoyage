@@ -17,6 +17,7 @@ public class ReviewRecommendationProperties {
     private int maxCandidates = 300;
     private Cache cache = new Cache();
     private Scoring scoring = new Scoring();
+    private Search search = new Search();
 
     @Getter
     @Setter
@@ -39,5 +40,21 @@ public class ReviewRecommendationProperties {
             private double content = 0.2;
             private double bookContext = 0.1;
         }
+    }
+
+    @Getter
+    @Setter
+    public static class Search {
+        private int contextReviewLimit = 5;
+        private int contextLibraryLimit = 5;
+        private int contextSearchLimit = 5;
+        private int contextSearchDays = 30;
+        private double feedInterestRatio = 0.6;
+        private double feedMltRatio = 0.3;
+        private double feedSemanticRatio = 0.3;
+        private int seedLimit = 3;
+        private int exposureTtlHours = 24;
+        private int exposureMaxItems = 200;
+        private int exposureFilterLimit = 200;
     }
 }

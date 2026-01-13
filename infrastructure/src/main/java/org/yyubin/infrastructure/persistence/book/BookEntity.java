@@ -132,7 +132,7 @@ public class BookEntity {
 
     private static java.util.List<String> readAuthors(String authorsJson) {
         if (authorsJson == null || authorsJson.isBlank()) {
-            return java.util.Collections.singletonList("Unknown");
+            return java.util.Collections.singletonList("저자 미상");
         }
         try {
             return OBJECT_MAPPER.readValue(authorsJson, new TypeReference<java.util.List<String>>() {});
