@@ -46,6 +46,7 @@ public class UserAnalysisPersistenceService {
      * @param analysis 파싱된 분석 결과
      * @param cacheKey 캐시 키
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void persistAnalysis(
         Long userId,
         String rawResponse,
