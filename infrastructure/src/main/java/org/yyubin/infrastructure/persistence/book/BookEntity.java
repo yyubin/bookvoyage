@@ -10,6 +10,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -21,6 +23,8 @@ import org.yyubin.domain.book.BookId;
 import org.yyubin.domain.book.BookMetadata;
 import org.yyubin.domain.book.BookType;
 import org.yyubin.domain.book.WebNovelPlatform;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "book")
@@ -79,6 +83,21 @@ public class BookEntity {
 
     @Column(name = "platform_url", length = 500)
     private String platformUrl;
+
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    public void prePersist() {
+        if (updatedAt == null) {
+            updatedAt = LocalDateTime.now();
+        }
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 
     public static BookEntity fromDomain(Book book) {
         return BookEntity.builder()

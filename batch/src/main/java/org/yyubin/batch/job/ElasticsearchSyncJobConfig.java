@@ -1,13 +1,18 @@
 package org.yyubin.batch.job;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
+import java.util.Arrays;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.batch.infrastructure.item.ItemProcessor;
 import org.springframework.batch.infrastructure.item.ItemReader;
 import org.springframework.batch.infrastructure.item.ItemWriter;
@@ -48,6 +53,7 @@ public class ElasticsearchSyncJobConfig {
     private final BatchReviewSyncService batchReviewSyncService;
     private final ReviewViewCounterFlusher reviewViewCounterFlusher;
     private final org.yyubin.batch.sync.ReviewEngagementStatsProvider reviewEngagementStatsProvider;
+    private final org.yyubin.batch.listener.SyncTimestampListener syncTimestampListener;
 
     @Bean
     public Job elasticsearchSyncJob(
@@ -82,6 +88,7 @@ public class ElasticsearchSyncJobConfig {
                 .reader(bookReaderForElasticsearch)
                 .processor(bookDocumentProcessor)
                 .writer(bookDocumentWriter)
+                .listener(syncTimestampListener)
                 .build();
     }
 
@@ -98,6 +105,7 @@ public class ElasticsearchSyncJobConfig {
                 .reader(reviewReaderForElasticsearch)
                 .processor(reviewDocumentProcessor)
                 .writer(reviewDocumentWriter)
+                .listener(syncTimestampListener)
                 .build();
     }
 
@@ -112,25 +120,65 @@ public class ElasticsearchSyncJobConfig {
     }
 
     @Bean
-    public RepositoryItemReader<BookEntity> bookReaderForElasticsearch() {
-        return new RepositoryItemReaderBuilder<BookEntity>()
-                .name("bookReaderForElasticsearch")
-                .repository(bookJpaRepository)
-                .methodName("findAll")
-                .pageSize(batchProperties.getSync().getElasticsearch().getPageSize())
-                .sorts(Map.of("id", Sort.Direction.ASC))
-                .build();
+    @StepScope
+    public RepositoryItemReader<BookEntity> bookReaderForElasticsearch(
+            @Value("#{jobParameters['lastSyncTime']}") String lastSyncTimeParam
+    ) {
+        LocalDateTime lastSyncTime = parseLastSyncTime(lastSyncTimeParam);
+
+        if (lastSyncTime == null) {
+            // 초기 실행: 전체 동기화
+            log.info("Running full sync for books to Elasticsearch (no lastSyncTime)");
+            return new RepositoryItemReaderBuilder<BookEntity>()
+                    .name("bookReaderForElasticsearch")
+                    .repository(bookJpaRepository)
+                    .methodName("findAll")
+                    .pageSize(batchProperties.getSync().getElasticsearch().getPageSize())
+                    .sorts(Map.of("id", Sort.Direction.ASC))
+                    .build();
+        } else {
+            // 증분 동기화
+            log.info("Running incremental sync for books to Elasticsearch (lastSyncTime: {})", lastSyncTime);
+            return new RepositoryItemReaderBuilder<BookEntity>()
+                    .name("bookReaderForElasticsearch")
+                    .repository(bookJpaRepository)
+                    .methodName("findByUpdatedAtAfterOrderByIdAsc")
+                    .arguments(Arrays.asList(lastSyncTime))
+                    .pageSize(batchProperties.getSync().getElasticsearch().getPageSize())
+                    .sorts(Map.of("id", Sort.Direction.ASC))
+                    .build();
+        }
     }
 
     @Bean
-    public RepositoryItemReader<ReviewEntity> reviewReaderForElasticsearch() {
-        return new RepositoryItemReaderBuilder<ReviewEntity>()
-                .name("reviewReaderForElasticsearch")
-                .repository(reviewJpaRepository)
-                .methodName("findAll")
-                .pageSize(batchProperties.getSync().getElasticsearch().getPageSize())
-                .sorts(Map.of("id", Sort.Direction.ASC))
-                .build();
+    @StepScope
+    public RepositoryItemReader<ReviewEntity> reviewReaderForElasticsearch(
+            @Value("#{jobParameters['lastSyncTime']}") String lastSyncTimeParam
+    ) {
+        LocalDateTime lastSyncTime = parseLastSyncTime(lastSyncTimeParam);
+
+        if (lastSyncTime == null) {
+            // 초기 실행: 전체 동기화
+            log.info("Running full sync for reviews to Elasticsearch (no lastSyncTime)");
+            return new RepositoryItemReaderBuilder<ReviewEntity>()
+                    .name("reviewReaderForElasticsearch")
+                    .repository(reviewJpaRepository)
+                    .methodName("findAll")
+                    .pageSize(batchProperties.getSync().getElasticsearch().getPageSize())
+                    .sorts(Map.of("id", Sort.Direction.ASC))
+                    .build();
+        } else {
+            // 증분 동기화
+            log.info("Running incremental sync for reviews to Elasticsearch (lastSyncTime: {})", lastSyncTime);
+            return new RepositoryItemReaderBuilder<ReviewEntity>()
+                    .name("reviewReaderForElasticsearch")
+                    .repository(reviewJpaRepository)
+                    .methodName("findByUpdatedAtAfterOrderByIdAsc")
+                    .arguments(Arrays.asList(lastSyncTime))
+                    .pageSize(batchProperties.getSync().getElasticsearch().getPageSize())
+                    .sorts(Map.of("id", Sort.Direction.ASC))
+                    .build();
+        }
     }
 
     @Bean
@@ -210,5 +258,22 @@ public class ElasticsearchSyncJobConfig {
             log.info("Indexing {} reviews to Elasticsearch", items.size());
             searchReviewPort.saveAll(items);
         };
+    }
+
+    /**
+     * jobParameters에서 전달된 lastSyncTime을 LocalDateTime으로 파싱
+     * null이거나 파싱 실패 시 null 반환 (전체 동기화 실행)
+     */
+    private LocalDateTime parseLastSyncTime(String lastSyncTimeParam) {
+        if (lastSyncTimeParam == null || lastSyncTimeParam.isBlank()) {
+            return null;
+        }
+
+        try {
+            return LocalDateTime.parse(lastSyncTimeParam);
+        } catch (DateTimeParseException e) {
+            log.warn("Failed to parse lastSyncTime '{}', falling back to full sync", lastSyncTimeParam);
+            return null;
+        }
     }
 }

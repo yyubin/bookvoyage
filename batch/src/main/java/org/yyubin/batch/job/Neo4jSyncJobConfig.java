@@ -1,5 +1,8 @@
 package org.yyubin.batch.job;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -7,11 +10,13 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.beans.factory.annotation.Value;
 
 import org.springframework.batch.infrastructure.item.ItemProcessor;
 import org.springframework.batch.infrastructure.item.ItemReader;
@@ -64,6 +69,7 @@ public class Neo4jSyncJobConfig {
     private final GraphReviewPort graphReviewPort;
     private final BatchUserSyncService batchUserSyncService;
     private final BatchBookSyncService batchBookSyncService;
+    private final org.yyubin.batch.listener.SyncTimestampListener syncTimestampListener;
 
     @Bean
     public Job neo4jSyncJob(Step syncBooksToNeo4jStep, Step syncReviewsToNeo4jStep, Step syncUsersToNeo4jStep) {
@@ -87,6 +93,7 @@ public class Neo4jSyncJobConfig {
                 .reader(bookReaderForNeo4j)
                 .processor(bookNodeProcessor)
                 .writer(bookNodeWriter)
+                .listener(syncTimestampListener)
                 .build();
     }
 
@@ -104,6 +111,7 @@ public class Neo4jSyncJobConfig {
                 .reader(userReaderForNeo4j)
                 .processor(userNodeProcessor)
                 .writer(userNodeWriter)
+                .listener(syncTimestampListener)
                 .build();
     }
 
@@ -120,41 +128,102 @@ public class Neo4jSyncJobConfig {
                 .reader(reviewReaderForNeo4j)
                 .processor(reviewNodeProcessor)
                 .writer(reviewNodeWriter)
+                .listener(syncTimestampListener)
                 .build();
     }
 
 
     @Bean
-    public RepositoryItemReader<BookEntity> bookReaderForNeo4j() {
-        return new RepositoryItemReaderBuilder<BookEntity>()
-                .name("bookReaderForNeo4j")
-                .repository(bookJpaRepository)
-                .methodName("findAll")
-                .pageSize(batchProperties.getSync().getNeo4j().getPageSize())
-                .sorts(Map.of("id", Sort.Direction.ASC))
-                .build();
+    @StepScope
+    public RepositoryItemReader<BookEntity> bookReaderForNeo4j(
+            @Value("#{jobParameters['lastSyncTime']}") String lastSyncTimeParam
+    ) {
+        LocalDateTime lastSyncTime = parseLastSyncTime(lastSyncTimeParam);
+
+        if (lastSyncTime == null) {
+            // 초기 실행: 전체 동기화
+            log.info("Running full sync for books (no lastSyncTime)");
+            return new RepositoryItemReaderBuilder<BookEntity>()
+                    .name("bookReaderForNeo4j")
+                    .repository(bookJpaRepository)
+                    .methodName("findAll")
+                    .pageSize(batchProperties.getSync().getNeo4j().getPageSize())
+                    .sorts(Map.of("id", Sort.Direction.ASC))
+                    .build();
+        } else {
+            // 증분 동기화
+            log.info("Running incremental sync for books (lastSyncTime: {})", lastSyncTime);
+            return new RepositoryItemReaderBuilder<BookEntity>()
+                    .name("bookReaderForNeo4j")
+                    .repository(bookJpaRepository)
+                    .methodName("findByUpdatedAtAfterOrderByIdAsc")
+                    .arguments(Arrays.asList(lastSyncTime))
+                    .pageSize(batchProperties.getSync().getNeo4j().getPageSize())
+                    .sorts(Map.of("id", Sort.Direction.ASC))
+                    .build();
+        }
     }
 
     @Bean
-    public RepositoryItemReader<UserEntity> userReaderForNeo4j() {
-        return new RepositoryItemReaderBuilder<UserEntity>()
-                .name("userReaderForNeo4j")
-                .repository(userJpaRepository)
-                .methodName("findAll")
-                .pageSize(batchProperties.getSync().getNeo4j().getPageSize())
-                .sorts(Map.of("id", Sort.Direction.ASC))
-                .build();
+    @StepScope
+    public RepositoryItemReader<UserEntity> userReaderForNeo4j(
+            @Value("#{jobParameters['lastSyncTime']}") String lastSyncTimeParam
+    ) {
+        LocalDateTime lastSyncTime = parseLastSyncTime(lastSyncTimeParam);
+
+        if (lastSyncTime == null) {
+            // 초기 실행: 전체 동기화
+            log.info("Running full sync for users (no lastSyncTime)");
+            return new RepositoryItemReaderBuilder<UserEntity>()
+                    .name("userReaderForNeo4j")
+                    .repository(userJpaRepository)
+                    .methodName("findAll")
+                    .pageSize(batchProperties.getSync().getNeo4j().getPageSize())
+                    .sorts(Map.of("id", Sort.Direction.ASC))
+                    .build();
+        } else {
+            // 증분 동기화
+            log.info("Running incremental sync for users (lastSyncTime: {})", lastSyncTime);
+            return new RepositoryItemReaderBuilder<UserEntity>()
+                    .name("userReaderForNeo4j")
+                    .repository(userJpaRepository)
+                    .methodName("findByUpdatedAtAfterOrderByIdAsc")
+                    .arguments(Arrays.asList(lastSyncTime))
+                    .pageSize(batchProperties.getSync().getNeo4j().getPageSize())
+                    .sorts(Map.of("id", Sort.Direction.ASC))
+                    .build();
+        }
     }
 
     @Bean
-    public RepositoryItemReader<ReviewEntity> reviewReaderForNeo4j() {
-        return new RepositoryItemReaderBuilder<ReviewEntity>()
-                .name("reviewReaderForNeo4j")
-                .repository(reviewJpaRepository)
-                .methodName("findAll")
-                .pageSize(batchProperties.getSync().getNeo4j().getPageSize())
-                .sorts(Map.of("id", Sort.Direction.ASC))
-                .build();
+    @StepScope
+    public RepositoryItemReader<ReviewEntity> reviewReaderForNeo4j(
+            @Value("#{jobParameters['lastSyncTime']}") String lastSyncTimeParam
+    ) {
+        LocalDateTime lastSyncTime = parseLastSyncTime(lastSyncTimeParam);
+
+        if (lastSyncTime == null) {
+            // 초기 실행: 전체 동기화
+            log.info("Running full sync for reviews (no lastSyncTime)");
+            return new RepositoryItemReaderBuilder<ReviewEntity>()
+                    .name("reviewReaderForNeo4j")
+                    .repository(reviewJpaRepository)
+                    .methodName("findAll")
+                    .pageSize(batchProperties.getSync().getNeo4j().getPageSize())
+                    .sorts(Map.of("id", Sort.Direction.ASC))
+                    .build();
+        } else {
+            // 증분 동기화
+            log.info("Running incremental sync for reviews (lastSyncTime: {})", lastSyncTime);
+            return new RepositoryItemReaderBuilder<ReviewEntity>()
+                    .name("reviewReaderForNeo4j")
+                    .repository(reviewJpaRepository)
+                    .methodName("findByUpdatedAtAfterOrderByIdAsc")
+                    .arguments(Arrays.asList(lastSyncTime))
+                    .pageSize(batchProperties.getSync().getNeo4j().getPageSize())
+                    .sorts(Map.of("id", Sort.Direction.ASC))
+                    .build();
+        }
     }
 
     @Bean
@@ -294,5 +363,22 @@ public class Neo4jSyncJobConfig {
     private long generateAuthorId(String name) {
         long hash = Math.abs(name.toLowerCase().hashCode());
         return hash == 0 ? 1 : hash;
+    }
+
+    /**
+     * jobParameters에서 전달된 lastSyncTime을 LocalDateTime으로 파싱
+     * null이거나 파싱 실패 시 null 반환 (전체 동기화 실행)
+     */
+    private LocalDateTime parseLastSyncTime(String lastSyncTimeParam) {
+        if (lastSyncTimeParam == null || lastSyncTimeParam.isBlank()) {
+            return null;
+        }
+
+        try {
+            return LocalDateTime.parse(lastSyncTimeParam);
+        } catch (DateTimeParseException e) {
+            log.warn("Failed to parse lastSyncTime '{}', falling back to full sync", lastSyncTimeParam);
+            return null;
+        }
     }
 }

@@ -33,12 +33,11 @@ public class ReviewViewCounterFlusher {
             return;
         }
 
-        // DB 업데이트
-        updates.forEach(update -> {
-            long base = reviewViewFlushPort.findCurrentViewCount(update.reviewId()).orElse(0L);
-            long newCount = base + update.delta();
-            reviewViewFlushPort.updateViewCount(update.reviewId(), newCount);
-        });
+        // DB 배치 업데이트 (단일 쿼리로 처리)
+        List<ReviewViewFlushPort.CounterUpdate> portUpdates = updates.stream()
+                .map(u -> new ReviewViewFlushPort.CounterUpdate(u.reviewId(), u.delta()))
+                .toList();
+        reviewViewFlushPort.batchUpdateViewCount(portUpdates);
 
         // ES 업데이트 (partial)
         Map<Long, Long> esUpdates = new HashMap<>();

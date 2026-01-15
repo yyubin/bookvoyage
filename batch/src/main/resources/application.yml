@@ -60,7 +60,7 @@ batch:
     recommendation: "0 0 * * * *"   # 매 1시간마다 실행
     view-flush: "0 */15 * * * *"    # 조회수 플러시 15분마다
     communityTrend: "0 0 * * * *"   # 커뮤니티 트렌드 분석 매 1시간마다
-    search-query-log: "0 */1 * * * *" # 검색어 로그 플러시 매 1분마다
+    search-query-log: "0 */5 * * * *" # 검색어 로그 플러시 매 5분마다 (80% 감소)
 
 search:
   query-log:
