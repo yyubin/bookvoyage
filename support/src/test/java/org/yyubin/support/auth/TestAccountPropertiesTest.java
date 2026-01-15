@@ -83,4 +83,40 @@ class TestAccountPropertiesTest {
         // then
         assertThat(result).isFalse();
     }
+
+    @Test
+    @DisplayName("도메인이 빈 문자열이면 false를 반환한다")
+    void shouldReturnFalseWhenDomainIsEmpty() {
+        // given
+        testAccountProperties.setEmailDomain("");
+
+        // when
+        boolean result = testAccountProperties.isTestEmail("user@test.bookvoyage.com");
+
+        // then
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    @DisplayName("도메인이 공백만 있으면 false를 반환한다")
+    void shouldReturnFalseWhenDomainIsBlank() {
+        // given
+        testAccountProperties.setEmailDomain("   ");
+
+        // when
+        boolean result = testAccountProperties.isTestEmail("user@test.bookvoyage.com");
+
+        // then
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    @DisplayName("getter와 setter가 정상 동작한다")
+    void shouldGetAndSetEmailDomain() {
+        // when
+        testAccountProperties.setEmailDomain("custom.domain.com");
+
+        // then
+        assertThat(testAccountProperties.getEmailDomain()).isEqualTo("custom.domain.com");
+    }
 }

@@ -259,4 +259,126 @@ class JwtProviderTest {
 
         assertThat(refreshClaims.getExpiration()).isAfter(accessClaims.getExpiration());
     }
+
+    @Test
+    @DisplayName("토큰으로부터 JTI(JWT ID) 추출 성공")
+    void getJtiFromToken_Success() {
+        // Given
+        String userId = "12345";
+        Collection<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        String token = jwtProvider.createAccessToken(userId, authorities);
+
+        // When
+        String jti = jwtProvider.getJtiFromToken(token);
+
+        // Then
+        assertThat(jti).isNotNull();
+        assertThat(jti).isNotEmpty();
+    }
+
+    @Test
+    @DisplayName("각 토큰은 고유한 JTI를 가진다")
+    void getJtiFromToken_UniqueForEachToken() {
+        // Given
+        String userId = "12345";
+        Collection<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
+
+        // When
+        String token1 = jwtProvider.createAccessToken(userId, authorities);
+        String token2 = jwtProvider.createAccessToken(userId, authorities);
+        String jti1 = jwtProvider.getJtiFromToken(token1);
+        String jti2 = jwtProvider.getJtiFromToken(token2);
+
+        // Then
+        assertThat(jti1).isNotEqualTo(jti2);
+    }
+
+    @Test
+    @DisplayName("토큰의 남은 유효 시간을 초 단위로 반환한다")
+    void getRemainingTimeInSeconds_Success() {
+        // Given
+        String userId = "12345";
+        Collection<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        String token = jwtProvider.createAccessToken(userId, authorities);
+
+        // When
+        long remainingTime = jwtProvider.getRemainingTimeInSeconds(token);
+
+        // Then
+        // ACCESS_TOKEN_EXPIRATION은 30분(1800초)
+        assertThat(remainingTime).isGreaterThan(0);
+        assertThat(remainingTime).isLessThanOrEqualTo(ACCESS_TOKEN_EXPIRATION / 1000);
+    }
+
+    @Test
+    @DisplayName("거의 만료된 토큰의 남은 시간은 0에 가깝다")
+    void getRemainingTimeInSeconds_AlmostExpired() {
+        // Given
+        SecretKey key = Keys.hmacShaKeyFor(TEST_SECRET.getBytes(StandardCharsets.UTF_8));
+        String almostExpiredToken = Jwts.builder()
+                .subject("12345")
+                .claim("auth", "ROLE_USER")
+                .issuedAt(new Date(System.currentTimeMillis() - 10000))
+                .expiration(new Date(System.currentTimeMillis() + 1000)) // 1초 후 만료
+                .signWith(key)
+                .compact();
+
+        // When
+        long remainingTime = jwtProvider.getRemainingTimeInSeconds(almostExpiredToken);
+
+        // Then
+        assertThat(remainingTime).isGreaterThanOrEqualTo(0);
+        assertThat(remainingTime).isLessThanOrEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("null 토큰 검증 시 false를 반환한다")
+    void validateToken_NullToken_ReturnsFalse() {
+        // When
+        boolean isValid = jwtProvider.validateToken(null);
+
+        // Then
+        assertThat(isValid).isFalse();
+    }
+
+    @Test
+    @DisplayName("빈 토큰 검증 시 false를 반환한다")
+    void validateToken_EmptyToken_ReturnsFalse() {
+        // When
+        boolean isValid = jwtProvider.validateToken("");
+
+        // Then
+        assertThat(isValid).isFalse();
+    }
+
+    @Test
+    @DisplayName("리프레시 토큰에서 JTI 추출 성공")
+    void getJtiFromRefreshToken_Success() {
+        // Given
+        String userId = "12345";
+        String refreshToken = jwtProvider.createRefreshToken(userId);
+
+        // When
+        String jti = jwtProvider.getJtiFromToken(refreshToken);
+
+        // Then
+        assertThat(jti).isNotNull();
+        assertThat(jti).isNotEmpty();
+    }
+
+    @Test
+    @DisplayName("리프레시 토큰의 남은 유효 시간을 초 단위로 반환한다")
+    void getRemainingTimeInSeconds_RefreshToken_Success() {
+        // Given
+        String userId = "12345";
+        String refreshToken = jwtProvider.createRefreshToken(userId);
+
+        // When
+        long remainingTime = jwtProvider.getRemainingTimeInSeconds(refreshToken);
+
+        // Then
+        // REFRESH_TOKEN_EXPIRATION은 7일
+        assertThat(remainingTime).isGreaterThan(0);
+        assertThat(remainingTime).isLessThanOrEqualTo(REFRESH_TOKEN_EXPIRATION / 1000);
+    }
 }
