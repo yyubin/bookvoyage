@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.yyubin.api.ai.dto.CommunityTrendResponse;
 import org.yyubin.api.ai.dto.UserAnalysisResponse;
 import org.yyubin.api.common.PrincipalUtils;
+import org.yyubin.application.recommendation.AnalyzeUserPreferenceUseCase;
 import org.yyubin.application.recommendation.usecase.AnalyzeCommunityTrendUseCase;
-import org.yyubin.application.recommendation.usecase.AnalyzeUserPreferenceUseCase;
 import org.yyubin.domain.recommendation.CommunityTrend;
 import org.yyubin.domain.recommendation.UserAnalysis;
 
