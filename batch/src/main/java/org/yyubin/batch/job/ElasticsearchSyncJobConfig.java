@@ -19,6 +19,7 @@ import org.springframework.batch.infrastructure.item.ItemWriter;
 import org.springframework.batch.infrastructure.item.data.RepositoryItemReader;
 import org.springframework.batch.infrastructure.item.data.builder.RepositoryItemReaderBuilder;
 import org.springframework.batch.infrastructure.repeat.RepeatStatus;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.Sort;
@@ -57,9 +58,9 @@ public class ElasticsearchSyncJobConfig {
 
     @Bean
     public Job elasticsearchSyncJob(
-            Step syncBooksToElasticsearchStep,
-            Step syncReviewsToElasticsearchStep,
-            Step flushReviewViewCountersStep
+            @Qualifier("syncBooksToElasticsearchStep") Step syncBooksToElasticsearchStep,
+            @Qualifier("syncReviewsToElasticsearchStep") Step syncReviewsToElasticsearchStep,
+            @Qualifier("flushReviewViewCountersStep") Step flushReviewViewCountersStep
     ) {
         return new JobBuilder("elasticsearchSyncJob", jobRepository)
                 .start(syncBooksToElasticsearchStep)
@@ -69,7 +70,9 @@ public class ElasticsearchSyncJobConfig {
     }
 
     @Bean
-    public Job reviewViewFlushJob(Step flushReviewViewCountersStep) {
+    public Job reviewViewFlushJob(
+            @Qualifier("flushReviewViewCountersStep") Step flushReviewViewCountersStep
+    ) {
         return new JobBuilder("reviewViewFlushJob", jobRepository)
                 .start(flushReviewViewCountersStep)
                 .build();
@@ -77,9 +80,9 @@ public class ElasticsearchSyncJobConfig {
 
     @Bean
     public Step syncBooksToElasticsearchStep(
-            ItemReader<BookEntity> bookReaderForElasticsearch,
-            ItemProcessor<BookEntity, BookDocument> bookDocumentProcessor,
-            ItemWriter<BookDocument> bookDocumentWriter
+            @Qualifier("bookReaderForElasticsearch") ItemReader<BookEntity> bookReaderForElasticsearch,
+            @Qualifier("bookDocumentProcessor") ItemProcessor<BookEntity, BookDocument> bookDocumentProcessor,
+            @Qualifier("bookDocumentWriter") ItemWriter<BookDocument> bookDocumentWriter
     ) {
         int chunkSize = batchProperties.getSync().getElasticsearch().getChunkSize();
         return new StepBuilder("syncBooksToElasticsearchStep", jobRepository)
@@ -94,9 +97,9 @@ public class ElasticsearchSyncJobConfig {
 
     @Bean
     public Step syncReviewsToElasticsearchStep(
-            ItemReader<ReviewEntity> reviewReaderForElasticsearch,
-            ItemProcessor<ReviewEntity, ReviewDocument> reviewDocumentProcessor,
-            ItemWriter<ReviewDocument> reviewDocumentWriter
+            @Qualifier("reviewReaderForElasticsearch") ItemReader<ReviewEntity> reviewReaderForElasticsearch,
+            @Qualifier("reviewDocumentProcessor") ItemProcessor<ReviewEntity, ReviewDocument> reviewDocumentProcessor,
+            @Qualifier("reviewDocumentWriter") ItemWriter<ReviewDocument> reviewDocumentWriter
     ) {
         int chunkSize = batchProperties.getSync().getElasticsearch().getChunkSize();
         return new StepBuilder("syncReviewsToElasticsearchStep", jobRepository)

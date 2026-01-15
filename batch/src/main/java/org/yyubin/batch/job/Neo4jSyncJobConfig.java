@@ -23,6 +23,7 @@ import org.springframework.batch.infrastructure.item.ItemReader;
 import org.springframework.batch.infrastructure.item.ItemWriter;
 import org.springframework.batch.infrastructure.item.data.RepositoryItemReader;
 import org.springframework.batch.infrastructure.item.data.builder.RepositoryItemReaderBuilder;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.Sort;
@@ -72,7 +73,11 @@ public class Neo4jSyncJobConfig {
     private final org.yyubin.batch.listener.SyncTimestampListener syncTimestampListener;
 
     @Bean
-    public Job neo4jSyncJob(Step syncBooksToNeo4jStep, Step syncReviewsToNeo4jStep, Step syncUsersToNeo4jStep) {
+    public Job neo4jSyncJob(
+            @Qualifier("syncBooksToNeo4jStep") Step syncBooksToNeo4jStep,
+            @Qualifier("syncReviewsToNeo4jStep") Step syncReviewsToNeo4jStep,
+            @Qualifier("syncUsersToNeo4jStep") Step syncUsersToNeo4jStep
+    ) {
         return new JobBuilder("neo4jSyncJob", jobRepository)
                 .start(syncBooksToNeo4jStep)
                 .next(syncReviewsToNeo4jStep)
@@ -82,9 +87,9 @@ public class Neo4jSyncJobConfig {
 
     @Bean
     public Step syncBooksToNeo4jStep(
-            ItemReader<BookEntity> bookReaderForNeo4j,
-            ItemProcessor<BookEntity, BookNode> bookNodeProcessor,
-            ItemWriter<BookNode> bookNodeWriter
+            @Qualifier("bookReaderForNeo4j") ItemReader<BookEntity> bookReaderForNeo4j,
+            @Qualifier("bookNodeProcessor") ItemProcessor<BookEntity, BookNode> bookNodeProcessor,
+            @Qualifier("bookNodeWriter") ItemWriter<BookNode> bookNodeWriter
     ) {
         int chunkSize = batchProperties.getSync().getNeo4j().getChunkSize();
         return new StepBuilder("syncBooksToNeo4jStep", jobRepository)
@@ -99,9 +104,9 @@ public class Neo4jSyncJobConfig {
 
     @Bean
     public Step syncUsersToNeo4jStep(
-            ItemReader<UserEntity> userReaderForNeo4j,
-            ItemProcessor<UserEntity, UserNode> userNodeProcessor,
-            ItemWriter<UserNode> userNodeWriter
+            @Qualifier("userReaderForNeo4j") ItemReader<UserEntity> userReaderForNeo4j,
+            @Qualifier("userNodeProcessor") ItemProcessor<UserEntity, UserNode> userNodeProcessor,
+            @Qualifier("userNodeWriter") ItemWriter<UserNode> userNodeWriter
     ) {
         int chunkSize = batchProperties.getSync().getNeo4j().getChunkSize();
 
@@ -117,9 +122,9 @@ public class Neo4jSyncJobConfig {
 
     @Bean
     public Step syncReviewsToNeo4jStep(
-            ItemReader<ReviewEntity> reviewReaderForNeo4j,
-            ItemProcessor<ReviewEntity, ReviewNode> reviewNodeProcessor,
-            ItemWriter<ReviewNode> reviewNodeWriter
+            @Qualifier("reviewReaderForNeo4j") ItemReader<ReviewEntity> reviewReaderForNeo4j,
+            @Qualifier("reviewNodeProcessor") ItemProcessor<ReviewEntity, ReviewNode> reviewNodeProcessor,
+            @Qualifier("reviewNodeWriter") ItemWriter<ReviewNode> reviewNodeWriter
     ) {
         int chunkSize = batchProperties.getSync().getNeo4j().getChunkSize();
         return new StepBuilder("syncReviewsToNeo4jStep", jobRepository)

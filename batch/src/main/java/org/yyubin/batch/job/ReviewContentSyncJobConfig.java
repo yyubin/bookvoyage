@@ -20,6 +20,7 @@ import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.data.domain.Sort;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.yyubin.batch.config.BatchProperties;
 import org.yyubin.infrastructure.persistence.book.BookEntity;
 import org.yyubin.infrastructure.persistence.book.BookJpaRepository;
@@ -53,7 +54,9 @@ public class ReviewContentSyncJobConfig {
     private final HighlightReviewRecommendationService reviewRecommendationService;
 
     @Bean
-    public Job reviewContentSyncJob(Step reviewContentSyncStep) {
+    public Job reviewContentSyncJob(
+            @Qualifier("reviewContentSyncStep") Step reviewContentSyncStep
+    ) {
         return new JobBuilder("reviewContentSyncJob", jobRepository)
                 .start(reviewContentSyncStep)
                 .build();
@@ -61,9 +64,9 @@ public class ReviewContentSyncJobConfig {
 
     @Bean
     public Step reviewContentSyncStep(
-            ItemReader<ReviewEntity> reviewContentReader,
-            ItemProcessor<ReviewEntity, RecommendationIngestCommand> reviewContentProcessor,
-            ItemWriter<RecommendationIngestCommand> reviewContentWriter
+            @Qualifier("reviewContentReader") ItemReader<ReviewEntity> reviewContentReader,
+            @Qualifier("reviewContentProcessor") ItemProcessor<ReviewEntity, RecommendationIngestCommand> reviewContentProcessor,
+            @Qualifier("reviewContentWriter") ItemWriter<RecommendationIngestCommand> reviewContentWriter
     ) {
         int chunkSize = batchProperties.getRecommendation().getChunkSize();
         return new StepBuilder("reviewContentSyncStep", jobRepository)

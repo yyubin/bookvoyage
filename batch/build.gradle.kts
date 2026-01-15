@@ -1,7 +1,6 @@
 plugins {
     java
-    id("org.springframework.boot") version "4.0.0"
-    id("io.spring.dependency-management") version "1.1.7"
+    id("org.springframework.boot") version "4.0.0" apply false
 }
 
 group = "org.yyubin"
@@ -31,38 +30,36 @@ dependencies {
     implementation(project(":infrastructure"))
     implementation(project(":recommendation"))
 
-    // Spring Boot starters
-    implementation("org.springframework.boot:spring-boot-starter")
-    implementation("org.springframework.boot:spring-boot-starter-batch")
-    implementation("org.springframework.batch:spring-batch-core")
-    implementation("org.springframework.batch:spring-batch-infrastructure")
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    implementation("org.springframework.boot:spring-boot-starter-data-redis")
+    // Spring Boot / Spring Batch
+    implementation("org.springframework.boot:spring-boot-starter-batch:4.0.0")
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa:4.0.0")
+    implementation("org.springframework.boot:spring-boot-starter-data-redis:4.0.0")
 
-    // Jackson for JSON parsing
-    implementation("com.fasterxml.jackson.core:jackson-databind")
-    implementation("com.fasterxml.jackson.core:jackson-core")
-    implementation("com.fasterxml.jackson.core:jackson-annotations")
+    // Spring Kafka
+    implementation("org.springframework.kafka:spring-kafka:3.2.2")
 
-    // Kafka (이벤트 수집용)
-    implementation("org.springframework.kafka:spring-kafka")
+    // Jackson
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.17.2")
+    implementation("com.fasterxml.jackson.core:jackson-core:2.17.2")
+    implementation("com.fasterxml.jackson.core:jackson-annotations:2.17.2")
 
-    // ShedLock (분산 환경 스케줄러 중복 실행 방지)
+    // ShedLock
     implementation("net.javacrumbs.shedlock:shedlock-spring:5.10.0")
     implementation("net.javacrumbs.shedlock:shedlock-provider-redis-spring:5.10.0")
 
     // Database
-    runtimeOnly("com.mysql:mysql-connector-j")
+    runtimeOnly("com.mysql:mysql-connector-j:8.4.0")
 
     // Lombok
-    compileOnly("org.projectlombok:lombok")
-    annotationProcessor("org.projectlombok:lombok")
+    compileOnly("org.projectlombok:lombok:1.18.32")
+    annotationProcessor("org.projectlombok:lombok:1.18.32")
 
     // Test
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("org.springframework.batch:spring-batch-test")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation("org.springframework.boot:spring-boot-starter-test:4.0.0")
+    testImplementation("org.springframework.batch:spring-batch-test:5.1.2")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.10.2")
 }
+
 
 tasks.withType<Test> {
     useJUnitPlatform()
