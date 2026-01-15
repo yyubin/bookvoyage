@@ -31,9 +31,6 @@ class HybridScorerTest {
     private SemanticScorer semanticScorer;
 
     @Mock
-    private EngagementScorer engagementScorer;
-
-    @Mock
     private PopularityScorer popularityScorer;
 
     @Mock
@@ -63,7 +60,6 @@ class HybridScorerTest {
         weights = new RecommendationProperties.ScoringConfig.Weights();
         weights.setGraph(0.4);
         weights.setSemantic(0.3);
-        weights.setEngagement(0.15);
         weights.setPopularity(0.1);
         weights.setFreshness(0.05);
 
@@ -79,7 +75,6 @@ class HybridScorerTest {
         // Given
         when(graphScorer.score(anyLong(), any())).thenReturn(1.0);
         when(semanticScorer.score(anyLong(), any())).thenReturn(1.0);
-        when(engagementScorer.score(anyLong(), any())).thenReturn(1.0);
         when(popularityScorer.score(anyLong(), any())).thenReturn(1.0);
         when(freshnessScorer.score(anyLong(), any())).thenReturn(1.0);
 
@@ -87,8 +82,8 @@ class HybridScorerTest {
         double finalScore = hybridScorer.calculateFinalScore(userId, candidate);
 
         // Then
-        // 0.4 + 0.3 + 0.15 + 0.1 + 0.05 = 1.0
-        assertThat(finalScore).isEqualTo(1.0);
+        // 0.4 + 0.3 + 0.1 + 0.05 = 0.85
+        assertThat(finalScore).isEqualTo(0.85);
     }
 
     @Test
@@ -97,7 +92,6 @@ class HybridScorerTest {
         // Given
         when(graphScorer.score(anyLong(), any())).thenReturn(0.0);
         when(semanticScorer.score(anyLong(), any())).thenReturn(0.0);
-        when(engagementScorer.score(anyLong(), any())).thenReturn(0.0);
         when(popularityScorer.score(anyLong(), any())).thenReturn(0.0);
         when(freshnessScorer.score(anyLong(), any())).thenReturn(0.0);
 
@@ -114,7 +108,6 @@ class HybridScorerTest {
         // Given
         when(graphScorer.score(anyLong(), any())).thenReturn(0.8);      // 0.8 * 0.4 = 0.32
         when(semanticScorer.score(anyLong(), any())).thenReturn(0.6);   // 0.6 * 0.3 = 0.18
-        when(engagementScorer.score(anyLong(), any())).thenReturn(0.5); // 0.5 * 0.15 = 0.075
         when(popularityScorer.score(anyLong(), any())).thenReturn(0.7); // 0.7 * 0.1 = 0.07
         when(freshnessScorer.score(anyLong(), any())).thenReturn(0.9);  // 0.9 * 0.05 = 0.045
 
@@ -122,8 +115,8 @@ class HybridScorerTest {
         double finalScore = hybridScorer.calculateFinalScore(userId, candidate);
 
         // Then
-        // 0.32 + 0.18 + 0.075 + 0.07 + 0.045 = 0.69
-        assertThat(finalScore).isEqualTo(0.69);
+        // 0.32 + 0.18 + 0.07 + 0.045 = 0.615
+        assertThat(finalScore).isEqualTo(0.615);
     }
 
     @Test
@@ -144,7 +137,6 @@ class HybridScorerTest {
         // Mock 설정
         when(graphScorer.score(anyLong(), any())).thenReturn(0.8);
         when(semanticScorer.score(anyLong(), any())).thenReturn(0.6);
-        when(engagementScorer.score(anyLong(), any())).thenReturn(0.5);
         when(popularityScorer.score(anyLong(), any())).thenReturn(0.7);
         when(freshnessScorer.score(anyLong(), any())).thenReturn(0.9);
 
@@ -154,9 +146,9 @@ class HybridScorerTest {
         // Then
         assertThat(scores).hasSize(3);
         assertThat(scores).containsKeys(1L, 2L, 3L);
-        assertThat(scores.get(1L)).isEqualTo(0.69);
-        assertThat(scores.get(2L)).isEqualTo(0.69);
-        assertThat(scores.get(3L)).isEqualTo(0.69);
+        assertThat(scores.get(1L)).isEqualTo(0.615);
+        assertThat(scores.get(2L)).isEqualTo(0.615);
+        assertThat(scores.get(3L)).isEqualTo(0.615);
     }
 
     @Test
@@ -165,7 +157,6 @@ class HybridScorerTest {
         // Given
         when(graphScorer.score(anyLong(), any())).thenReturn(0.8);
         when(semanticScorer.score(anyLong(), any())).thenReturn(0.6);
-        when(engagementScorer.score(anyLong(), any())).thenReturn(0.5);
         when(popularityScorer.score(anyLong(), any())).thenReturn(0.7);
         when(freshnessScorer.score(anyLong(), any())).thenReturn(0.9);
 
@@ -176,10 +167,9 @@ class HybridScorerTest {
         assertThat(breakdown.getBookId()).isEqualTo(100L);
         assertThat(breakdown.getGraphScore()).isEqualTo(0.8);
         assertThat(breakdown.getSemanticScore()).isEqualTo(0.6);
-        assertThat(breakdown.getEngagementScore()).isEqualTo(0.5);
         assertThat(breakdown.getPopularityScore()).isEqualTo(0.7);
         assertThat(breakdown.getFreshnessScore()).isEqualTo(0.9);
-        assertThat(breakdown.getFinalScore()).isEqualTo(0.69);
+        assertThat(breakdown.getFinalScore()).isEqualTo(0.615);
         assertThat(breakdown.getSource()).isEqualTo(RecommendationCandidate.CandidateSource.NEO4J_COLLABORATIVE);
         assertThat(breakdown.getReason()).isEqualTo("Test candidate");
     }
@@ -203,7 +193,6 @@ class HybridScorerTest {
         // Given - 그래프 점수만 높고 나머지는 낮음
         when(graphScorer.score(anyLong(), any())).thenReturn(1.0);
         when(semanticScorer.score(anyLong(), any())).thenReturn(0.0);
-        when(engagementScorer.score(anyLong(), any())).thenReturn(0.0);
         when(popularityScorer.score(anyLong(), any())).thenReturn(0.0);
         when(freshnessScorer.score(anyLong(), any())).thenReturn(0.0);
 
@@ -222,7 +211,6 @@ class HybridScorerTest {
         RecommendationProperties.ScoringConfig.Weights newWeights = new RecommendationProperties.ScoringConfig.Weights();
         newWeights.setGraph(0.5);
         newWeights.setSemantic(0.2);
-        newWeights.setEngagement(0.1);
         newWeights.setPopularity(0.1);
         newWeights.setFreshness(0.1);
 
@@ -233,7 +221,6 @@ class HybridScorerTest {
 
         when(graphScorer.score(anyLong(), any())).thenReturn(1.0);      // 1.0 * 0.5 = 0.5
         when(semanticScorer.score(anyLong(), any())).thenReturn(1.0);   // 1.0 * 0.2 = 0.2
-        when(engagementScorer.score(anyLong(), any())).thenReturn(1.0); // 1.0 * 0.1 = 0.1
         when(popularityScorer.score(anyLong(), any())).thenReturn(1.0); // 1.0 * 0.1 = 0.1
         when(freshnessScorer.score(anyLong(), any())).thenReturn(1.0);  // 1.0 * 0.1 = 0.1
 
@@ -241,7 +228,7 @@ class HybridScorerTest {
         double finalScore = hybridScorer.calculateFinalScore(userId, candidate);
 
         // Then
-        // 0.5 + 0.2 + 0.1 + 0.1 + 0.1 = 1.0
-        assertThat(finalScore).isCloseTo(1.0, within(0.0001));
+        // 0.5 + 0.2 + 0.1 + 0.1 = 0.9
+        assertThat(finalScore).isCloseTo(0.9, within(0.0001));
     }
 }

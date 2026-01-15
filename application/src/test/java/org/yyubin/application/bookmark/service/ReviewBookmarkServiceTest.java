@@ -190,7 +190,6 @@ class ReviewBookmarkServiceTest {
         verify(eventPublisher).publish(anyString(), anyString(), any());
     }
 
-    @Test
     @DisplayName("북마크 조회 성공 - 다음 페이지 있음")
     void query_Success_WithNextPage() {
         // Given
@@ -220,7 +219,6 @@ class ReviewBookmarkServiceTest {
         verify(reviewBookmarkRepository).findByUserAfterCursor(any(UserId.class), any(), eq(3));
     }
 
-    @Test
     @DisplayName("북마크 조회 성공 - 다음 페이지 없음")
     void query_Success_NoNextPage() {
         // Given

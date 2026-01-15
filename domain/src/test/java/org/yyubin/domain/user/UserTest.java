@@ -28,13 +28,14 @@ class UserTest {
             String password = "password123";
             String nickname = "testnick";
             String bio = "Test bio";
+            String tasteTag = "fiction";
             Role role = Role.USER;
             AuthProvider provider = AuthProvider.LOCAL;
             String profileImageUrl = "https://example.com/image.jpg";
             LocalDateTime createdAt = LocalDateTime.now();
 
             // when
-            User user = new User(id, email, username, password, nickname, bio, role, provider, profileImageUrl, createdAt);
+            User user = new User(id, email, username, password, nickname, bio, tasteTag, role, provider, profileImageUrl, createdAt);
 
             // then
             assertThat(user).isNotNull();
@@ -44,6 +45,7 @@ class UserTest {
             assertThat(user.password()).isEqualTo(password);
             assertThat(user.nickname()).isEqualTo(nickname);
             assertThat(user.bio()).isEqualTo(bio);
+            assertThat(user.tasteTag()).isEqualTo(tasteTag);
             assertThat(user.role()).isEqualTo(role);
             assertThat(user.provider()).isEqualTo(provider);
             assertThat(user.ProfileImageUrl()).isEqualTo(profileImageUrl);
@@ -58,6 +60,7 @@ class UserTest {
                     new UserId(1L),
                     "user@example.com",
                     "testuser",
+                    null,
                     null,
                     null,
                     null,
@@ -81,6 +84,7 @@ class UserTest {
                     "user@example.com",
                     "testuser",
                     blankPassword,
+                    null,
                     null,
                     null,
                     null,
@@ -108,6 +112,7 @@ class UserTest {
                     null,
                     "testnick",
                     "Test bio",
+                    null,
                     Role.USER,
                     AuthProvider.GOOGLE,
                     "https://example.com/image.jpg",
@@ -132,6 +137,7 @@ class UserTest {
                     null,
                     null,
                     null,
+                    null,
                     AuthProvider.KAKAO,
                     null,
                     null
@@ -151,6 +157,7 @@ class UserTest {
                     new UserId(1L),
                     "user@naver.com",
                     "testuser",
+                    null,
                     null,
                     null,
                     null,
@@ -185,6 +192,7 @@ class UserTest {
                     null,
                     null,
                     null,
+                    null,
                     null
             );
 
@@ -206,11 +214,34 @@ class UserTest {
                     null,
                     null,
                     null,
+                    null,
                     null
             );
 
             // then
             assertThat(user.bio()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("null tasteTag는 빈 문자열로 기본 설정된다")
+        void nullTasteTagDefaultsToEmptyString() {
+            // when
+            User user = new User(
+                    new UserId(1L),
+                    "user@example.com",
+                    "testuser",
+                    "password123",
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+
+            // then
+            assertThat(user.tasteTag()).isEmpty();
         }
 
         @Test
@@ -222,6 +253,7 @@ class UserTest {
                     "user@example.com",
                     "testuser",
                     "password123",
+                    null,
                     null,
                     null,
                     null,
@@ -246,6 +278,7 @@ class UserTest {
                     "user@example.com",
                     "testuser",
                     "password123",
+                    null,
                     null,
                     null,
                     null,
@@ -279,6 +312,7 @@ class UserTest {
                     null,
                     null,
                     null,
+                    null,
                     null
             );
 
@@ -300,6 +334,7 @@ class UserTest {
                     null,
                     null,
                     null,
+                    null,
                     null
             ))
                     .isInstanceOf(IllegalArgumentException.class)
@@ -315,6 +350,7 @@ class UserTest {
                     "userexample.com",
                     "testuser",
                     "password123",
+                    null,
                     null,
                     null,
                     null,
@@ -345,6 +381,7 @@ class UserTest {
                     null,
                     null,
                     null,
+                    null,
                     null
             );
 
@@ -361,6 +398,7 @@ class UserTest {
                     "user@example.com",
                     null,
                     "password123",
+                    null,
                     null,
                     null,
                     null,
@@ -383,6 +421,7 @@ class UserTest {
                     "user@example.com",
                     blankUsername,
                     "password123",
+                    null,
                     null,
                     null,
                     null,
@@ -413,12 +452,13 @@ class UserTest {
                     null,
                     null,
                     null,
+                    null,
                     null
             );
             String newUsername = "newusername";
 
             // when
-            User updated = user.updateProfile(newUsername, null, null, null);
+            User updated = user.updateProfile(newUsername, null, null, null, null);
 
             // then
             assertThat(updated.username()).isEqualTo(newUsername);
@@ -439,12 +479,13 @@ class UserTest {
                     null,
                     null,
                     null,
+                    null,
                     null
             );
             String newBio = "new bio";
 
             // when
-            User updated = user.updateProfile(null, newBio, null, null);
+            User updated = user.updateProfile(null, newBio, null, null, null);
 
             // then
             assertThat(updated.bio()).isEqualTo(newBio);
@@ -465,12 +506,13 @@ class UserTest {
                     null,
                     null,
                     null,
+                    null,
                     null
             );
             String newNickname = "newnick";
 
             // when
-            User updated = user.updateProfile(null, null, newNickname, null);
+            User updated = user.updateProfile(null, null, newNickname, null, null);
 
             // then
             assertThat(updated.nickname()).isEqualTo(newNickname);
@@ -490,17 +532,45 @@ class UserTest {
                     null,
                     null,
                     null,
+                    null,
                     "https://old.com/image.jpg",
                     null
             );
             String newProfileImageUrl = "https://new.com/image.jpg";
 
             // when
-            User updated = user.updateProfile(null, null, null, newProfileImageUrl);
+            User updated = user.updateProfile(null, null, null, newProfileImageUrl, null);
 
             // then
             assertThat(updated.ProfileImageUrl()).isEqualTo(newProfileImageUrl);
             assertThat(user.ProfileImageUrl()).isEqualTo("https://old.com/image.jpg");
+        }
+
+        @Test
+        @DisplayName("updateProfile로 tasteTag를 업데이트할 수 있다")
+        void updateTasteTag() {
+            // given
+            User user = new User(
+                    new UserId(1L),
+                    "user@example.com",
+                    "testuser",
+                    "password123",
+                    null,
+                    null,
+                    "old taste",
+                    null,
+                    null,
+                    null,
+                    null
+            );
+            String newTasteTag = "new taste";
+
+            // when
+            User updated = user.updateProfile(null, null, null, null, newTasteTag);
+
+            // then
+            assertThat(updated.tasteTag()).isEqualTo(newTasteTag);
+            assertThat(user.tasteTag()).isEqualTo("old taste");
         }
 
         @Test
@@ -514,6 +584,7 @@ class UserTest {
                     "password123",
                     "oldnick",
                     "old bio",
+                    "old taste",
                     null,
                     null,
                     "https://old.com/image.jpg",
@@ -525,7 +596,8 @@ class UserTest {
                     "newusername",
                     "new bio",
                     "newnick",
-                    "https://new.com/image.jpg"
+                    "https://new.com/image.jpg",
+                    "new taste"
             );
 
             // then
@@ -533,6 +605,7 @@ class UserTest {
             assertThat(updated.bio()).isEqualTo("new bio");
             assertThat(updated.nickname()).isEqualTo("newnick");
             assertThat(updated.ProfileImageUrl()).isEqualTo("https://new.com/image.jpg");
+            assertThat(updated.tasteTag()).isEqualTo("new taste");
         }
 
         @Test
@@ -546,6 +619,7 @@ class UserTest {
                     "password123",
                     "testnick",
                     "test bio",
+                    "test taste",
                     null,
                     null,
                     "https://example.com/image.jpg",
@@ -553,13 +627,14 @@ class UserTest {
             );
 
             // when
-            User updated = user.updateProfile(null, null, null, null);
+            User updated = user.updateProfile(null, null, null, null, null);
 
             // then
             assertThat(updated.username()).isEqualTo(user.username());
             assertThat(updated.bio()).isEqualTo(user.bio());
             assertThat(updated.nickname()).isEqualTo(user.nickname());
             assertThat(updated.ProfileImageUrl()).isEqualTo(user.ProfileImageUrl());
+            assertThat(updated.tasteTag()).isEqualTo(user.tasteTag());
         }
 
         @Test
@@ -576,11 +651,12 @@ class UserTest {
                     null,
                     null,
                     null,
+                    null,
                     null
             );
 
             // when
-            User updated = user.updateProfile("  ", null, null, null);
+            User updated = user.updateProfile("  ", null, null, null, null);
 
             // then
             assertThat(updated.username()).isEqualTo("testuser");
@@ -600,12 +676,13 @@ class UserTest {
                     null,
                     null,
                     null,
+                    null,
                     null
             );
             String originalUsername = original.username();
 
             // when
-            User updated = original.updateProfile("newusername", null, null, null);
+            User updated = original.updateProfile("newusername", null, null, null, null);
 
             // then
             assertThat(original.username()).isEqualTo(originalUsername);
@@ -626,8 +703,8 @@ class UserTest {
             String username = "testuser";
             String password = "password123";
             LocalDateTime createdAt = LocalDateTime.now();
-            User user1 = new User(id, email, username, password, null, null, null, null, null, createdAt);
-            User user2 = new User(id, email, username, password, null, null, null, null, null, createdAt);
+            User user1 = new User(id, email, username, password, null, null, null, null, null, null, createdAt);
+            User user2 = new User(id, email, username, password, null, null, null, null, null, null, createdAt);
 
             // when & then
             assertThat(user1).isEqualTo(user2);
@@ -648,6 +725,7 @@ class UserTest {
                     null,
                     null,
                     null,
+                    null,
                     null
             );
             User user2 = new User(
@@ -655,6 +733,7 @@ class UserTest {
                     "user2@example.com",
                     "testuser2",
                     "password123",
+                    null,
                     null,
                     null,
                     null,
@@ -681,6 +760,7 @@ class UserTest {
                     null,
                     null,
                     null,
+                    null,
                     null
             );
 
@@ -697,6 +777,7 @@ class UserTest {
                     "user@example.com",
                     "testuser",
                     "password123",
+                    null,
                     null,
                     null,
                     null,

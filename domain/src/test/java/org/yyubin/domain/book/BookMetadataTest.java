@@ -161,57 +161,61 @@ class BookMetadataTest {
     class ValidateAuthors {
 
         @Test
-        @DisplayName("null authors 리스트로 생성 시 예외가 발생한다")
-        void nullAuthorsThrowsException() {
-            // when & then
-            assertThatThrownBy(() -> BookMetadata.of(
+        @DisplayName("null authors 리스트로 생성 시 '저자 미상'으로 fallback된다")
+        void nullAuthorsFallbackToUnknown() {
+            // when
+            BookMetadata metadata = BookMetadata.of(
                     "Title", null, null, null, null,
                     null, null, null, null, null, null
-            ))
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("Book authors cannot be empty");
+            );
+
+            // then
+            assertThat(metadata.getAuthors()).containsExactly("저자 미상");
         }
 
         @Test
-        @DisplayName("빈 authors 리스트로 생성 시 예외가 발생한다")
-        void emptyAuthorsListThrowsException() {
-            // when & then
-            assertThatThrownBy(() -> BookMetadata.of(
+        @DisplayName("빈 authors 리스트로 생성 시 '저자 미상'으로 fallback된다")
+        void emptyAuthorsListFallbackToUnknown() {
+            // when
+            BookMetadata metadata = BookMetadata.of(
                     "Title", Collections.emptyList(), null, null, null,
                     null, null, null, null, null, null
-            ))
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("Book authors cannot be empty");
+            );
+
+            // then
+            assertThat(metadata.getAuthors()).containsExactly("저자 미상");
         }
 
         @Test
-        @DisplayName("null 요소만 있는 authors 리스트로 생성 시 예외가 발생한다")
-        void authorsWithOnlyNullElementsThrowsException() {
+        @DisplayName("null 요소만 있는 authors 리스트로 생성 시 '저자 미상'으로 fallback된다")
+        void authorsWithOnlyNullElementsFallbackToUnknown() {
             // given
             List<String> nullAuthors = Arrays.asList(null, null, null);
 
-            // when & then
-            assertThatThrownBy(() -> BookMetadata.of(
+            // when
+            BookMetadata metadata = BookMetadata.of(
                     "Title", nullAuthors, null, null, null,
                     null, null, null, null, null, null
-            ))
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("Book authors cannot be empty");
+            );
+
+            // then
+            assertThat(metadata.getAuthors()).containsExactly("저자 미상");
         }
 
         @Test
-        @DisplayName("빈 문자열만 있는 authors 리스트로 생성 시 예외가 발생한다")
-        void authorsWithOnlyEmptyStringsThrowsException() {
+        @DisplayName("빈 문자열만 있는 authors 리스트로 생성 시 '저자 미상'으로 fallback된다")
+        void authorsWithOnlyEmptyStringsFallbackToUnknown() {
             // given
             List<String> emptyAuthors = List.of("", "  ", "\t");
 
-            // when & then
-            assertThatThrownBy(() -> BookMetadata.of(
+            // when
+            BookMetadata metadata = BookMetadata.of(
                     "Title", emptyAuthors, null, null, null,
                     null, null, null, null, null, null
-            ))
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("Book authors cannot be empty");
+            );
+
+            // then
+            assertThat(metadata.getAuthors()).containsExactly("저자 미상");
         }
 
         @Test
