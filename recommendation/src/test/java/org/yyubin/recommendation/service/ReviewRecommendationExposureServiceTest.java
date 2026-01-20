@@ -321,8 +321,6 @@ class ReviewRecommendationExposureServiceTest {
             Long userId = 1L;
             List<Long> reviewIds = List.of(100L);
 
-            when(properties.getSearch()).thenReturn(searchConfig);
-            when(searchConfig.getExposureMaxItems()).thenReturn(200);
             when(zSetOperations.add(anyString(), anyString(), anyDouble()))
                     .thenThrow(new RuntimeException("Redis error"));
 

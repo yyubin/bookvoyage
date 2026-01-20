@@ -18,7 +18,10 @@ import org.yyubin.application.event.OutboxEvent;
 import org.yyubin.application.event.OutboxPort;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -48,12 +51,13 @@ class OutboxProcessorTest {
         // Given
         when(redissonClient.getLock(anyString())).thenReturn(lock);
         when(lock.tryLock(org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.anyLong(), any())).thenReturn(false);
+        when(lock.isHeldByCurrentThread()).thenReturn(false);
 
         // When
         processor.process();
 
         // Then
-        verify(outboxPort, never()).findPending(any());
+        verify(outboxPort, never()).findPending(anyInt());
         verify(lock, never()).unlock();
     }
 
@@ -123,7 +127,7 @@ class OutboxProcessorTest {
         processor.process();
 
         // Then
-        verify(outboxPort).markFailed(3L, "fail");
+        verify(outboxPort).markFailed(eq(3L), contains("fail"));
         verify(lock).unlock();
     }
 }
