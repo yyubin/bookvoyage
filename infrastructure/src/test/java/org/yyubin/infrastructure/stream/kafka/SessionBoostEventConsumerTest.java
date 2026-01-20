@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.yyubin.application.event.EventPayload;
 import org.yyubin.infrastructure.config.SessionBoostProperties;
@@ -41,7 +42,7 @@ class SessionBoostEventConsumerTest {
         consumer.consume(payload);
 
         // Then
-        verify(redisTemplate, never()).executePipelined(any());
+        verify(redisTemplate, never()).executePipelined(any(RedisCallback.class));
         verify(reviewTrackingCounterAdapter, never()).incrementClick(any());
     }
 
@@ -55,7 +56,7 @@ class SessionBoostEventConsumerTest {
         consumer.consume(payload);
 
         // Then
-        verify(redisTemplate, never()).executePipelined(any());
+        verify(redisTemplate, never()).executePipelined(any(RedisCallback.class));
         verify(reviewTrackingCounterAdapter, never()).incrementClick(any());
     }
 
@@ -70,7 +71,7 @@ class SessionBoostEventConsumerTest {
 
         // Then
         verify(reviewTrackingCounterAdapter).incrementClick(10L);
-        verify(redisTemplate).executePipelined(any());
+        verify(redisTemplate).executePipelined(any(RedisCallback.class));
     }
 
     @Test
@@ -94,7 +95,7 @@ class SessionBoostEventConsumerTest {
 
         // Then
         verify(reviewTrackingCounterAdapter).addDwell(10L, 5000L);
-        verify(redisTemplate).executePipelined(any());
+        verify(redisTemplate).executePipelined(any(RedisCallback.class));
     }
 
     @Test
@@ -108,6 +109,6 @@ class SessionBoostEventConsumerTest {
 
         // Then
         verify(reviewTrackingCounterAdapter).incrementReach(11L);
-        verify(redisTemplate).executePipelined(any());
+        verify(redisTemplate).executePipelined(any(RedisCallback.class));
     }
 }

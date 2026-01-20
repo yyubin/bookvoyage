@@ -67,6 +67,6 @@ class KafkaConfigTest {
                 config.kafkaListenerContainerFactory(config.consumerFactory(), errorHandler);
 
         // Then
-        assertThat(factory.getConcurrency()).isEqualTo(5);
+        assertThat(factory.getConsumerFactory()).isEqualTo(5);
     }
 }
