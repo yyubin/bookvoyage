@@ -152,7 +152,7 @@ class UserSyncDataProviderTest {
 
         ReviewEntity review = mock(ReviewEntity.class);
         when(review.getBookId()).thenReturn(null);
-        when(review.getCreatedAt()).thenReturn(LocalDateTime.now());
+        lenient().when(review.getCreatedAt()).thenReturn(LocalDateTime.now());
 
         when(reviewJpaRepository.findByUserId(1L)).thenReturn(List.of(review));
         when(wishlistJpaRepository.findByUserId(1L)).thenReturn(List.of());
@@ -176,7 +176,7 @@ class UserSyncDataProviderTest {
         BookEntity book = mock(BookEntity.class);
         when(wishlist.getBook()).thenReturn(book);
         when(book.getId()).thenReturn(null);
-        when(wishlist.getCreatedAt()).thenReturn(LocalDateTime.now());
+        lenient().when(wishlist.getCreatedAt()).thenReturn(LocalDateTime.now());
 
         when(wishlistJpaRepository.findByUserId(1L)).thenReturn(List.of(wishlist));
         when(reviewReactionJpaRepository.findByUserId(1L)).thenReturn(List.of());
@@ -221,7 +221,7 @@ class UserSyncDataProviderTest {
 
         ReviewReactionEntity reaction = mock(ReviewReactionEntity.class);
         when(reaction.getReviewId()).thenReturn(10L);
-        when(reaction.getCreatedAt()).thenReturn(LocalDateTime.now());
+        lenient().when(reaction.getCreatedAt()).thenReturn(LocalDateTime.now());
 
         ReviewEntity likedReview = mock(ReviewEntity.class);
         when(likedReview.getId()).thenReturn(10L);
@@ -248,7 +248,7 @@ class UserSyncDataProviderTest {
 
     private ReviewEntity createMockReview(Long id, Long bookId, LocalDateTime createdAt, Long viewCount) {
         ReviewEntity review = mock(ReviewEntity.class);
-        when(review.getId()).thenReturn(id);
+        lenient().when(review.getId()).thenReturn(id);
         when(review.getBookId()).thenReturn(bookId);
         when(review.getCreatedAt()).thenReturn(createdAt);
         when(review.getViewCount()).thenReturn(viewCount);
