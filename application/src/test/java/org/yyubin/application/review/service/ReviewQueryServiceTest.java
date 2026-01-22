@@ -17,9 +17,17 @@ import org.yyubin.application.review.port.LoadReviewPort;
 import org.yyubin.application.review.port.ReviewViewMetricPort;
 import org.yyubin.application.review.query.GetReviewQuery;
 import org.yyubin.application.review.query.GetUserReviewsQuery;
+import org.yyubin.application.bookmark.port.ReviewBookmarkRepository;
+import org.yyubin.application.review.port.ReviewExistencePort;
+import org.yyubin.application.review.port.ReviewLikePort;
+import org.yyubin.application.review.port.ReviewReactionPort;
+import org.yyubin.application.user.port.LoadUserPort;
 import org.yyubin.domain.book.Book;
 import org.yyubin.domain.book.BookId;
 import org.yyubin.domain.review.*;
+import org.yyubin.domain.user.AuthProvider;
+import org.yyubin.domain.user.Role;
+import org.yyubin.domain.user.User;
 import org.yyubin.domain.user.UserId;
 
 import java.time.LocalDateTime;
@@ -56,16 +64,49 @@ class ReviewQueryServiceTest {
     @Mock
     private HighlightNormalizer highlightNormalizer;
 
+    @Mock
+    private ReviewExistencePort reviewExistencePort;
+
+    @Mock
+    private ReviewReactionPort reviewReactionPort;
+
+    @Mock
+    private ReviewBookmarkRepository reviewBookmarkRepository;
+
+    @Mock
+    private LoadUserPort loadUserPort;
+
+    @Mock
+    private ReviewLikePort reviewLikePort;
+
     @InjectMocks
     private ReviewQueryService reviewQueryService;
 
     private Review testReview;
     private Book testBook;
+    private User testUser;
 
     @BeforeEach
     void setUp() {
         testReview = createTestReview(100L, 1L, 1L, false, ReviewVisibility.PUBLIC);
         testBook = createTestBook(1L);
+        testUser = createTestUser(1L);
+    }
+
+    private User createTestUser(Long userId) {
+        return new User(
+                new UserId(userId),
+                "user" + userId + "@test.com",
+                "user" + userId,
+                "password123",
+                "nickname" + userId,
+                "bio",
+                "",
+                Role.USER,
+                AuthProvider.LOCAL,
+                null,
+                LocalDateTime.now()
+        );
     }
 
     private Review createTestReview(Long reviewId, Long userId, Long bookId, boolean deleted, ReviewVisibility visibility) {
@@ -113,6 +154,12 @@ class ReviewQueryServiceTest {
         when(loadHighlightsUseCase.loadHighlights(any(ReviewId.class))).thenReturn(List.of());
         when(reviewViewMetricPort.incrementAndGet(100L, 2L)).thenReturn(101L);
         when(reviewViewMetricPort.getCachedCount(100L)).thenReturn(Optional.of(101L));
+        when(loadUserPort.loadById(any(UserId.class))).thenReturn(testUser);
+        when(reviewBookmarkRepository.exists(any(UserId.class), any(ReviewId.class))).thenReturn(false);
+        when(reviewReactionPort.countByReviewIdGroupByContent(anyLong())).thenReturn(List.of());
+        when(reviewReactionPort.loadByReviewIdAndUserId(anyLong(), anyLong())).thenReturn(Optional.empty());
+        when(reviewLikePort.exists(any(ReviewId.class), any(UserId.class))).thenReturn(false);
+        when(reviewLikePort.countByReviewId(any(ReviewId.class))).thenReturn(0L);
 
         // When
         ReviewResult result = reviewQueryService.query(query);
@@ -139,6 +186,9 @@ class ReviewQueryServiceTest {
         when(loadHighlightsUseCase.loadHighlights(any(ReviewId.class))).thenReturn(List.of());
         when(reviewViewMetricPort.incrementAndGet(100L, null)).thenReturn(101L);
         when(reviewViewMetricPort.getCachedCount(100L)).thenReturn(Optional.of(150L));
+        when(loadUserPort.loadById(any(UserId.class))).thenReturn(testUser);
+        when(reviewReactionPort.countByReviewIdGroupByContent(anyLong())).thenReturn(List.of());
+        when(reviewLikePort.countByReviewId(any(ReviewId.class))).thenReturn(0L);
 
         // When
         ReviewResult result = reviewQueryService.query(query);
@@ -161,6 +211,12 @@ class ReviewQueryServiceTest {
         when(loadHighlightsUseCase.loadHighlights(any(ReviewId.class))).thenReturn(List.of());
         when(reviewViewMetricPort.incrementAndGet(100L, 1L)).thenReturn(101L);
         when(reviewViewMetricPort.getCachedCount(100L)).thenReturn(Optional.of(101L));
+        when(loadUserPort.loadById(any(UserId.class))).thenReturn(testUser);
+        when(reviewBookmarkRepository.exists(any(UserId.class), any(ReviewId.class))).thenReturn(false);
+        when(reviewReactionPort.countByReviewIdGroupByContent(anyLong())).thenReturn(List.of());
+        when(reviewReactionPort.loadByReviewIdAndUserId(anyLong(), anyLong())).thenReturn(Optional.empty());
+        when(reviewLikePort.exists(any(ReviewId.class), any(UserId.class))).thenReturn(false);
+        when(reviewLikePort.countByReviewId(any(ReviewId.class))).thenReturn(0L);
 
         // When
         ReviewResult result = reviewQueryService.query(query);
@@ -244,6 +300,7 @@ class ReviewQueryServiceTest {
         when(loadKeywordsUseCase.loadKeywords(any(ReviewId.class))).thenReturn(List.of());
         when(loadHighlightsUseCase.loadHighlights(any(ReviewId.class))).thenReturn(List.of());
         when(reviewViewMetricPort.getCachedCount(anyLong())).thenReturn(Optional.empty());
+        when(loadUserPort.loadById(any(UserId.class))).thenReturn(testUser);
 
         // When
         PagedReviewResult result = reviewQueryService.query(query);
@@ -269,6 +326,7 @@ class ReviewQueryServiceTest {
         when(loadKeywordsUseCase.loadKeywords(any(ReviewId.class))).thenReturn(List.of());
         when(loadHighlightsUseCase.loadHighlights(any(ReviewId.class))).thenReturn(List.of());
         when(reviewViewMetricPort.getCachedCount(anyLong())).thenReturn(Optional.empty());
+        when(loadUserPort.loadById(any(UserId.class))).thenReturn(testUser);
 
         // When
         PagedReviewResult result = reviewQueryService.query(query);
@@ -313,6 +371,7 @@ class ReviewQueryServiceTest {
         when(loadKeywordsUseCase.loadKeywords(any(ReviewId.class))).thenReturn(List.of());
         when(loadHighlightsUseCase.loadHighlights(any(ReviewId.class))).thenReturn(List.of());
         when(reviewViewMetricPort.getCachedCount(anyLong())).thenReturn(Optional.empty());
+        when(loadUserPort.loadById(any(UserId.class))).thenReturn(testUser);
 
         // When
         PagedReviewResult result = reviewQueryService.query(query);

@@ -17,9 +17,13 @@ import org.yyubin.application.review.port.LoadReviewPort;
 import org.yyubin.domain.book.Book;
 import org.yyubin.domain.book.BookId;
 import org.yyubin.domain.feed.FeedItem;
+import org.yyubin.application.user.port.LoadUserPort;
 import org.yyubin.domain.review.Review;
 import org.yyubin.domain.review.ReviewId;
 import org.yyubin.domain.review.ReviewVisibility;
+import org.yyubin.domain.user.AuthProvider;
+import org.yyubin.domain.user.Role;
+import org.yyubin.domain.user.User;
 import org.yyubin.domain.user.UserId;
 
 import java.time.LocalDateTime;
@@ -52,18 +56,39 @@ class FeedQueryServiceTest {
     @Mock
     private LoadHighlightsUseCase loadHighlightsUseCase;
 
+    @Mock
+    private LoadUserPort loadUserPort;
+
     @InjectMocks
     private FeedQueryService feedQueryService;
 
     private Book testBook;
     private Review testReview;
     private FeedItem testFeedItem;
+    private User testUser;
 
     @BeforeEach
     void setUp() {
         testBook = createTestBook(1L);
         testReview = createTestReview(100L, 1L, 1L);
         testFeedItem = FeedItem.of(1L, new UserId(1L), ReviewId.of(100L), LocalDateTime.now());
+        testUser = createTestUser(1L);
+    }
+
+    private User createTestUser(Long userId) {
+        return new User(
+                new UserId(userId),
+                "user" + userId + "@test.com",
+                "user" + userId,
+                "password123",
+                "nickname" + userId,
+                "bio",
+                "",
+                Role.USER,
+                AuthProvider.LOCAL,
+                null,
+                LocalDateTime.now()
+        );
     }
 
     private Book createTestBook(Long bookId) {
@@ -119,6 +144,7 @@ class FeedQueryServiceTest {
         when(loadBookPort.loadById(1L)).thenReturn(Optional.of(testBook));
         when(loadKeywordsUseCase.loadKeywords(any())).thenReturn(List.of());
         when(loadHighlightsUseCase.loadHighlights(any())).thenReturn(List.of());
+        when(loadUserPort.loadById(any(UserId.class))).thenReturn(testUser);
 
         // When
         FeedPageResult result = feedQueryService.query(query);
@@ -144,6 +170,7 @@ class FeedQueryServiceTest {
         when(loadBookPort.loadById(1L)).thenReturn(Optional.of(testBook));
         when(loadKeywordsUseCase.loadKeywords(any())).thenReturn(List.of());
         when(loadHighlightsUseCase.loadHighlights(any())).thenReturn(List.of());
+        when(loadUserPort.loadById(any(UserId.class))).thenReturn(testUser);
 
         // When
         FeedPageResult result = feedQueryService.query(query);
@@ -189,6 +216,7 @@ class FeedQueryServiceTest {
         when(loadBookPort.loadById(1L)).thenReturn(Optional.of(testBook));
         when(loadKeywordsUseCase.loadKeywords(any())).thenReturn(List.of());
         when(loadHighlightsUseCase.loadHighlights(any())).thenReturn(List.of());
+        when(loadUserPort.loadById(any(UserId.class))).thenReturn(testUser);
 
         // When
         FeedPageResult result = feedQueryService.query(query);

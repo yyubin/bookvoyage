@@ -19,6 +19,7 @@ import org.yyubin.domain.user.InvalidPasswordException;
 import org.yyubin.domain.user.Role;
 import org.yyubin.domain.user.User;
 import org.yyubin.domain.user.UserId;
+import org.yyubin.support.auth.TestAccountProperties;
 import org.yyubin.support.jwt.JwtProvider;
 
 import java.time.LocalDateTime;
@@ -27,6 +28,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -49,6 +51,9 @@ class SignUpServiceTest {
     @Mock
     private NotificationSettingPort notificationSettingPort;
 
+    @Mock
+    private TestAccountProperties testAccountProperties;
+
     @InjectMocks
     private SignUpService signUpService;
 
@@ -59,10 +64,14 @@ class SignUpServiceTest {
 
     @BeforeEach
     void setUp() {
-        email = "newuser@example.com";
+        email = "newuser@test.com";
         password = "Password123!";
         username = "newuser";
         bio = "New user bio";
+
+        // 테스트 이메일 도메인 허용 설정
+        lenient().when(testAccountProperties.isTestEmail(anyString())).thenReturn(true);
+        lenient().when(testAccountProperties.getEmailDomain()).thenReturn("test.com");
     }
 
     @Test

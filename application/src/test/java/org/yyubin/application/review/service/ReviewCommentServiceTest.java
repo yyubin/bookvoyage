@@ -21,6 +21,9 @@ import org.yyubin.application.review.query.GetCommentsQuery;
 import org.yyubin.application.user.port.LoadUserPort;
 import org.yyubin.domain.book.BookId;
 import org.yyubin.domain.review.*;
+import org.yyubin.domain.user.AuthProvider;
+import org.yyubin.domain.user.Role;
+import org.yyubin.domain.user.User;
 import org.yyubin.domain.user.UserId;
 
 import java.time.LocalDateTime;
@@ -63,12 +66,30 @@ class ReviewCommentServiceTest {
 
     private Review testReview;
     private ReviewComment testComment;
+    private User testUser;
 
     @BeforeEach
     void setUp() {
         testReview = createTestReview(100L, 1L, 1L, false, ReviewVisibility.PUBLIC);
         testComment = createTestComment(1L, 100L, 2L);
+        testUser = createTestUser(2L);
         lenient().when(mentionParser.parse(anyString())).thenReturn(List.of());
+    }
+
+    private User createTestUser(Long userId) {
+        return new User(
+                new UserId(userId),
+                "user" + userId + "@test.com",
+                "user" + userId,
+                "password123",
+                "nickname" + userId,
+                "bio",
+                "",
+                Role.USER,
+                AuthProvider.LOCAL,
+                null,
+                LocalDateTime.now()
+        );
     }
 
     private Review createTestReview(Long reviewId, Long userId, Long bookId, boolean deleted, ReviewVisibility visibility) {
@@ -107,7 +128,7 @@ class ReviewCommentServiceTest {
         // Given
         CreateCommentCommand command = new CreateCommentCommand(100L, 2L, "Nice review!", null);
 
-        when(loadUserPort.loadById(any(UserId.class))).thenReturn(null);
+        when(loadUserPort.loadById(any(UserId.class))).thenReturn(testUser);
         when(loadReviewPort.loadById(100L)).thenReturn(testReview);
         when(saveReviewCommentPort.save(any(ReviewComment.class))).thenReturn(testComment);
 
@@ -119,7 +140,7 @@ class ReviewCommentServiceTest {
         assertThat(result.commentId()).isEqualTo(1L);
         assertThat(result.content()).isEqualTo("Nice review!");
 
-        verify(loadUserPort).loadById(any(UserId.class));
+        verify(loadUserPort, times(2)).loadById(any(UserId.class));
         verify(loadReviewPort).loadById(100L);
         verify(saveReviewCommentPort).save(any(ReviewComment.class));
         verify(notificationEventUseCase).handle(any());
@@ -134,7 +155,7 @@ class ReviewCommentServiceTest {
 
         Review deletedReview = createTestReview(100L, 1L, 1L, true, ReviewVisibility.PUBLIC);
 
-        when(loadUserPort.loadById(any(UserId.class))).thenReturn(null);
+        when(loadUserPort.loadById(any(UserId.class))).thenReturn(testUser);
         when(loadReviewPort.loadById(100L)).thenReturn(deletedReview);
 
         // When & Then
@@ -154,7 +175,7 @@ class ReviewCommentServiceTest {
 
         Review privateReview = createTestReview(100L, 1L, 1L, false, ReviewVisibility.PRIVATE);
 
-        when(loadUserPort.loadById(any(UserId.class))).thenReturn(null);
+        when(loadUserPort.loadById(any(UserId.class))).thenReturn(testUser);
         when(loadReviewPort.loadById(100L)).thenReturn(privateReview);
 
         // When & Then
@@ -196,7 +217,7 @@ class ReviewCommentServiceTest {
                 List.of()
         );
 
-        when(loadUserPort.loadById(any(UserId.class))).thenReturn(null);
+        when(loadUserPort.loadById(any(UserId.class))).thenReturn(testUser);
         when(loadReviewPort.loadById(100L)).thenReturn(testReview);
         when(loadReviewCommentPort.loadById(1L)).thenReturn(parentComment);
         when(saveReviewCommentPort.save(any(ReviewComment.class))).thenReturn(savedReply);
@@ -231,7 +252,7 @@ class ReviewCommentServiceTest {
                 List.of()
         );
 
-        when(loadUserPort.loadById(any(UserId.class))).thenReturn(null);
+        when(loadUserPort.loadById(any(UserId.class))).thenReturn(testUser);
         when(loadReviewPort.loadById(100L)).thenReturn(testReview);
         when(loadReviewCommentPort.loadById(1L)).thenReturn(differentReviewComment);
 
@@ -259,6 +280,9 @@ class ReviewCommentServiceTest {
         when(loadReviewPort.loadById(100L)).thenReturn(testReview);
         when(loadReviewCommentPort.loadByReviewId(anyLong(), any(), anyInt()))
                 .thenReturn(List.of(comment1, comment2, comment3));
+        when(loadReviewCommentPort.countByReviewId(anyLong())).thenReturn(3L);
+        when(loadReviewCommentPort.countRepliesBatch(anyList())).thenReturn(java.util.Map.of());
+        when(loadUserPort.loadById(any(UserId.class))).thenReturn(testUser);
 
         // When
         PagedCommentResult result = reviewCommentService.query(query);
@@ -312,6 +336,8 @@ class ReviewCommentServiceTest {
         when(loadReviewCommentPort.loadById(1L)).thenReturn(testComment);
         when(loadReviewPort.loadById(100L)).thenReturn(testReview);
         when(saveReviewCommentPort.save(any(ReviewComment.class))).thenReturn(updated);
+        when(loadUserPort.loadById(any(UserId.class))).thenReturn(testUser);
+        when(loadReviewCommentPort.countRepliesByParentId(anyLong())).thenReturn(0L);
 
         // When
         ReviewCommentResult result = reviewCommentService.execute(command);
