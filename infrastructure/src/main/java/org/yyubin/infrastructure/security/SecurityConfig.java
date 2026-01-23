@@ -67,7 +67,10 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/redoc/**",
-                                "/redoc.html"
+                                "/redoc.html",
+                                // Actuator (내부 네트워크에서만 접근)
+                                "/actuator/health",
+                                "/actuator/prometheus"
                         ).permitAll()
                         // 리뷰 조회 API - GET 메서드만 허용
                         .requestMatchers(org.springframework.http.HttpMethod.GET,
