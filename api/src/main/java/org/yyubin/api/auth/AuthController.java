@@ -19,6 +19,7 @@ import org.yyubin.api.auth.dto.LoginRequest;
 import org.yyubin.api.auth.dto.SignUpRequest;
 import org.yyubin.application.auth.LoginUseCase;
 import org.yyubin.application.auth.LogoutUseCase;
+import org.yyubin.application.auth.RefreshTokenUseCase;
 import org.yyubin.application.auth.SignUpUseCase;
 import org.yyubin.application.dto.AuthResult;
 import org.yyubin.support.jwt.JwtProperties;
@@ -36,6 +37,8 @@ public class AuthController {
     private final SignUpUseCase signUpUseCase;
     private final LoginUseCase loginUseCase;
     private final LogoutUseCase logoutUseCase;
+    private final RefreshTokenUseCase refreshTokenUseCase;
+    private final LogoutCleanupHandler logoutCleanupHandler;
     private final JwtProperties jwtProperties;
     private final CookieProperties cookieProperties;
 
@@ -81,21 +84,25 @@ public class AuthController {
         // 2. 로그아웃 처리 (토큰 블랙리스트 추가)
         logoutUseCase.execute(accessToken, refreshToken);
 
-        // 3. 쿠키 삭제
-        deleteCookie(response, "accessToken");
-        deleteCookie(response, "refreshToken");
-
-        // 4. 서버 세션 무효화
-        jakarta.servlet.http.HttpSession session = request.getSession(false);
-        if (session != null) {
-            session.invalidate();
-            log.debug("Server session invalidated");
-        }
-
-        // 5. JSESSIONID 쿠키 삭제
-        deleteCookie(response, "JSESSIONID");
+        // 3. 클라이언트/세션 정리
+        logoutCleanupHandler.clear(request, response);
 
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponse> refresh(HttpServletRequest request, HttpServletResponse response) {
+        log.info("Refresh token request");
+
+        String refreshToken = extractTokenFromRequest(request, "refreshToken");
+        if (!StringUtils.hasText(refreshToken)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        AuthResult authResult = refreshTokenUseCase.execute(refreshToken);
+        setTokenCookies(response, authResult.accessToken(), authResult.refreshToken());
+
+        return ResponseEntity.ok(AuthResponse.from(authResult));
     }
 
     private void setTokenCookies(HttpServletResponse response, String accessToken, String refreshToken) {
@@ -131,10 +138,6 @@ public class AuthController {
         }
 
         response.addHeader("Set-Cookie", builder.build().toString());
-    }
-
-    private void deleteCookie(HttpServletResponse response, String name) {
-        addCookie(response, name, "", 0);
     }
 
     private String extractTokenFromRequest(HttpServletRequest request, String cookieName) {
