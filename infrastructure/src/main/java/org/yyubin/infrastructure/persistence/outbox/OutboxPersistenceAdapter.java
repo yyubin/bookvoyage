@@ -20,7 +20,10 @@ public class OutboxPersistenceAdapter implements OutboxPort {
     private final ObjectMapper objectMapper;
 
     @Override
-    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+    @Transactional(
+            transactionManager = "outboxTransactionManager",
+            propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW
+    )
     public void save(String topic, String key, EventPayload payload) {
         outboxEventJpaRepository.save(
                 OutboxEventEntity.builder()
@@ -37,7 +40,7 @@ public class OutboxPersistenceAdapter implements OutboxPort {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional(transactionManager = "outboxTransactionManager", readOnly = true)
     public List<OutboxEvent> findPending(int limit) {
         return outboxEventJpaRepository.findByStatusOrderByOccurredAtAsc(
                         OutboxEvent.OutboxStatus.PENDING,
@@ -49,7 +52,10 @@ public class OutboxPersistenceAdapter implements OutboxPort {
     }
 
     @Override
-    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+    @Transactional(
+            transactionManager = "outboxTransactionManager",
+            propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW
+    )
     public void markSent(Long id) {
         outboxEventJpaRepository.findById(id).ifPresent(entity -> {
             entity.setStatus(OutboxEvent.OutboxStatus.SENT);
@@ -58,7 +64,10 @@ public class OutboxPersistenceAdapter implements OutboxPort {
     }
 
     @Override
-    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+    @Transactional(
+            transactionManager = "outboxTransactionManager",
+            propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW
+    )
     public void markFailed(Long id, String errorMessage) {
         outboxEventJpaRepository.findById(id).ifPresent(entity -> {
             entity.setStatus(OutboxEvent.OutboxStatus.PENDING); // 재시도를 위해 PENDING으로 변경
@@ -69,7 +78,10 @@ public class OutboxPersistenceAdapter implements OutboxPort {
     }
 
     @Override
-    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+    @Transactional(
+            transactionManager = "outboxTransactionManager",
+            propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW
+    )
     public void markDead(Long id, String errorMessage) {
         outboxEventJpaRepository.findById(id).ifPresent(entity -> {
             entity.setStatus(OutboxEvent.OutboxStatus.DEAD);
@@ -79,7 +91,10 @@ public class OutboxPersistenceAdapter implements OutboxPort {
     }
 
     @Override
-    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+    @Transactional(
+            transactionManager = "outboxTransactionManager",
+            propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW
+    )
     public int deleteByStatusAndOccurredAtBefore(OutboxEvent.OutboxStatus status, Instant cutoff) {
         return outboxEventJpaRepository.deleteByStatusAndOccurredAtBefore(status, cutoff);
     }

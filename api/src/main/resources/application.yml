@@ -62,6 +62,15 @@ server:
   port: ${SERVER_PORT:8080}
 
 outbox:
+  datasource:
+    url: ${OUTBOX_DB_URL:${spring.datasource.url}}
+    username: ${OUTBOX_DB_USERNAME:${spring.datasource.username}}
+    password: ${OUTBOX_DB_PASSWORD:${spring.datasource.password}}
+    driver-class-name: ${OUTBOX_DB_DRIVER:${spring.datasource.driver-class-name}}
+    hikari:
+      maximum-pool-size: ${OUTBOX_DB_POOL_SIZE:5}
+      minimum-idle: ${OUTBOX_DB_MIN_IDLE:2}
+      connection-timeout: ${OUTBOX_DB_CONN_TIMEOUT_MS:30000}
   processor:
     fixed-delay-ms: 1000
     initial-delay-ms: 2000

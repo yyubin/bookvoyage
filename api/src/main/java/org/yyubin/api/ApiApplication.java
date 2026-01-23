@@ -6,13 +6,21 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.boot.persistence.autoconfigure.EntityScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @SpringBootApplication(scanBasePackages = "org.yyubin")
 @ConfigurationPropertiesScan(basePackages = "org.yyubin")
-@EnableJpaRepositories(basePackages = "org.yyubin.infrastructure.persistence")
+@EnableJpaRepositories(
+        basePackages = "org.yyubin.infrastructure.persistence",
+        excludeFilters = @ComponentScan.Filter(
+                type = FilterType.REGEX,
+                pattern = "org\\.yyubin\\.infrastructure\\.persistence\\.outbox\\..*"
+        )
+)
 @EntityScan(basePackages = "org.yyubin.infrastructure.persistence")
 public class ApiApplication {
 
