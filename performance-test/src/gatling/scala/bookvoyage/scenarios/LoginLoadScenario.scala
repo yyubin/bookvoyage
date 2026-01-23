@@ -26,10 +26,20 @@ object LoginLoadScenario {
       http("Fresh Login")
         .post("/api/auth/login")
         .header("Content-Type", "application/json")
-        .body(StringBody("""{"email": "${email}", "password": "${password}"}"""))
+        .body(StringBody(session =>
+          s"""{"email": "${session("email").as[String]}", "password": "${session("password").as[String]}"}"""
+        ))
+        .asJson
         .check(status.in(200, 401))
         .check(headerRegex("Set-Cookie", "accessToken=([^;]+)").optional.saveAs("newAccessToken"))
     )
+
+  // 로그아웃
+  val logout = exec(
+    http("Logout")
+      .post("/api/auth/logout")
+      .check(status.in(200, 204))
+  )
 
   // 토큰 갱신
   val refreshToken = exec(
@@ -37,13 +47,6 @@ object LoginLoadScenario {
       .post("/api/auth/refresh")
       .check(status.in(200, 401))
       .check(headerRegex("Set-Cookie", "accessToken=([^;]+)").optional.saveAs("refreshedAccessToken"))
-  )
-
-  // 로그아웃
-  val logout = exec(
-    http("Logout")
-      .post("/api/auth/logout")
-      .check(status.in(200, 204))
   )
 
   // 로그인 부하 시나리오
@@ -63,7 +66,10 @@ object LoginLoadScenario {
       http("Spike Login")
         .post("/api/auth/login")
         .header("Content-Type", "application/json")
-        .body(StringBody("""{"email": "${email}", "password": "${password}"}"""))
+        .body(StringBody(session =>
+          s"""{"email": "${session("email").as[String]}", "password": "${session("password").as[String]}"}"""
+        ))
+        .asJson
         .check(status.in(200, 401))
     )
     .pause(1.second, 3.seconds)

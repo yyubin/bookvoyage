@@ -39,7 +39,10 @@ object AuthenticatedUserScenario {
       http("Login")
         .post("/api/auth/login")
         .header("Content-Type", "application/json")
-        .body(StringBody("""{"email": "${email}", "password": "${password}"}"""))
+        .body(StringBody(session =>
+          s"""{"email": "${session("email").as[String]}", "password": "${session("password").as[String]}"}"""
+        ))
+        .asJson
         .check(status.in(200, 401))
         .check(headerRegex("Set-Cookie", "accessToken=([^;]+)").optional.saveAs("accessToken"))
     )

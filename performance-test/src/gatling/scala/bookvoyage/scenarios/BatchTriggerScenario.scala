@@ -20,7 +20,7 @@ object BatchTriggerScenario {
     http("Trigger Neo4j Sync")
       .post("/api/admin/batch/sync-neo4j")
       .check(status.in(200, 202, 409)) // 409: 이미 실행 중
-      .check(jsonPath("$.jobExecutionId").optional.saveAs("neo4jJobId"))
+      .check(jsonPath("$.executionId").optional.saveAs("neo4jJobId"))
   )
 
   // Elasticsearch 동기화 트리거 (인증 불필요 - permitAll)
@@ -28,14 +28,7 @@ object BatchTriggerScenario {
     http("Trigger Elasticsearch Sync")
       .post("/api/admin/batch/sync-elasticsearch")
       .check(status.in(200, 202, 409))
-      .check(jsonPath("$.jobExecutionId").optional.saveAs("esJobId"))
-  )
-
-  // 배치 상태 조회
-  val checkBatchStatus = exec(
-    http("Check Batch Status")
-      .get("/api/admin/batch/status")
-      .check(status.in(200, 404))
+      .check(jsonPath("$.executionId").optional.saveAs("esJobId"))
   )
 
   // 배치 트리거 시나리오 (Neo4j + ES 동시)
@@ -46,27 +39,18 @@ object BatchTriggerScenario {
     .exec(triggerNeo4jSync)
     .pause(5.seconds)
     .exec(triggerEsSync)
-    // 상태 폴링 (5분간)
-    .during(300.seconds) {
-      exec(checkBatchStatus)
-        .pause(TestConfig.batchPollInterval.seconds)
-    }
+    // 상태 폴링 엔드포인트가 없어 트리거 후 대기만 수행
+    .pause(300.seconds)
 
   // Neo4j만 트리거
   val neo4jOnlySync = scenario("Neo4j Sync Only")
     .pause(TestConfig.batchTriggerDelay.seconds)
     .exec(triggerNeo4jSync)
-    .during(300.seconds) {
-      exec(checkBatchStatus)
-        .pause(TestConfig.batchPollInterval.seconds)
-    }
+    .pause(300.seconds)
 
   // Elasticsearch만 트리거
   val esOnlySync = scenario("Elasticsearch Sync Only")
     .pause(TestConfig.batchTriggerDelay.seconds)
     .exec(triggerEsSync)
-    .during(300.seconds) {
-      exec(checkBatchStatus)
-        .pause(TestConfig.batchPollInterval.seconds)
-    }
+    .pause(300.seconds)
 }
