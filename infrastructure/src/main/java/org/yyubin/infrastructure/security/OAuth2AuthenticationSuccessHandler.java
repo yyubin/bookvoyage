@@ -12,6 +12,7 @@ import org.yyubin.infrastructure.security.oauth2.CustomOAuth2User;
 import org.yyubin.support.jwt.JwtProperties;
 import org.yyubin.support.jwt.JwtProvider;
 import org.yyubin.support.web.CookieProperties;
+import org.yyubin.support.web.FrontendProperties;
 
 import java.io.IOException;
 
@@ -23,6 +24,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     private final JwtProvider jwtProvider;
     private final JwtProperties jwtProperties;
     private final CookieProperties cookieProperties;
+    private final FrontendProperties frontendProperties;
     private final HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
 
     @Override
@@ -51,8 +53,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
         log.info("OAuth2 authentication success for user: {}", oAuth2User.getEmail());
 
-        // 프론트엔드 리다이렉트 URL (토큰은 쿠키로 전달됨)
-        String targetUrl = "http://localhost:3000/oauth2/redirect";
+        // 프론트엔드 리다이렉트 URL (토큰은 쿠키로 전달됨, 환경변수로 설정)
+        String targetUrl = frontendProperties.getOauth2RedirectUrl();
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
 

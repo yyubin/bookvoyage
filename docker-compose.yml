@@ -78,8 +78,9 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      # 외부(localhost)와 내부(컨테이너간) 통신을 위한 리스너 설정
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:9093
+      # 외부와 내부(컨테이너간) 통신을 위한 리스너 설정
+      # KAFKA_EXTERNAL_HOST: 로컬에서는 localhost, 프로덕션에서는 실제 도메인/IP
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://${KAFKA_EXTERNAL_HOST:-localhost}:9092,PLAINTEXT_INTERNAL://kafka:9093
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
       # 로컬 개발 환경 (단일 브로커)

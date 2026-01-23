@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '4.0.0' apply false
     id 'io.spring.dependency-management' version '1.1.7' apply false
+    id 'org.sonarqube' version '5.0.0.4638'
     id 'jacoco'
 }
 
@@ -47,6 +48,12 @@ subprojects {
             csv.required = false
         }
     }
+
+    sonarqube {
+        properties {
+            property 'sonar.coverage.jacoco.xmlReportPaths', "${buildDir}/reports/jacoco/test/jacocoTestReport.xml"
+        }
+    }
 }
 
 // Aggregate JaCoCo coverage report for all subprojects
@@ -72,4 +79,28 @@ task jacocoRootReport(type: JacocoReport) {
     doFirst {
         executionData.from = files(executionData.findAll { it.exists() })
     }
+}
+
+sonarqube {
+    properties {
+        def sonarProjectKey = System.getProperty('sonar.projectKey') ?: System.getenv('SONAR_PROJECT_KEY')
+        def sonarHostUrl = System.getProperty('sonar.host.url') ?: System.getenv('SONAR_HOST_URL')
+        def sonarToken = System.getProperty('sonar.token') ?: System.getenv('SONAR_TOKEN')
+
+        if (sonarProjectKey) {
+            property 'sonar.projectKey', sonarProjectKey
+        }
+        if (sonarHostUrl) {
+            property 'sonar.host.url', sonarHostUrl
+        }
+        if (sonarToken) {
+            property 'sonar.token', sonarToken
+        }
+
+        property 'sonar.coverage.jacoco.xmlReportPaths', "${buildDir}/reports/jacoco/test/jacocoTestReport.xml"
+    }
+}
+
+tasks.named('sonarqube') {
+    dependsOn jacocoRootReport
 }
