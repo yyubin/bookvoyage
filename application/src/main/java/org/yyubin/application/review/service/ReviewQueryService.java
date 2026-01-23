@@ -26,6 +26,8 @@ import org.yyubin.application.review.query.CheckUserReviewQuery;
 import org.yyubin.application.review.query.GetReviewQuery;
 import org.yyubin.application.review.query.GetReviewsByHighlightQuery;
 import org.yyubin.application.review.query.GetUserReviewsQuery;
+import org.yyubin.application.review.exception.ReviewAccessDeniedException;
+import org.yyubin.application.review.exception.ReviewNotFoundException;
 import org.yyubin.domain.book.Book;
 import org.yyubin.domain.review.Review;
 import org.yyubin.domain.book.BookId;
@@ -55,13 +57,18 @@ public class ReviewQueryService implements GetReviewUseCase, GetUserReviewsUseCa
     @Override
     public ReviewResult query(GetReviewQuery query) {
         log.debug("Querying review {} with viewerId: {}", query.reviewId(), query.viewerId());
-        Review review = loadReviewPort.loadById(query.reviewId());
+        Review review;
+        try {
+            review = loadReviewPort.loadById(query.reviewId());
+        } catch (IllegalArgumentException ex) {
+            throw new ReviewNotFoundException("Review not found: " + query.reviewId());
+        }
         log.debug("Loaded review {} - visibility: {}, deleted: {}",
             review.getId().getValue(), review.getVisibility(), review.isDeleted());
         validateViewPermission(review, query.viewerId());
         log.debug("View permission validated for review {}", review.getId().getValue());
         Book book = loadBookPort.loadById(review.getBookId().getValue())
-                .orElseThrow(() -> new IllegalArgumentException("Book not found: " + review.getBookId().getValue()));
+                .orElseThrow(() -> new ReviewNotFoundException("Book not found: " + review.getBookId().getValue()));
         org.yyubin.domain.user.User author = loadUserPort.loadById(review.getUserId());
 
         long cachedView = reviewViewMetricPort.incrementAndGet(review.getId().getValue(), query.viewerId());
@@ -187,7 +194,7 @@ public class ReviewQueryService implements GetReviewUseCase, GetUserReviewsUseCa
 
     private ReviewResult toResult(Review review) {
         Book book = loadBookPort.loadById(review.getBookId().getValue())
-                .orElseThrow(() -> new IllegalArgumentException("Book not found: " + review.getBookId().getValue()));
+                .orElseThrow(() -> new ReviewNotFoundException("Book not found: " + review.getBookId().getValue()));
         org.yyubin.domain.user.User author = loadUserPort.loadById(review.getUserId());
         long viewForResponse = reviewViewMetricPort.getCachedCount(review.getId().getValue())
                 .orElse(review.getViewCount());
@@ -204,7 +211,7 @@ public class ReviewQueryService implements GetReviewUseCase, GetUserReviewsUseCa
     private void validateViewPermission(Review review, Long viewerId) {
         if (review.isDeleted()) {
             log.warn("Access denied: Review {} is deleted", review.getId().getValue());
-            throw new IllegalArgumentException("Review not found: " + review.getId().getValue());
+            throw new ReviewNotFoundException("Review not found: " + review.getId().getValue());
         }
 
         if (review.getVisibility().isPublic()) {
@@ -214,13 +221,13 @@ public class ReviewQueryService implements GetReviewUseCase, GetUserReviewsUseCa
 
         if (viewerId == null) {
             log.warn("Access denied: Review {} is private and viewerId is null", review.getId().getValue());
-            throw new IllegalArgumentException("Review not found: " + review.getId().getValue());
+            throw new ReviewAccessDeniedException("Access denied for review: " + review.getId().getValue());
         }
 
         if (!review.isWrittenBy(new UserId(viewerId))) {
             log.warn("Access denied: Review {} - viewer {} is not the author",
                 review.getId().getValue(), viewerId);
-            throw new IllegalArgumentException("Review not found: " + review.getId().getValue());
+            throw new ReviewAccessDeniedException("Access denied for review: " + review.getId().getValue());
         }
     }
 }
