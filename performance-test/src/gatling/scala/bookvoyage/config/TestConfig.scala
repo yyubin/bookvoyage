@@ -10,8 +10,6 @@ object TestConfig {
 
   // Auth
   val userEmailDomain: String = config.getString("test.auth.userEmailDomain")
-  val adminEmail: String = config.getString("test.auth.adminEmail")
-  val adminPassword: String = config.getString("test.auth.adminPassword")
 
   // Load
   val users: Int = config.getInt("test.load.users")

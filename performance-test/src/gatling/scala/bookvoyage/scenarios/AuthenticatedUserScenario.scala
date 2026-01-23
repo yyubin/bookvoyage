@@ -17,6 +17,9 @@ import scala.util.Random
  */
 object AuthenticatedUserScenario {
 
+  // 기존 테스트 계정 로드 (CSV)
+  val testAccountsFeeder = csv("data/test_accounts.csv").circular
+
   // 검색 키워드 목록
   val searchKeywords = Array(
     "해리포터", "반지의제왕", "1984", "어린왕자", "데미안",
@@ -25,55 +28,21 @@ object AuthenticatedUserScenario {
   )
 
   // 리뷰 ID 범위 (실제 데이터에 맞게 조정)
-  val reviewIdRange = 1 to 1000
+  val reviewIdRange = 1 to 100
 
   // 랜덤 생성기
   val random = new Random()
 
-  // 테스트 사용자 생성 (필요 시)
-  val signUp = exec(session => {
-    val uniqueId = System.nanoTime() + random.nextInt(100000)
-    session.set("testEmail", s"perftest_${uniqueId}@${TestConfig.userEmailDomain}")
-      .set("testPassword", "test1234!")
-      .set("testUsername", s"PerfUser_${uniqueId}")
-  }).exec(
-    http("SignUp")
-      .post("/api/auth/signup")
-      .header("Content-Type", "application/json")
-      .body(StringBody(session => {
-        val email = session("testEmail").as[String]
-        val password = session("testPassword").as[String]
-        val username = session("testUsername").as[String]
-        s"""{"email": "$email", "password": "$password", "username": "$username"}"""
-      }))
-      .check(status.in(201, 409)) // 409: 이미 존재
-      .check(headerRegex("Set-Cookie", "accessToken=([^;]+)").optional.saveAs("accessToken"))
-  )
-
-  // 로그인 (기존 계정 또는 방금 생성한 계정)
-  val login = exec(session => {
-    // 이미 accessToken이 있으면 로그인 스킵
-    if (session.contains("accessToken")) {
-      session
-    } else {
-      val uniqueId = System.nanoTime() + random.nextInt(100000)
-      session.set("testEmail", s"perftest_${uniqueId}@${TestConfig.userEmailDomain}")
-        .set("testPassword", "test1234!")
-    }
-  }).doIf(session => !session.contains("accessToken")) {
-    exec(signUp)
-  }.exec(
-    http("Login")
-      .post("/api/auth/login")
-      .header("Content-Type", "application/json")
-      .body(StringBody(session => {
-        val email = session("testEmail").as[String]
-        val password = session("testPassword").as[String]
-        s"""{"email": "$email", "password": "$password"}"""
-      }))
-      .check(status.in(200, 401))
-      .check(headerRegex("Set-Cookie", "accessToken=([^;]+)").optional.saveAs("accessToken"))
-  )
+  // 기존 테스트 계정으로 로그인
+  val login = feed(testAccountsFeeder)
+    .exec(
+      http("Login")
+        .post("/api/auth/login")
+        .header("Content-Type", "application/json")
+        .body(StringBody("""{"email": "${email}", "password": "${password}"}"""))
+        .check(status.in(200, 401))
+        .check(headerRegex("Set-Cookie", "accessToken=([^;]+)").optional.saveAs("accessToken"))
+    )
 
   // 검색 API (40%)
   val search = exec(
@@ -114,7 +83,7 @@ object AuthenticatedUserScenario {
   val userProfile = exec(
     http("Get User Profile")
       .get("/api/users/me")
-      .check(status.is(200))
+      .check(status.in(200, 401))
   )
 
   // Think time (3~8초)

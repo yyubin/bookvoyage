@@ -15,38 +15,21 @@ import scala.util.Random
  */
 object LoginLoadScenario {
 
+  // 기존 테스트 계정 로드 (CSV)
+  val testAccountsFeeder = csv("data/test_accounts.csv").circular
+
   val random = new Random()
 
-  // 신규 사용자 생성 + 로그인
-  val freshLogin = exec(session => {
-    val uniqueId = System.nanoTime() + random.nextInt(100000)
-    session.set("loginEmail", s"perftest_login_${uniqueId}@${TestConfig.userEmailDomain}")
-      .set("loginPassword", "test1234!")
-      .set("loginUsername", s"LoginUser_${uniqueId}")
-  }).exec(
-    http("SignUp for Login")
-      .post("/api/auth/signup")
-      .header("Content-Type", "application/json")
-      .body(StringBody(session => {
-        val email = session("loginEmail").as[String]
-        val password = session("loginPassword").as[String]
-        val username = session("loginUsername").as[String]
-        s"""{"email": "$email", "password": "$password", "username": "$username"}"""
-      }))
-      .check(status.in(201, 409))
-      .check(headerRegex("Set-Cookie", "accessToken=([^;]+)").optional.saveAs("newAccessToken"))
-  ).pause(1.second).exec(
-    http("Fresh Login")
-      .post("/api/auth/login")
-      .header("Content-Type", "application/json")
-      .body(StringBody(session => {
-        val email = session("loginEmail").as[String]
-        val password = session("loginPassword").as[String]
-        s"""{"email": "$email", "password": "$password"}"""
-      }))
-      .check(status.in(200, 401))
-      .check(headerRegex("Set-Cookie", "accessToken=([^;]+)").optional.saveAs("newAccessToken"))
-  )
+  // 기존 계정으로 로그인 (정상 케이스)
+  val freshLogin = feed(testAccountsFeeder)
+    .exec(
+      http("Fresh Login")
+        .post("/api/auth/login")
+        .header("Content-Type", "application/json")
+        .body(StringBody("""{"email": "${email}", "password": "${password}"}"""))
+        .check(status.in(200, 401))
+        .check(headerRegex("Set-Cookie", "accessToken=([^;]+)").optional.saveAs("newAccessToken"))
+    )
 
   // 토큰 갱신
   val refreshToken = exec(
@@ -68,14 +51,21 @@ object LoginLoadScenario {
     .during(TestConfig.duration.seconds) {
       randomSwitch(
         70.0 -> exec(freshLogin).pause(30.seconds, 60.seconds),
-        20.0 -> exec(refreshToken).pause(30.seconds, 60.seconds),
+        20.0 -> exec(freshLogin).exec(refreshToken).pause(30.seconds, 60.seconds),
         10.0 -> exec(freshLogin).exec(logout).pause(30.seconds, 60.seconds)
       )
     }
 
   // 로그인 스파이크 (순간 대량 로그인)
   val loginSpike = scenario("Login Spike")
-    .exec(freshLogin)
+    .feed(testAccountsFeeder)
+    .exec(
+      http("Spike Login")
+        .post("/api/auth/login")
+        .header("Content-Type", "application/json")
+        .body(StringBody("""{"email": "${email}", "password": "${password}"}"""))
+        .check(status.in(200, 401))
+    )
     .pause(1.second, 3.seconds)
     .exec(
       http("Profile After Login")
