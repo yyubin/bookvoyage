@@ -1,5 +1,8 @@
 package org.yyubin.infrastructure.external.book;
 
+import java.time.Duration;
+import org.springframework.boot.web.client.ClientHttpRequestFactories;
+import org.springframework.boot.web.client.ClientHttpRequestFactorySettings;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -12,13 +15,22 @@ import org.yyubin.infrastructure.external.book.dto.GoogleBooksVolumeResponse;
 @Component
 public class GoogleBooksClient {
 
+    private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(3);
+    private static final Duration READ_TIMEOUT = Duration.ofSeconds(5);
+
     private final GoogleBooksProperties properties;
     private final RestClient restClient;
 
     public GoogleBooksClient(GoogleBooksProperties properties) {
         this.properties = properties;
+
+        ClientHttpRequestFactorySettings settings = ClientHttpRequestFactorySettings.DEFAULTS
+                .withConnectTimeout(CONNECT_TIMEOUT)
+                .withReadTimeout(READ_TIMEOUT);
+
         this.restClient = RestClient.builder()
                 .baseUrl(properties.getBaseUrl())
+                .requestFactory(ClientHttpRequestFactories.get(settings))
                 .build();
     }
 
