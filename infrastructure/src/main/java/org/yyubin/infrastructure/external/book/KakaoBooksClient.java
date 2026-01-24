@@ -1,8 +1,8 @@
 package org.yyubin.infrastructure.external.book;
 
+import java.net.http.HttpClient;
 import java.time.Duration;
-import org.springframework.boot.web.client.ClientHttpRequestFactories;
-import org.springframework.boot.web.client.ClientHttpRequestFactorySettings;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -24,13 +24,16 @@ public class KakaoBooksClient {
     public KakaoBooksClient(KakaoBooksProperties properties) {
         this.properties = properties;
 
-        ClientHttpRequestFactorySettings settings = ClientHttpRequestFactorySettings.DEFAULTS
-                .withConnectTimeout(CONNECT_TIMEOUT)
-                .withReadTimeout(READ_TIMEOUT);
+        HttpClient httpClient = HttpClient.newBuilder()
+                .connectTimeout(CONNECT_TIMEOUT)
+                .build();
+
+        JdkClientHttpRequestFactory requestFactory = new JdkClientHttpRequestFactory(httpClient);
+        requestFactory.setReadTimeout(READ_TIMEOUT);
 
         this.restClient = RestClient.builder()
                 .baseUrl(properties.getBaseUrl())
-                .requestFactory(ClientHttpRequestFactories.get(settings))
+                .requestFactory(requestFactory)
                 .build();
     }
 

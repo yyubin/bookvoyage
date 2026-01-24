@@ -47,17 +47,17 @@ object AuthenticatedUserScenario {
         .check(headerRegex("Set-Cookie", "accessToken=([^;]+)").optional.saveAs("accessToken"))
     )
 
-  // 검색 API (40%)
-  val search = exec(
-    http("Search Books")
-      .get("/api/search")
-      .queryParam("q", _ => searchKeywords(random.nextInt(searchKeywords.length)))
-      .queryParam("page", _ => random.nextInt(5))
-      .queryParam("size", "20")
-      .check(status.in(200, 204))
-  )
+  // 검색 API - 외부 API rate limit 문제로 비활성화
+  // val search = exec(
+  //   http("Search Books")
+  //     .get("/api/search")
+  //     .queryParam("q", _ => searchKeywords(random.nextInt(searchKeywords.length)))
+  //     .queryParam("page", _ => random.nextInt(5))
+  //     .queryParam("size", "20")
+  //     .check(status.in(200, 204))
+  // )
 
-  // 추천 조회 (30%)
+  // 추천 조회 (50% - 검색 비활성화로 비율 상향)
   val recommendations = exec(
     randomSwitch(
       50.0 -> exec(
@@ -95,12 +95,11 @@ object AuthenticatedUserScenario {
     TestConfig.thinkTimeMax.seconds
   )
 
-  // 메인 시나리오: 가중치 기반 액션 선택
+  // 메인 시나리오: 가중치 기반 액션 선택 (검색 비활성화로 재조정)
   val weightedActions = randomSwitch(
-    40.0 -> exec(search).exec(thinkTime),
-    30.0 -> exec(recommendations).exec(thinkTime),
-    20.0 -> exec(reviewDetail).exec(thinkTime),
-    10.0 -> exec(userProfile).exec(thinkTime)
+    50.0 -> exec(recommendations).exec(thinkTime),
+    35.0 -> exec(reviewDetail).exec(thinkTime),
+    15.0 -> exec(userProfile).exec(thinkTime)
   )
 
   // 일반 사용자 시나리오 (80%)
@@ -110,16 +109,15 @@ object AuthenticatedUserScenario {
       exec(weightedActions)
     }
 
-  // 고빈도 사용자 시나리오 (20%) - Think time 짧음
+  // 고빈도 사용자 시나리오 (20%) - Think time 짧음 (검색 비활성화)
   val heavyUser = scenario("Heavy User Traffic")
     .exec(login)
     .during(TestConfig.duration.seconds) {
       exec(
         randomSwitch(
-          40.0 -> exec(search),
-          30.0 -> exec(recommendations),
-          20.0 -> exec(reviewDetail),
-          10.0 -> exec(userProfile)
+          50.0 -> exec(recommendations),
+          35.0 -> exec(reviewDetail),
+          15.0 -> exec(userProfile)
         )
       ).pause(1.second, 3.seconds) // 더 짧은 think time
     }
