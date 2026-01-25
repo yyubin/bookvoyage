@@ -10,6 +10,28 @@ BookVoyage는 책 리뷰를 중심으로 한 소셜 플랫폼입니다. 사용�
 
 ---
 
+## 포트폴리오 하이라이트
+
+- 45분 부하 테스트에서 **KO 2009 → 0** 달성 (Gatling 리포트 기반)
+- Outbox 쓰기 트래픽을 **전용 커넥션 풀**로 분리해 경합 완화
+- Kakao Books **rate limit 대응 캐싱** 도입
+- JFR/프로파일링 리포트로 병목 원인 확인 → 개선 적용
+
+### 성능 근거 링크
+- Gatling 리포트: `performance-test/build/reports/gatling/fullexperimentsimulation-20260124020335657/index.html`
+- KO 분석 문서: 블로그 링크 추가 예정
+- 프로파일링 리포트: `performance-test/reports/profiling`
+- 배치 성능 개선 기록: 블로그 링크 추가 예정
+
+### 성능 요약 (발췌)
+| 항목 | 결과 | 근거                                                       |
+| --- | --- |----------------------------------------------------------|
+| 45분 부하 테스트 KO | 2009 → 0 | 링크 추가 예정                                                 |
+| 전체 요청 p95/p99 | 85ms / 106ms | `performance-test/reports/profiling/global_stats.json`   |
+| Outbox 쓰기 경합 완화 | 전용 커넥션 풀 분리 | 링크 추가 예정 |
+| 외부 API 제한 대응 | Kakao 캐싱 도입 | 링크 추가 예정 |
+
+
 ## 주요 특징
 
 - 🎯 **헥사고날 아키텍처** - 도메인 중심 멀티모듈 설계
@@ -41,12 +63,6 @@ BookVoyage는 책 리뷰를 중심으로 한 소셜 플랫폼입니다. 사용�
 - **리뷰 추천**: 맞춤 피드, 베스트 리뷰, 품질 기반
 - **하이브리드 스코어링**: 그래프(40%) + 시맨틱(30%) + 참여도(15%) + 인기도(10%) + 최신성(5%)
 - **개인화**: 실시간 이벤트 트래킹, 커서 페이지네이션, 윈도우 샘플링
-
-### 🔔 알림 시스템
-- Kafka 기반 비동기 알림
-- Outbox 패턴으로 메시지 신뢰성 보장
-- DLQ (Dead Letter Queue) 실패 처리
-- 알림 유형: 리액션, 멘션, 팔로우 신규 리뷰
 
 ### 🔐 인증 & 보안
 - JWT 기반 인증 (Access + Refresh Token)
@@ -113,13 +129,6 @@ BookVoyage는 책 리뷰를 중심으로 한 소셜 플랫폼입니다. 사용�
    # Elasticsearch 동기화 (검색)
    curl -X POST http://localhost:8080/api/admin/batch/sync-elasticsearch
    ```
-
-자세한 내용은 다음 문서를 참고하세요:
-- [시작하기 가이드](./docs/getting-started.md)
-- [웹소설 지원 가이드](./WEB_NOVEL_GUIDE.md)
-- [책 검색 테스트 가이드](./BOOK_SEARCH_TESTING.md)
-- [저자 정보 Fallback 처리](./AUTHOR_FALLBACK_GUIDE.md)
-
 ---
 
 ## 기술 스택
@@ -150,6 +159,22 @@ BookVoyage는 책 리뷰를 중심으로 한 소셜 플랫폼입니다. 사용�
 
 ## 아키텍처
 
+### 상위 흐름
+```mermaid
+flowchart LR
+  Client --> API[API]
+  API --> App[Application]
+  App --> Domain[Domain]
+  App --> Infra[Infrastructure]
+  App --> Rec[Recommendation]
+  App --> Batch[Batch]
+  Infra --> MySQL[(MySQL SoT)]
+  Infra --> Redis[(Redis)]
+  Infra --> ES[(Elasticsearch)]
+  Infra --> Neo4j[(Neo4j)]
+  Infra --> Kafka[(Kafka)]
+```
+
 ### 멀티모듈 구조
 ```
 bookvoyage/
@@ -177,21 +202,15 @@ MySQL (SoT) → 모든 쓰기 작업
 ## 문서
 
 ### 핵심 문서
-- [📘 시작하기](./docs/getting-started.md) - 설치 및 실행 가이드
 - [🏗️ 아키텍처](./docs/architecture.md) - 시스템 구조 및 기술 스택
 - [🤖 추천 시스템](./docs/recommendation-system.md) - 2-Stage 하이브리드 추천
+- [🔎 리뷰 검색](./docs/review-search.md) - ES 기반 리뷰 검색 상세
+- [🧠 AI 추천](./docs/ai-book-recommendation.md) - 취향 분석/추천 설명 흐름
 - [💾 데이터베이스](./docs/database.md) - MySQL 중심 파생 인덱스 구조
 - [🔒 보안](./docs/security.md) - JWT 인증 및 보안 정책
 - [📦 모듈 구조](./docs/modules.md) - 헥사고날 아키텍처 모듈 상세
 - [🎨 설계 패턴](./docs/design-patterns.md) - Outbox, DLQ, Repository
 - [⚡ 성능 최적화](./docs/performance.md) - 캐싱, 인덱싱, 분산 락
-
-### 추가 문서
-- [API 문서](./API_DOCUMENTATION.md) - SpringDoc OpenAPI 사용
-- [인증 스펙](./AUTHENTICATION_SPEC.md) - JWT 쿠키 인증 상세
-- [Docker 설정](./DOCKER_SETUP.md) - 인프라 구성 가이드
-- [배치 API](./BATCH_API_CURL_COMMANDS.md) - 수동 배치 실행
-- [프론트엔드 가이드](./FRONTEND_TRACKING_GUIDE.md) - 이벤트 트래킹 통합
 
 ### API 문서 (실행 후 접속)
 - **Redoc UI**: http://localhost:8080/redoc.html (권장)
@@ -200,31 +219,6 @@ MySQL (SoT) → 모든 쓰기 작업
 
 ---
 
-## 로드맵
-
-### ✅ 완료된 기능
-- [x] 헥사고날 아키텍처 멀티모듈 설계
-- [x] 리뷰 CRUD 및 소셜 기능
-- [x] Kafka 기반 알림 시스템 (Outbox + DLQ)
-- [x] 2-Stage 하이브리드 추천 시스템
-- [x] JWT 블랙리스트 및 HttpOnly 쿠키
-- [x] 배치 동기화 (Neo4j, Elasticsearch)
-- [x] Redis 캐싱 및 분산 락
-- [x] 커서 기반 페이지네이션
-- [x] 윈도우 샘플링 전략
-- [x] SpringDoc OpenAPI 문서
-- [x] **멀티 소스 책 검색** (카카오 책 API + Google Books)
-- [x] **웹소설 지원** (플랫폼별 등록 가능)
-
-### 🚧 진행 중
-- [ ] 프론트엔드 추천 시스템 통합
-- [ ] A/B 테스트 프레임워크
-- [ ] 성능 모니터링 대시보드
-- [ ] Refresh Token 엔드포인트
-- [ ] 웹소설 유저 직접 등록 API
-
----
-
 ## 팀
 
-- 프로젝트 관리: [@yyubin](https://github.com/yyubin)
+- [@yyubin](https://github.com/yyubin)
