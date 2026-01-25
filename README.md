@@ -16,6 +16,9 @@ BookVoyage는 책 리뷰를 중심으로 한 소셜 플랫폼입니다. 사용�
 - Outbox 쓰기 트래픽을 **전용 커넥션 풀**로 분리해 경합 완화
 - Kakao Books **rate limit 대응 캐싱** 도입
 - JFR/프로파일링 리포트로 병목 원인 확인 → 개선 적용
+- 실제 배포 환경(FE+BE, 커스텀 도메인/OAuth2 포함)에서 촬영한 데모 영상: https://www.youtube.com/watch?v=GIzRyLRbyuE
+
+[![배포 환경 데모 영상 미리보기](https://img.youtube.com/vi/GIzRyLRbyuE/hqdefault.jpg)](https://www.youtube.com/watch?v=GIzRyLRbyuE)
 
 ### 성능 근거 링크
 - Gatling 리포트: `performance-test/build/reports/gatling/fullexperimentsimulation-20260124020335657/index.html`
