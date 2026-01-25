@@ -199,6 +199,25 @@ public interface ReviewRepository extends JpaRepository<ReviewEntity, Long> {
 }
 ```
 
+---
+
+## 성능 테스트 및 프로파일링
+
+### 사용 도구
+- **Gatling**: 부하/시나리오 테스트
+- **async-profiler**: CPU/메모리 프로파일링
+- **JMC (Java Mission Control)**: JFR 기반 분석
+
+### 핵심 지표 (발췌)
+- **전체 요청 p95/p99**: 85ms / 106ms  
+  근거: `performance-test/reports/profiling/global_stats.json`
+
+### 테스트 시나리오/스크립트/결과
+구체 시나리오, 실행 스크립트, 상세 결과는 아래 경로에서 확인 가능합니다.
+- `performance-test/` (Gatling 시나리오/스크립트/리포트 포함)
+
+이미지/그래프/상세 분석은 별도 블로그 링크로 보강할 예정입니다.
+
 ### 배치 설정
 ```yaml
 spring:
@@ -410,29 +429,4 @@ server:
     enabled: true
     mime-types: application/json,application/xml,text/html,text/xml,text/plain
     min-response-size: 1024  # 1KB 이상일 때만 압축
-```
-
-## 성능 테스트
-
-### JMeter
-```bash
-# 동시 사용자 100명, 10분간 테스트
-jmeter -n -t load-test.jmx -l results.jtl
-```
-
-### K6
-```javascript
-import http from 'k6/http';
-
-export const options = {
-  stages: [
-    { duration: '2m', target: 100 },  // Ramp-up
-    { duration: '5m', target: 100 },  // Stay
-    { duration: '2m', target: 0 },    // Ramp-down
-  ],
-};
-
-export default function () {
-  http.get('http://localhost:8080/api/recommendations/books');
-}
 ```
