@@ -14,8 +14,6 @@ dependencies {
 }
 
 gatling {
-    // 시뮬레이션 필터 (특정 시뮬레이션만 실행 시)
-    // includes = listOf("bookvoyage.*")
 }
 
 tasks.withType<ScalaCompile> {
