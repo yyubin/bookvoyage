@@ -3,10 +3,13 @@ package org.yyubin.infrastructure.security;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.util.SerializationUtils;
+import org.yyubin.support.web.CookieProperties;
 
 import java.util.Base64;
 
@@ -15,11 +18,14 @@ import java.util.Base64;
  * 세션 대신 HttpOnly 쿠키에 OAuth2 state를 저장합니다.
  */
 @Component
+@RequiredArgsConstructor
 public class HttpCookieOAuth2AuthorizationRequestRepository
         implements AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
 
     public static final String OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME = "oauth2_auth_request";
     private static final int COOKIE_EXPIRE_SECONDS = 180; // 3분
+
+    private final CookieProperties cookieProperties;
 
     @Override
     public OAuth2AuthorizationRequest loadAuthorizationRequest(HttpServletRequest request) {
@@ -70,15 +76,20 @@ public class HttpCookieOAuth2AuthorizationRequestRepository
     }
 
     private void addCookie(HttpServletResponse response, String name, String value, int maxAge) {
-        Cookie cookie = new Cookie(name, value);
-        cookie.setPath("/");
-        cookie.setHttpOnly(true);
-        cookie.setMaxAge(maxAge);
-        // SameSite=Lax for OAuth2 flow (allows cookies in redirects from external sites)
-        response.addHeader("Set-Cookie", String.format(
-                "%s=%s; Path=/; HttpOnly; Max-Age=%d; SameSite=Lax",
-                name, value, maxAge
-        ));
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(name, value)
+                .httpOnly(true)
+                .secure(cookieProperties.isSecure())
+                .path(cookieProperties.getPath())
+                .maxAge(maxAge);
+
+        if (cookieProperties.getSameSite() != null && !cookieProperties.getSameSite().isBlank()) {
+            builder.sameSite(cookieProperties.getSameSite());
+        }
+        if (cookieProperties.getDomain() != null && !cookieProperties.getDomain().isBlank()) {
+            builder.domain(cookieProperties.getDomain());
+        }
+
+        response.addHeader("Set-Cookie", builder.build().toString());
     }
 
     private void deleteCookie(HttpServletRequest request, HttpServletResponse response, String name) {

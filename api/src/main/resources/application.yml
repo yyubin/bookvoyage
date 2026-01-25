@@ -71,6 +71,7 @@ test-account:
 
 server:
   port: ${SERVER_PORT:8080}
+  forward-headers-strategy: framework
 
 outbox:
   datasource:
@@ -191,12 +192,13 @@ spring:
 
 app:
   cookie:
-    secure: false
-    same-site: Lax
+    secure: true
+    same-site: None
   frontend:
-    url: http://localhost:3000
+    url: https://bookvoyage-fr.vercel.app
     cors-origins:
       - http://localhost:3000
+      - https://bookvoyage-fr.vercel.app
 
 ---
 spring:

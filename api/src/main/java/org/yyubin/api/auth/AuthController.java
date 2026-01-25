@@ -13,15 +13,19 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.yyubin.api.auth.dto.AuthResponse;
+import org.yyubin.api.auth.dto.OAuth2TokenResponse;
 import org.yyubin.api.auth.dto.LoginRequest;
 import org.yyubin.api.auth.dto.SignUpRequest;
 import org.yyubin.application.auth.LoginUseCase;
 import org.yyubin.application.auth.LogoutUseCase;
+import org.yyubin.application.auth.OAuth2CodeExchangeUseCase;
 import org.yyubin.application.auth.RefreshTokenUseCase;
 import org.yyubin.application.auth.SignUpUseCase;
 import org.yyubin.application.dto.AuthResult;
+import org.yyubin.application.dto.OAuth2TokenResult;
 import org.yyubin.support.jwt.JwtProperties;
 import org.yyubin.support.web.CookieProperties;
 
@@ -38,6 +42,7 @@ public class AuthController {
     private final LoginUseCase loginUseCase;
     private final LogoutUseCase logoutUseCase;
     private final RefreshTokenUseCase refreshTokenUseCase;
+    private final OAuth2CodeExchangeUseCase oAuth2CodeExchangeUseCase;
     private final LogoutCleanupHandler logoutCleanupHandler;
     private final JwtProperties jwtProperties;
     private final CookieProperties cookieProperties;
@@ -103,6 +108,37 @@ public class AuthController {
         setTokenCookies(response, authResult.accessToken(), authResult.refreshToken());
 
         return ResponseEntity.ok(AuthResponse.from(authResult));
+    }
+
+    /**
+     * OAuth2 일회용 코드로 토큰 교환
+     * 프론트엔드에서 fetch로 호출하면 쿠키가 정상적으로 설정됨
+     */
+    @PostMapping("/oauth2/token")
+    public ResponseEntity<OAuth2TokenResponse> exchangeOAuth2Code(
+            @RequestParam String code,
+            HttpServletResponse response) {
+        log.info("OAuth2 code exchange request, code: {}", code);
+
+        try {
+            OAuth2TokenResult tokenResult = oAuth2CodeExchangeUseCase.execute(code);
+            log.info("UseCase returned: accessToken={}, refreshToken={}",
+                    tokenResult.accessToken() != null ? "present" : "null",
+                    tokenResult.refreshToken() != null ? "present" : "null");
+
+            // 쿠키 설정 (이메일 로그인과 동일!)
+            setTokenCookies(response, tokenResult.accessToken(), tokenResult.refreshToken());
+
+            log.info("OAuth2 code exchange success, cookies set");
+
+            return ResponseEntity.ok(OAuth2TokenResponse.from(tokenResult));
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid or expired OAuth2 code: {}, error: {}", code, e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        } catch (Exception e) {
+            log.error("Unexpected error during OAuth2 code exchange: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     private void setTokenCookies(HttpServletResponse response, String accessToken, String refreshToken) {

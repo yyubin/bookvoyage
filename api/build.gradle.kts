@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "org.yyubin"
-version = "0.0.1-SNAPSHOT"
+version = "v1"
 description = "api"
 
 java {

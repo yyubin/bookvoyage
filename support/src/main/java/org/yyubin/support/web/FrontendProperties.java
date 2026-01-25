@@ -16,13 +16,13 @@ public class FrontendProperties {
      * 프론트엔드 기본 URL (OAuth2 리다이렉트 등에 사용)
      * 예: https://bookvoyage.com
      */
-    private String url = "http://localhost:3000";
+    private String url = "https://bookvoyage-fr.vercel.app";
 
     /**
      * CORS 허용 origins (쉼표로 구분)
      * 예: https://bookvoyage.com,https://www.bookvoyage.com
      */
-    private List<String> corsOrigins = List.of("http://localhost:3000");
+    private List<String> corsOrigins = List.of("http://localhost:3000", "https://bookvoyage-fr.vercel.app");
 
     /**
      * OAuth2 인증 성공 후 리다이렉트 경로

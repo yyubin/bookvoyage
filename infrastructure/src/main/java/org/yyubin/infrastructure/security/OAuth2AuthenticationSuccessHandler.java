@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import org.yyubin.application.auth.port.OAuth2CodePort;
 import org.yyubin.infrastructure.security.oauth2.CustomOAuth2User;
 import org.yyubin.support.jwt.JwtProperties;
 import org.yyubin.support.jwt.JwtProvider;
@@ -15,6 +16,7 @@ import org.yyubin.support.web.CookieProperties;
 import org.yyubin.support.web.FrontendProperties;
 
 import java.io.IOException;
+import java.util.UUID;
 
 @Slf4j
 @Component
@@ -26,6 +28,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     private final CookieProperties cookieProperties;
     private final FrontendProperties frontendProperties;
     private final HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
+    private final OAuth2CodePort oAuth2CodePort;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
@@ -48,13 +51,14 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
         String refreshToken = jwtProvider.createRefreshToken(String.valueOf(oAuth2User.getUserId()));
 
-        // 토큰을 쿠키에 설정
-        setTokenCookies(response, accessToken, refreshToken);
-
         log.info("OAuth2 authentication success for user: {}", oAuth2User.getEmail());
 
-        // 프론트엔드 리다이렉트 URL (토큰은 쿠키로 전달됨, 환경변수로 설정)
-        String targetUrl = frontendProperties.getOauth2RedirectUrl();
+        // 일회용 코드 생성 및 저장
+        String code = UUID.randomUUID().toString();
+        oAuth2CodePort.saveCode(code, accessToken, refreshToken);
+
+        // 프론트엔드 리다이렉트 (일회용 코드만 전달)
+        String targetUrl = frontendProperties.getOauth2RedirectUrl() + "?code=" + code;
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
 

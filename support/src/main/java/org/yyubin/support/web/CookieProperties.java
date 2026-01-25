@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "app.cookie")
 public class CookieProperties {
     private boolean secure = true;
-    private String sameSite = "Lax";
+    private String sameSite = "None";
     private String domain;
     private String path = "/";
 }

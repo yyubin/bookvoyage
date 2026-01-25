@@ -1,6 +1,35 @@
 version: '3.8'
 
 services:
+  # ===========================================
+  # Traefik - Reverse Proxy + Let's Encrypt
+  # ===========================================
+  traefik:
+    image: traefik:v3.0
+    container_name: bookvoyage-traefik
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    command:
+      - "--api.insecure=true"
+      - "--log.level=DEBUG"
+      - "--providers.file.filename=/etc/traefik/dynamic.yml"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      # Let's Encrypt 설정 (리다이렉트는 dynamic.yml에서 처리)
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.letsencrypt.acme.email=${LETSENCRYPT_EMAIL:-admin@bookvoyage.online}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    volumes:
+      - ./traefik-dynamic.yml:/etc/traefik/dynamic.yml:ro
+      - traefik-certs:/letsencrypt
+    networks:
+      - bookvoyage-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
   # RDB - MySQL
   mysql:
     image: mysql:8.0
@@ -210,6 +239,8 @@ services:
       - bookvoyage-network
 
 volumes:
+  traefik-certs:
+    driver: local
   mysql-data:
     driver: local
   redis-data:
