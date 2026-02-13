@@ -20,19 +20,22 @@ BookVoyage는 책 리뷰를 중심으로 한 소셜 플랫폼입니다. 사용�
 
 [![배포 환경 데모 영상 미리보기](https://img.youtube.com/vi/GIzRyLRbyuE/hqdefault.jpg)](https://www.youtube.com/watch?v=GIzRyLRbyuE)
 
+![개선 후 Gatling 리포트 개요](https://velog.velcdn.com/images/cassidy/post/859e7c57-3696-4d4e-a45e-6e02be36fb5f/image.png)
+![개선 후 Gatling Latency 리포트](https://velog.velcdn.com/images/cassidy/post/168c7a52-0d61-4f74-bf30-d5f88e7528a4/image.png)
+
 ### 성능 근거 링크
 - Gatling 리포트: `performance-test/build/reports/gatling/fullexperimentsimulation-20260124020335657/index.html`
-- KO 분석 문서: 블로그 링크 추가 예정
+- KO 분석 문서: [성능 개선 포스트 바로가기](https://cassidycodes.vercel.app/articles/bookvoyage-performance-improvement-report)
 - 프로파일링 리포트: `performance-test/reports/profiling`
-- 배치 성능 개선 기록: 블로그 링크 추가 예정
+- 배치 성능 개선 기록: [성능 개선 포스트 바로가기](https://cassidycodes.vercel.app/articles/bookvoyage-performance-improvement-report)
 
 ### 성능 요약 (발췌)
 | 항목 | 결과 | 근거                                                       |
 | --- | --- |----------------------------------------------------------|
-| 45분 부하 테스트 KO | 2009 → 0 | 링크 추가 예정                                                 |
+| 45분 부하 테스트 KO | 2009 → 0 | [성능 개선 포스트 바로가기](https://cassidycodes.vercel.app/articles/bookvoyage-performance-improvement-report)                                              |
 | 전체 요청 p95/p99 | 85ms / 106ms | `performance-test/reports/profiling/global_stats.json`   |
-| Outbox 쓰기 경합 완화 | 전용 커넥션 풀 분리 | 링크 추가 예정 |
-| 외부 API 제한 대응 | Kakao 캐싱 도입 | 링크 추가 예정 |
+| Outbox 쓰기 경합 완화 | 전용 커넥션 풀 분리 | [성능 개선 포스트 바로가기](https://cassidycodes.vercel.app/articles/bookvoyage-performance-improvement-report) |
+| 외부 API 제한 대응 | Kakao 캐싱 도입 | [성능 개선 포스트 바로가기](https://cassidycodes.vercel.app/articles/bookvoyage-performance-improvement-report) |
 
 
 ## 주요 특징
