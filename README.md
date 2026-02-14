@@ -159,6 +159,8 @@ BookVoyage는 책 리뷰를 중심으로 한 소셜 플랫폼입니다. 사용�
 - **Gradle** - 빌드 도구
 - **ShedLock** - 분산 배치 락
 - **SpringDoc OpenAPI 3** - API 문서
+- **AWS(EC2 / S3 / Route53)**
+- **Vercel** 
 
 ---
 
