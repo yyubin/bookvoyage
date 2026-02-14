@@ -24,9 +24,13 @@ BookVoyage는 책 리뷰를 중심으로 한 소셜 플랫폼입니다. 사용�
 ![개선 후 Gatling Latency 리포트](https://velog.velcdn.com/images/cassidy/post/168c7a52-0d61-4f74-bf30-d5f88e7528a4/image.png)
 
 ### 성능 근거 링크
-- Gatling 리포트: `performance-test/build/reports/gatling/fullexperimentsimulation-20260124020335657/index.html`
+- Gatling 리포트: [성능 개선 포스트 바로가기](https://cassidycodes.vercel.app/articles/bookvoyage-performance-improvement-report)
 - KO 분석 문서: [성능 개선 포스트 바로가기](https://cassidycodes.vercel.app/articles/bookvoyage-performance-improvement-report)
 - 프로파일링 리포트: `performance-test/reports/profiling`
+  - cpu `cpu_60063_20260124_085339.html`
+  - alloc `alloc_71371_20260124_105914.html`
+  - jfr `jfr_20260124_110325.jfr`
+  - assertions 수치 확인 문서 `global_stats.json`
 - 배치 성능 개선 기록: [성능 개선 포스트 바로가기](https://cassidycodes.vercel.app/articles/bookvoyage-performance-improvement-report)
 
 ### 성능 요약 (발췌)
